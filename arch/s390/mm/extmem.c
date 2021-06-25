@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Author(s)......: Carsten Otte <cotte@de.ibm.com>
  * 		    Rob M van der Heij <rvdheij@nl.ibm.com>
@@ -8,649 +7,649 @@
  * Copyright IBM Corp. 2002, 2004
  */
 
-#घोषणा KMSG_COMPONENT "extmem"
-#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#define KMSG_COMPONENT "extmem"
+#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/list.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/export.h>
-#समावेश <linux/memblock.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/ioport.h>
-#समावेश <linux/refcount.h>
-#समावेश <linux/pgtable.h>
-#समावेश <यंत्र/diag.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/ebcdic.h>
-#समावेश <यंत्र/त्रुटिसं.स>
-#समावेश <यंत्र/exपंचांगem.h>
-#समावेश <यंत्र/cpcmd.h>
-#समावेश <यंत्र/setup.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <linux/spinlock.h>
+#include <linux/list.h>
+#include <linux/slab.h>
+#include <linux/export.h>
+#include <linux/memblock.h>
+#include <linux/ctype.h>
+#include <linux/ioport.h>
+#include <linux/refcount.h>
+#include <linux/pgtable.h>
+#include <asm/diag.h>
+#include <asm/page.h>
+#include <asm/ebcdic.h>
+#include <asm/errno.h>
+#include <asm/extmem.h>
+#include <asm/cpcmd.h>
+#include <asm/setup.h>
 
-#घोषणा DCSS_PURGESEG   0x08
-#घोषणा DCSS_LOADSHRX	0x20
-#घोषणा DCSS_LOADNSRX	0x24
-#घोषणा DCSS_FINDSEGX	0x2c
-#घोषणा DCSS_SEGEXTX	0x38
-#घोषणा DCSS_FINDSEGA   0x0c
+#define DCSS_PURGESEG   0x08
+#define DCSS_LOADSHRX	0x20
+#define DCSS_LOADNSRX	0x24
+#define DCSS_FINDSEGX	0x2c
+#define DCSS_SEGEXTX	0x38
+#define DCSS_FINDSEGA   0x0c
 
-काष्ठा qrange अणु
-	अचिन्हित दीर्घ  start; /* last byte type */
-	अचिन्हित दीर्घ  end;   /* last byte reserved */
-पूर्ण;
+struct qrange {
+	unsigned long  start; /* last byte type */
+	unsigned long  end;   /* last byte reserved */
+};
 
-काष्ठा qout64 अणु
-	अचिन्हित दीर्घ segstart;
-	अचिन्हित दीर्घ segend;
-	पूर्णांक segcnt;
-	पूर्णांक segrcnt;
-	काष्ठा qrange range[6];
-पूर्ण;
+struct qout64 {
+	unsigned long segstart;
+	unsigned long segend;
+	int segcnt;
+	int segrcnt;
+	struct qrange range[6];
+};
 
-काष्ठा qin64 अणु
-	अक्षर qopcode;
-	अक्षर rsrv1[3];
-	अक्षर qrcode;
-	अक्षर rsrv2[3];
-	अक्षर qname[8];
-	अचिन्हित पूर्णांक qoutptr;
-	लघु पूर्णांक qoutlen;
-पूर्ण;
+struct qin64 {
+	char qopcode;
+	char rsrv1[3];
+	char qrcode;
+	char rsrv2[3];
+	char qname[8];
+	unsigned int qoutptr;
+	short int qoutlen;
+};
 
-काष्ठा dcss_segment अणु
-	काष्ठा list_head list;
-	अक्षर dcss_name[8];
-	अक्षर res_name[16];
-	अचिन्हित दीर्घ start_addr;
-	अचिन्हित दीर्घ end;
+struct dcss_segment {
+	struct list_head list;
+	char dcss_name[8];
+	char res_name[16];
+	unsigned long start_addr;
+	unsigned long end;
 	refcount_t ref_count;
-	पूर्णांक करो_nonshared;
-	अचिन्हित पूर्णांक vm_segtype;
-	काष्ठा qrange range[6];
-	पूर्णांक segcnt;
-	काष्ठा resource *res;
-पूर्ण;
+	int do_nonshared;
+	unsigned int vm_segtype;
+	struct qrange range[6];
+	int segcnt;
+	struct resource *res;
+};
 
-अटल DEFINE_MUTEX(dcss_lock);
-अटल LIST_HEAD(dcss_list);
-अटल अक्षर *segtype_string[] = अणु "SW", "EW", "SR", "ER", "SN", "EN", "SC",
-					"EW/EN-MIXED" पूर्ण;
-अटल पूर्णांक loadshr_scode = DCSS_LOADSHRX;
-अटल पूर्णांक loadnsr_scode = DCSS_LOADNSRX;
-अटल पूर्णांक purgeseg_scode = DCSS_PURGESEG;
-अटल पूर्णांक segext_scode = DCSS_SEGEXTX;
+static DEFINE_MUTEX(dcss_lock);
+static LIST_HEAD(dcss_list);
+static char *segtype_string[] = { "SW", "EW", "SR", "ER", "SN", "EN", "SC",
+					"EW/EN-MIXED" };
+static int loadshr_scode = DCSS_LOADSHRX;
+static int loadnsr_scode = DCSS_LOADNSRX;
+static int purgeseg_scode = DCSS_PURGESEG;
+static int segext_scode = DCSS_SEGEXTX;
 
 /*
  * Create the 8 bytes, ebcdic VM segment name from
  * an ascii name.
  */
-अटल व्योम
-dcss_mkname(अक्षर *name, अक्षर *dcss_name)
-अणु
-	पूर्णांक i;
+static void
+dcss_mkname(char *name, char *dcss_name)
+{
+	int i;
 
-	क्रम (i = 0; i < 8; i++) अणु
-		अगर (name[i] == '\0')
-			अवरोध;
-		dcss_name[i] = बड़े(name[i]);
-	पूर्ण
-	क्रम (; i < 8; i++)
+	for (i = 0; i < 8; i++) {
+		if (name[i] == '\0')
+			break;
+		dcss_name[i] = toupper(name[i]);
+	}
+	for (; i < 8; i++)
 		dcss_name[i] = ' ';
 	ASCEBC(dcss_name, 8);
-पूर्ण
+}
 
 
 /*
- * search all segments in dcss_list, and वापस the one
- * namend *name. If not found, वापस शून्य.
+ * search all segments in dcss_list, and return the one
+ * namend *name. If not found, return NULL.
  */
-अटल काष्ठा dcss_segment *
-segment_by_name (अक्षर *name)
-अणु
-	अक्षर dcss_name[9];
-	काष्ठा list_head *l;
-	काष्ठा dcss_segment *पंचांगp, *retval = शून्य;
+static struct dcss_segment *
+segment_by_name (char *name)
+{
+	char dcss_name[9];
+	struct list_head *l;
+	struct dcss_segment *tmp, *retval = NULL;
 
 	BUG_ON(!mutex_is_locked(&dcss_lock));
 	dcss_mkname (name, dcss_name);
-	list_क्रम_each (l, &dcss_list) अणु
-		पंचांगp = list_entry (l, काष्ठा dcss_segment, list);
-		अगर (स_भेद(पंचांगp->dcss_name, dcss_name, 8) == 0) अणु
-			retval = पंचांगp;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस retval;
-पूर्ण
+	list_for_each (l, &dcss_list) {
+		tmp = list_entry (l, struct dcss_segment, list);
+		if (memcmp(tmp->dcss_name, dcss_name, 8) == 0) {
+			retval = tmp;
+			break;
+		}
+	}
+	return retval;
+}
 
 
 /*
- * Perक्रमm a function on a dcss segment.
+ * Perform a function on a dcss segment.
  */
-अटल अंतरभूत पूर्णांक
-dcss_diag(पूर्णांक *func, व्योम *parameter,
-           अचिन्हित दीर्घ *ret1, अचिन्हित दीर्घ *ret2)
-अणु
-	अचिन्हित दीर्घ rx, ry;
-	पूर्णांक rc;
+static inline int
+dcss_diag(int *func, void *parameter,
+           unsigned long *ret1, unsigned long *ret2)
+{
+	unsigned long rx, ry;
+	int rc;
 
-	rx = (अचिन्हित दीर्घ) parameter;
-	ry = (अचिन्हित दीर्घ) *func;
+	rx = (unsigned long) parameter;
+	ry = (unsigned long) *func;
 
 	diag_stat_inc(DIAG_STAT_X064);
-	यंत्र अस्थिर(
+	asm volatile(
 		"	diag	%0,%1,0x64\n"
 		"	ipm	%2\n"
 		"	srl	%2,28\n"
 		: "+d" (rx), "+d" (ry), "=d" (rc) : : "cc");
 	*ret1 = rx;
 	*ret2 = ry;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल अंतरभूत पूर्णांक
-dcss_diag_translate_rc (पूर्णांक vm_rc) अणु
-	अगर (vm_rc == 44)
-		वापस -ENOENT;
-	वापस -EIO;
-पूर्ण
+static inline int
+dcss_diag_translate_rc (int vm_rc) {
+	if (vm_rc == 44)
+		return -ENOENT;
+	return -EIO;
+}
 
 
-/* करो a diag to get info about a segment.
+/* do a diag to get info about a segment.
  * fills start_address, end and vm_segtype fields
  */
-अटल पूर्णांक
-query_segment_type (काष्ठा dcss_segment *seg)
-अणु
-	अचिन्हित दीर्घ dummy, vmrc;
-	पूर्णांक diag_cc, rc, i;
-	काष्ठा qout64 *qout;
-	काष्ठा qin64 *qin;
+static int
+query_segment_type (struct dcss_segment *seg)
+{
+	unsigned long dummy, vmrc;
+	int diag_cc, rc, i;
+	struct qout64 *qout;
+	struct qin64 *qin;
 
-	qin = kदो_स्मृति(माप(*qin), GFP_KERNEL | GFP_DMA);
-	qout = kदो_स्मृति(माप(*qout), GFP_KERNEL | GFP_DMA);
-	अगर ((qin == शून्य) || (qout == शून्य)) अणु
+	qin = kmalloc(sizeof(*qin), GFP_KERNEL | GFP_DMA);
+	qout = kmalloc(sizeof(*qout), GFP_KERNEL | GFP_DMA);
+	if ((qin == NULL) || (qout == NULL)) {
 		rc = -ENOMEM;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	/* initialize diag input parameters */
 	qin->qopcode = DCSS_FINDSEGA;
-	qin->qoutptr = (अचिन्हित दीर्घ) qout;
-	qin->qoutlen = माप(काष्ठा qout64);
-	स_नकल (qin->qname, seg->dcss_name, 8);
+	qin->qoutptr = (unsigned long) qout;
+	qin->qoutlen = sizeof(struct qout64);
+	memcpy (qin->qname, seg->dcss_name, 8);
 
 	diag_cc = dcss_diag(&segext_scode, qin, &dummy, &vmrc);
 
-	अगर (diag_cc < 0) अणु
+	if (diag_cc < 0) {
 		rc = diag_cc;
-		जाओ out_मुक्त;
-	पूर्ण
-	अगर (diag_cc > 1) अणु
+		goto out_free;
+	}
+	if (diag_cc > 1) {
 		pr_warn("Querying a DCSS type failed with rc=%ld\n", vmrc);
 		rc = dcss_diag_translate_rc (vmrc);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	अगर (qout->segcnt > 6) अणु
+	if (qout->segcnt > 6) {
 		rc = -EOPNOTSUPP;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	अगर (qout->segcnt == 1) अणु
+	if (qout->segcnt == 1) {
 		seg->vm_segtype = qout->range[0].start & 0xff;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* multi-part segment. only one type supported here:
 		    - all parts are contiguous
 		    - all parts are either EW or EN type
 		    - maximum 6 parts allowed */
-		अचिन्हित दीर्घ start = qout->segstart >> PAGE_SHIFT;
-		क्रम (i=0; i<qout->segcnt; i++) अणु
-			अगर (((qout->range[i].start & 0xff) != SEG_TYPE_EW) &&
-			    ((qout->range[i].start & 0xff) != SEG_TYPE_EN)) अणु
+		unsigned long start = qout->segstart >> PAGE_SHIFT;
+		for (i=0; i<qout->segcnt; i++) {
+			if (((qout->range[i].start & 0xff) != SEG_TYPE_EW) &&
+			    ((qout->range[i].start & 0xff) != SEG_TYPE_EN)) {
 				rc = -EOPNOTSUPP;
-				जाओ out_मुक्त;
-			पूर्ण
-			अगर (start != qout->range[i].start >> PAGE_SHIFT) अणु
+				goto out_free;
+			}
+			if (start != qout->range[i].start >> PAGE_SHIFT) {
 				rc = -EOPNOTSUPP;
-				जाओ out_मुक्त;
-			पूर्ण
+				goto out_free;
+			}
 			start = (qout->range[i].end >> PAGE_SHIFT) + 1;
-		पूर्ण
+		}
 		seg->vm_segtype = SEG_TYPE_EWEN;
-	पूर्ण
+	}
 
 	/* analyze diag output and update seg */
 	seg->start_addr = qout->segstart;
 	seg->end = qout->segend;
 
-	स_नकल (seg->range, qout->range, 6*माप(काष्ठा qrange));
+	memcpy (seg->range, qout->range, 6*sizeof(struct qrange));
 	seg->segcnt = qout->segcnt;
 
 	rc = 0;
 
- out_मुक्त:
-	kमुक्त(qin);
-	kमुक्त(qout);
-	वापस rc;
-पूर्ण
+ out_free:
+	kfree(qin);
+	kfree(qout);
+	return rc;
+}
 
 /*
  * get info about a segment
- * possible वापस values:
+ * possible return values:
  * -ENOSYS  : we are not running on VM
- * -EIO     : could not perक्रमm query diagnose
+ * -EIO     : could not perform query diagnose
  * -ENOENT  : no such segment
  * -EOPNOTSUPP: multi-part segment cannot be used with linux
  * -ENOMEM  : out of memory
- * 0 .. 6   : type of segment as defined in include/यंत्र-s390/exपंचांगem.h
+ * 0 .. 6   : type of segment as defined in include/asm-s390/extmem.h
  */
-पूर्णांक
-segment_type (अक्षर* name)
-अणु
-	पूर्णांक rc;
-	काष्ठा dcss_segment seg;
+int
+segment_type (char* name)
+{
+	int rc;
+	struct dcss_segment seg;
 
-	अगर (!MACHINE_IS_VM)
-		वापस -ENOSYS;
+	if (!MACHINE_IS_VM)
+		return -ENOSYS;
 
 	dcss_mkname(name, seg.dcss_name);
 	rc = query_segment_type (&seg);
-	अगर (rc < 0)
-		वापस rc;
-	वापस seg.vm_segtype;
-पूर्ण
+	if (rc < 0)
+		return rc;
+	return seg.vm_segtype;
+}
 
 /*
- * check अगर segment collides with other segments that are currently loaded
- * वापसs 1 अगर this is the हाल, 0 अगर no collision was found
+ * check if segment collides with other segments that are currently loaded
+ * returns 1 if this is the case, 0 if no collision was found
  */
-अटल पूर्णांक
-segment_overlaps_others (काष्ठा dcss_segment *seg)
-अणु
-	काष्ठा list_head *l;
-	काष्ठा dcss_segment *पंचांगp;
+static int
+segment_overlaps_others (struct dcss_segment *seg)
+{
+	struct list_head *l;
+	struct dcss_segment *tmp;
 
 	BUG_ON(!mutex_is_locked(&dcss_lock));
-	list_क्रम_each(l, &dcss_list) अणु
-		पंचांगp = list_entry(l, काष्ठा dcss_segment, list);
-		अगर ((पंचांगp->start_addr >> 20) > (seg->end >> 20))
-			जारी;
-		अगर ((पंचांगp->end >> 20) < (seg->start_addr >> 20))
-			जारी;
-		अगर (seg == पंचांगp)
-			जारी;
-		वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	list_for_each(l, &dcss_list) {
+		tmp = list_entry(l, struct dcss_segment, list);
+		if ((tmp->start_addr >> 20) > (seg->end >> 20))
+			continue;
+		if ((tmp->end >> 20) < (seg->start_addr >> 20))
+			continue;
+		if (seg == tmp)
+			continue;
+		return 1;
+	}
+	return 0;
+}
 
 /*
  * real segment loading function, called from segment_load
  */
-अटल पूर्णांक
-__segment_load (अक्षर *name, पूर्णांक करो_nonshared, अचिन्हित दीर्घ *addr, अचिन्हित दीर्घ *end)
-अणु
-	अचिन्हित दीर्घ start_addr, end_addr, dummy;
-	काष्ठा dcss_segment *seg;
-	पूर्णांक rc, diag_cc;
+static int
+__segment_load (char *name, int do_nonshared, unsigned long *addr, unsigned long *end)
+{
+	unsigned long start_addr, end_addr, dummy;
+	struct dcss_segment *seg;
+	int rc, diag_cc;
 
 	start_addr = end_addr = 0;
-	seg = kदो_स्मृति(माप(*seg), GFP_KERNEL | GFP_DMA);
-	अगर (seg == शून्य) अणु
+	seg = kmalloc(sizeof(*seg), GFP_KERNEL | GFP_DMA);
+	if (seg == NULL) {
 		rc = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	dcss_mkname (name, seg->dcss_name);
 	rc = query_segment_type (seg);
-	अगर (rc < 0)
-		जाओ out_मुक्त;
+	if (rc < 0)
+		goto out_free;
 
-	अगर (segment_overlaps_others(seg)) अणु
+	if (segment_overlaps_others(seg)) {
 		rc = -EBUSY;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
-	seg->res = kzalloc(माप(काष्ठा resource), GFP_KERNEL);
-	अगर (seg->res == शून्य) अणु
+	seg->res = kzalloc(sizeof(struct resource), GFP_KERNEL);
+	if (seg->res == NULL) {
 		rc = -ENOMEM;
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 	seg->res->flags = IORESOURCE_BUSY | IORESOURCE_MEM;
 	seg->res->start = seg->start_addr;
 	seg->res->end = seg->end;
-	स_नकल(&seg->res_name, seg->dcss_name, 8);
+	memcpy(&seg->res_name, seg->dcss_name, 8);
 	EBCASC(seg->res_name, 8);
 	seg->res_name[8] = '\0';
-	strlcat(seg->res_name, " (DCSS)", माप(seg->res_name));
+	strlcat(seg->res_name, " (DCSS)", sizeof(seg->res_name));
 	seg->res->name = seg->res_name;
 	rc = seg->vm_segtype;
-	अगर (rc == SEG_TYPE_SC ||
-	    ((rc == SEG_TYPE_SR || rc == SEG_TYPE_ER) && !करो_nonshared))
+	if (rc == SEG_TYPE_SC ||
+	    ((rc == SEG_TYPE_SR || rc == SEG_TYPE_ER) && !do_nonshared))
 		seg->res->flags |= IORESOURCE_READONLY;
 
-	/* Check क्रम overlapping resources beक्रमe adding the mapping. */
-	अगर (request_resource(&iomem_resource, seg->res)) अणु
+	/* Check for overlapping resources before adding the mapping. */
+	if (request_resource(&iomem_resource, seg->res)) {
 		rc = -EBUSY;
-		जाओ out_मुक्त_resource;
-	पूर्ण
+		goto out_free_resource;
+	}
 
 	rc = vmem_add_mapping(seg->start_addr, seg->end - seg->start_addr + 1);
-	अगर (rc)
-		जाओ out_resource;
+	if (rc)
+		goto out_resource;
 
-	अगर (करो_nonshared)
+	if (do_nonshared)
 		diag_cc = dcss_diag(&loadnsr_scode, seg->dcss_name,
 				&start_addr, &end_addr);
-	अन्यथा
+	else
 		diag_cc = dcss_diag(&loadshr_scode, seg->dcss_name,
 				&start_addr, &end_addr);
-	अगर (diag_cc < 0) अणु
+	if (diag_cc < 0) {
 		dcss_diag(&purgeseg_scode, seg->dcss_name,
 				&dummy, &dummy);
 		rc = diag_cc;
-		जाओ out_mapping;
-	पूर्ण
-	अगर (diag_cc > 1) अणु
+		goto out_mapping;
+	}
+	if (diag_cc > 1) {
 		pr_warn("Loading DCSS %s failed with rc=%ld\n", name, end_addr);
 		rc = dcss_diag_translate_rc(end_addr);
 		dcss_diag(&purgeseg_scode, seg->dcss_name,
 				&dummy, &dummy);
-		जाओ out_mapping;
-	पूर्ण
+		goto out_mapping;
+	}
 	seg->start_addr = start_addr;
 	seg->end = end_addr;
-	seg->करो_nonshared = करो_nonshared;
+	seg->do_nonshared = do_nonshared;
 	refcount_set(&seg->ref_count, 1);
 	list_add(&seg->list, &dcss_list);
 	*addr = seg->start_addr;
 	*end  = seg->end;
-	अगर (करो_nonshared)
+	if (do_nonshared)
 		pr_info("DCSS %s of range %px to %px and type %s loaded as "
-			"exclusive-writable\n", name, (व्योम*) seg->start_addr,
-			(व्योम*) seg->end, segtype_string[seg->vm_segtype]);
-	अन्यथा अणु
+			"exclusive-writable\n", name, (void*) seg->start_addr,
+			(void*) seg->end, segtype_string[seg->vm_segtype]);
+	else {
 		pr_info("DCSS %s of range %px to %px and type %s loaded in "
-			"shared access mode\n", name, (व्योम*) seg->start_addr,
-			(व्योम*) seg->end, segtype_string[seg->vm_segtype]);
-	पूर्ण
-	जाओ out;
+			"shared access mode\n", name, (void*) seg->start_addr,
+			(void*) seg->end, segtype_string[seg->vm_segtype]);
+	}
+	goto out;
  out_mapping:
-	vmem_हटाओ_mapping(seg->start_addr, seg->end - seg->start_addr + 1);
+	vmem_remove_mapping(seg->start_addr, seg->end - seg->start_addr + 1);
  out_resource:
 	release_resource(seg->res);
- out_मुक्त_resource:
-	kमुक्त(seg->res);
- out_मुक्त:
-	kमुक्त(seg);
+ out_free_resource:
+	kfree(seg->res);
+ out_free:
+	kfree(seg);
  out:
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
  * this function loads a DCSS segment
  * name         : name of the DCSS
- * करो_nonshared : 0 indicates that the dcss should be shared with other linux images
- *                1 indicates that the dcss should be exclusive क्रम this linux image
+ * do_nonshared : 0 indicates that the dcss should be shared with other linux images
+ *                1 indicates that the dcss should be exclusive for this linux image
  * addr         : will be filled with start address of the segment
  * end          : will be filled with end address of the segment
- * वापस values:
+ * return values:
  * -ENOSYS  : we are not running on VM
- * -EIO     : could not perक्रमm query or load diagnose
+ * -EIO     : could not perform query or load diagnose
  * -ENOENT  : no such segment
  * -EOPNOTSUPP: multi-part segment cannot be used with linux
  * -EBUSY   : segment cannot be used (overlaps with dcss or storage)
- * -दुस्फल  : segment cannot be used (exceeds kernel mapping range)
+ * -ERANGE  : segment cannot be used (exceeds kernel mapping range)
  * -EPERM   : segment is currently loaded with incompatible permissions
  * -ENOMEM  : out of memory
- * 0 .. 6   : type of segment as defined in include/यंत्र-s390/exपंचांगem.h
+ * 0 .. 6   : type of segment as defined in include/asm-s390/extmem.h
  */
-पूर्णांक
-segment_load (अक्षर *name, पूर्णांक करो_nonshared, अचिन्हित दीर्घ *addr,
-		अचिन्हित दीर्घ *end)
-अणु
-	काष्ठा dcss_segment *seg;
-	पूर्णांक rc;
+int
+segment_load (char *name, int do_nonshared, unsigned long *addr,
+		unsigned long *end)
+{
+	struct dcss_segment *seg;
+	int rc;
 
-	अगर (!MACHINE_IS_VM)
-		वापस -ENOSYS;
+	if (!MACHINE_IS_VM)
+		return -ENOSYS;
 
 	mutex_lock(&dcss_lock);
 	seg = segment_by_name (name);
-	अगर (seg == शून्य)
-		rc = __segment_load (name, करो_nonshared, addr, end);
-	अन्यथा अणु
-		अगर (करो_nonshared == seg->करो_nonshared) अणु
+	if (seg == NULL)
+		rc = __segment_load (name, do_nonshared, addr, end);
+	else {
+		if (do_nonshared == seg->do_nonshared) {
 			refcount_inc(&seg->ref_count);
 			*addr = seg->start_addr;
 			*end  = seg->end;
 			rc    = seg->vm_segtype;
-		पूर्ण अन्यथा अणु
+		} else {
 			*addr = *end = 0;
 			rc    = -EPERM;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&dcss_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * this function modअगरies the shared state of a DCSS segment. note that
+ * this function modifies the shared state of a DCSS segment. note that
  * name         : name of the DCSS
- * करो_nonshared : 0 indicates that the dcss should be shared with other linux images
- *                1 indicates that the dcss should be exclusive क्रम this linux image
- * वापस values:
- * -EIO     : could not perक्रमm load diagnose (segment gone!)
+ * do_nonshared : 0 indicates that the dcss should be shared with other linux images
+ *                1 indicates that the dcss should be exclusive for this linux image
+ * return values:
+ * -EIO     : could not perform load diagnose (segment gone!)
  * -ENOENT  : no such segment (segment gone!)
  * -EAGAIN  : segment is in use by other exploiters, try later
  * -EINVAL  : no segment with the given name is currently loaded - name invalid
  * -EBUSY   : segment can temporarily not be used (overlaps with dcss)
  * 0	    : operation succeeded
  */
-पूर्णांक
-segment_modअगरy_shared (अक्षर *name, पूर्णांक करो_nonshared)
-अणु
-	काष्ठा dcss_segment *seg;
-	अचिन्हित दीर्घ start_addr, end_addr, dummy;
-	पूर्णांक rc, diag_cc;
+int
+segment_modify_shared (char *name, int do_nonshared)
+{
+	struct dcss_segment *seg;
+	unsigned long start_addr, end_addr, dummy;
+	int rc, diag_cc;
 
 	start_addr = end_addr = 0;
 	mutex_lock(&dcss_lock);
 	seg = segment_by_name (name);
-	अगर (seg == शून्य) अणु
+	if (seg == NULL) {
 		rc = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (करो_nonshared == seg->करो_nonshared) अणु
+		goto out_unlock;
+	}
+	if (do_nonshared == seg->do_nonshared) {
 		pr_info("DCSS %s is already in the requested access "
 			"mode\n", name);
 		rc = 0;
-		जाओ out_unlock;
-	पूर्ण
-	अगर (refcount_पढ़ो(&seg->ref_count) != 1) अणु
+		goto out_unlock;
+	}
+	if (refcount_read(&seg->ref_count) != 1) {
 		pr_warn("DCSS %s is in use and cannot be reloaded\n", name);
 		rc = -EAGAIN;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	release_resource(seg->res);
-	अगर (करो_nonshared)
+	if (do_nonshared)
 		seg->res->flags &= ~IORESOURCE_READONLY;
-	अन्यथा
-		अगर (seg->vm_segtype == SEG_TYPE_SR ||
+	else
+		if (seg->vm_segtype == SEG_TYPE_SR ||
 		    seg->vm_segtype == SEG_TYPE_ER)
 			seg->res->flags |= IORESOURCE_READONLY;
 
-	अगर (request_resource(&iomem_resource, seg->res)) अणु
+	if (request_resource(&iomem_resource, seg->res)) {
 		pr_warn("DCSS %s overlaps with used memory resources and cannot be reloaded\n",
 			name);
 		rc = -EBUSY;
-		kमुक्त(seg->res);
-		जाओ out_del_mem;
-	पूर्ण
+		kfree(seg->res);
+		goto out_del_mem;
+	}
 
 	dcss_diag(&purgeseg_scode, seg->dcss_name, &dummy, &dummy);
-	अगर (करो_nonshared)
+	if (do_nonshared)
 		diag_cc = dcss_diag(&loadnsr_scode, seg->dcss_name,
 				&start_addr, &end_addr);
-	अन्यथा
+	else
 		diag_cc = dcss_diag(&loadshr_scode, seg->dcss_name,
 				&start_addr, &end_addr);
-	अगर (diag_cc < 0) अणु
+	if (diag_cc < 0) {
 		rc = diag_cc;
-		जाओ out_del_res;
-	पूर्ण
-	अगर (diag_cc > 1) अणु
+		goto out_del_res;
+	}
+	if (diag_cc > 1) {
 		pr_warn("Reloading DCSS %s failed with rc=%ld\n",
 			name, end_addr);
 		rc = dcss_diag_translate_rc(end_addr);
-		जाओ out_del_res;
-	पूर्ण
+		goto out_del_res;
+	}
 	seg->start_addr = start_addr;
 	seg->end = end_addr;
-	seg->करो_nonshared = करो_nonshared;
+	seg->do_nonshared = do_nonshared;
 	rc = 0;
-	जाओ out_unlock;
+	goto out_unlock;
  out_del_res:
 	release_resource(seg->res);
-	kमुक्त(seg->res);
+	kfree(seg->res);
  out_del_mem:
-	vmem_हटाओ_mapping(seg->start_addr, seg->end - seg->start_addr + 1);
+	vmem_remove_mapping(seg->start_addr, seg->end - seg->start_addr + 1);
 	list_del(&seg->list);
 	dcss_diag(&purgeseg_scode, seg->dcss_name, &dummy, &dummy);
-	kमुक्त(seg);
+	kfree(seg);
  out_unlock:
 	mutex_unlock(&dcss_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /*
- * Decrease the use count of a DCSS segment and हटाओ
- * it from the address space अगर nobody is using it
- * any दीर्घer.
+ * Decrease the use count of a DCSS segment and remove
+ * it from the address space if nobody is using it
+ * any longer.
  */
-व्योम
-segment_unload(अक्षर *name)
-अणु
-	अचिन्हित दीर्घ dummy;
-	काष्ठा dcss_segment *seg;
+void
+segment_unload(char *name)
+{
+	unsigned long dummy;
+	struct dcss_segment *seg;
 
-	अगर (!MACHINE_IS_VM)
-		वापस;
+	if (!MACHINE_IS_VM)
+		return;
 
 	mutex_lock(&dcss_lock);
 	seg = segment_by_name (name);
-	अगर (seg == शून्य) अणु
+	if (seg == NULL) {
 		pr_err("Unloading unknown DCSS %s failed\n", name);
-		जाओ out_unlock;
-	पूर्ण
-	अगर (!refcount_dec_and_test(&seg->ref_count))
-		जाओ out_unlock;
+		goto out_unlock;
+	}
+	if (!refcount_dec_and_test(&seg->ref_count))
+		goto out_unlock;
 	release_resource(seg->res);
-	kमुक्त(seg->res);
-	vmem_हटाओ_mapping(seg->start_addr, seg->end - seg->start_addr + 1);
+	kfree(seg->res);
+	vmem_remove_mapping(seg->start_addr, seg->end - seg->start_addr + 1);
 	list_del(&seg->list);
 	dcss_diag(&purgeseg_scode, seg->dcss_name, &dummy, &dummy);
-	kमुक्त(seg);
+	kfree(seg);
 out_unlock:
 	mutex_unlock(&dcss_lock);
-पूर्ण
+}
 
 /*
  * save segment content permanently
  */
-व्योम
-segment_save(अक्षर *name)
-अणु
-	काष्ठा dcss_segment *seg;
-	अक्षर cmd1[160];
-	अक्षर cmd2[80];
-	पूर्णांक i, response;
+void
+segment_save(char *name)
+{
+	struct dcss_segment *seg;
+	char cmd1[160];
+	char cmd2[80];
+	int i, response;
 
-	अगर (!MACHINE_IS_VM)
-		वापस;
+	if (!MACHINE_IS_VM)
+		return;
 
 	mutex_lock(&dcss_lock);
 	seg = segment_by_name (name);
 
-	अगर (seg == शून्य) अणु
+	if (seg == NULL) {
 		pr_err("Saving unknown DCSS %s failed\n", name);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	प्र_लिखो(cmd1, "DEFSEG %s", name);
-	क्रम (i=0; i<seg->segcnt; i++) अणु
-		प्र_लिखो(cmd1+म_माप(cmd1), " %lX-%lX %s",
+	sprintf(cmd1, "DEFSEG %s", name);
+	for (i=0; i<seg->segcnt; i++) {
+		sprintf(cmd1+strlen(cmd1), " %lX-%lX %s",
 			seg->range[i].start >> PAGE_SHIFT,
 			seg->range[i].end >> PAGE_SHIFT,
 			segtype_string[seg->range[i].start & 0xff]);
-	पूर्ण
-	प्र_लिखो(cmd2, "SAVESEG %s", name);
+	}
+	sprintf(cmd2, "SAVESEG %s", name);
 	response = 0;
-	cpcmd(cmd1, शून्य, 0, &response);
-	अगर (response) अणु
+	cpcmd(cmd1, NULL, 0, &response);
+	if (response) {
 		pr_err("Saving a DCSS failed with DEFSEG response code "
 		       "%i\n", response);
-		जाओ out;
-	पूर्ण
-	cpcmd(cmd2, शून्य, 0, &response);
-	अगर (response) अणु
+		goto out;
+	}
+	cpcmd(cmd2, NULL, 0, &response);
+	if (response) {
 		pr_err("Saving a DCSS failed with SAVESEG response code "
 		       "%i\n", response);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 out:
 	mutex_unlock(&dcss_lock);
-पूर्ण
+}
 
 /*
- * prपूर्णांक appropriate error message क्रम segment_load()/segment_type()
- * वापस code
+ * print appropriate error message for segment_load()/segment_type()
+ * return code
  */
-व्योम segment_warning(पूर्णांक rc, अक्षर *seg_name)
-अणु
-	चयन (rc) अणु
-	हाल -ENOENT:
+void segment_warning(int rc, char *seg_name)
+{
+	switch (rc) {
+	case -ENOENT:
 		pr_err("DCSS %s cannot be loaded or queried\n", seg_name);
-		अवरोध;
-	हाल -ENOSYS:
+		break;
+	case -ENOSYS:
 		pr_err("DCSS %s cannot be loaded or queried without "
 		       "z/VM\n", seg_name);
-		अवरोध;
-	हाल -EIO:
+		break;
+	case -EIO:
 		pr_err("Loading or querying DCSS %s resulted in a "
 		       "hardware error\n", seg_name);
-		अवरोध;
-	हाल -EOPNOTSUPP:
+		break;
+	case -EOPNOTSUPP:
 		pr_err("DCSS %s has multiple page ranges and cannot be "
 		       "loaded or queried\n", seg_name);
-		अवरोध;
-	हाल -EBUSY:
+		break;
+	case -EBUSY:
 		pr_err("%s needs used memory resources and cannot be "
 		       "loaded or queried\n", seg_name);
-		अवरोध;
-	हाल -EPERM:
+		break;
+	case -EPERM:
 		pr_err("DCSS %s is already loaded in a different access "
 		       "mode\n", seg_name);
-		अवरोध;
-	हाल -ENOMEM:
+		break;
+	case -ENOMEM:
 		pr_err("There is not enough memory to load or query "
 		       "DCSS %s\n", seg_name);
-		अवरोध;
-	हाल -दुस्फल:
+		break;
+	case -ERANGE:
 		pr_err("DCSS %s exceeds the kernel mapping range (%lu) "
 		       "and cannot be loaded\n", seg_name, VMEM_MAX_PHYS);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
 EXPORT_SYMBOL(segment_load);
 EXPORT_SYMBOL(segment_unload);
 EXPORT_SYMBOL(segment_save);
 EXPORT_SYMBOL(segment_type);
-EXPORT_SYMBOL(segment_modअगरy_shared);
+EXPORT_SYMBOL(segment_modify_shared);
 EXPORT_SYMBOL(segment_warning);

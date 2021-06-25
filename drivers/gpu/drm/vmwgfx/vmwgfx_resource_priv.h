@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
  *
  * Copyright 2012-2014 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -26,128 +25,128 @@
  *
  **************************************************************************/
 
-#अगर_अघोषित _VMWGFX_RESOURCE_PRIV_H_
-#घोषणा _VMWGFX_RESOURCE_PRIV_H_
+#ifndef _VMWGFX_RESOURCE_PRIV_H_
+#define _VMWGFX_RESOURCE_PRIV_H_
 
-#समावेश "vmwgfx_drv.h"
+#include "vmwgfx_drv.h"
 
 /*
  * Extra memory required by the resource id's ida storage, which is allocated
  * separately from the base object itself. We estimate an on-average 128 bytes
  * per ida.
  */
-#घोषणा VMW_IDA_ACC_SIZE 128
+#define VMW_IDA_ACC_SIZE 128
 
-क्रमागत vmw_cmdbuf_res_state अणु
+enum vmw_cmdbuf_res_state {
 	VMW_CMDBUF_RES_COMMITTED,
 	VMW_CMDBUF_RES_ADD,
 	VMW_CMDBUF_RES_DEL
-पूर्ण;
+};
 
 /**
- * काष्ठा vmw_user_resource_conv - Identअगरy a derived user-exported resource
- * type and provide a function to convert its tपंचांग_base_object poपूर्णांकer to
- * a काष्ठा vmw_resource
+ * struct vmw_user_resource_conv - Identify a derived user-exported resource
+ * type and provide a function to convert its ttm_base_object pointer to
+ * a struct vmw_resource
  */
-काष्ठा vmw_user_resource_conv अणु
-	क्रमागत tपंचांग_object_type object_type;
-	काष्ठा vmw_resource *(*base_obj_to_res)(काष्ठा tपंचांग_base_object *base);
-	व्योम (*res_मुक्त) (काष्ठा vmw_resource *res);
-पूर्ण;
+struct vmw_user_resource_conv {
+	enum ttm_object_type object_type;
+	struct vmw_resource *(*base_obj_to_res)(struct ttm_base_object *base);
+	void (*res_free) (struct vmw_resource *res);
+};
 
 /**
- * काष्ठा vmw_res_func - members and functions common क्रम a resource type
+ * struct vmw_res_func - members and functions common for a resource type
  *
- * @res_type:          Enum that identअगरies the lru list to use क्रम eviction.
+ * @res_type:          Enum that identifies the lru list to use for eviction.
  * @needs_backup:      Whether the resource is guest-backed and needs
  *                     persistent buffer storage.
- * @type_name:         String that identअगरies the resource type.
- * @backup_placement:  TTM placement क्रम backup buffers.
+ * @type_name:         String that identifies the resource type.
+ * @backup_placement:  TTM placement for backup buffers.
  * @may_evict          Whether the resource may be evicted.
  * @create:            Create a hardware resource.
  * @destroy:           Destroy a hardware resource.
  * @bind:              Bind a hardware resource to persistent buffer storage.
  * @unbind:            Unbind a hardware resource from persistent
  *                     buffer storage.
- * @commit_notअगरy:     If the resource is a command buffer managed resource,
- *                     callback to notअगरy that a define or हटाओ command
+ * @commit_notify:     If the resource is a command buffer managed resource,
+ *                     callback to notify that a define or remove command
  *                     has been committed to the device.
- * @dirty_alloc:       Allocate a dirty tracker. शून्य अगर dirty-tracking is not
+ * @dirty_alloc:       Allocate a dirty tracker. NULL if dirty-tracking is not
  *                     supported.
- * @dirty_मुक्त:        Free the dirty tracker.
+ * @dirty_free:        Free the dirty tracker.
  * @dirty_sync:        Upload the dirty mob contents to the resource.
  * @dirty_add_range:   Add a sequential dirty range to the resource
  *                     dirty tracker.
  * @clean:             Clean the resource.
  */
-काष्ठा vmw_res_func अणु
-	क्रमागत vmw_res_type res_type;
+struct vmw_res_func {
+	enum vmw_res_type res_type;
 	bool needs_backup;
-	स्थिर अक्षर *type_name;
-	काष्ठा tपंचांग_placement *backup_placement;
+	const char *type_name;
+	struct ttm_placement *backup_placement;
 	bool may_evict;
 	u32 prio;
 	u32 dirty_prio;
 
-	पूर्णांक (*create) (काष्ठा vmw_resource *res);
-	पूर्णांक (*destroy) (काष्ठा vmw_resource *res);
-	पूर्णांक (*bind) (काष्ठा vmw_resource *res,
-		     काष्ठा tपंचांग_validate_buffer *val_buf);
-	पूर्णांक (*unbind) (काष्ठा vmw_resource *res,
-		       bool पढ़ोback,
-		       काष्ठा tपंचांग_validate_buffer *val_buf);
-	व्योम (*commit_notअगरy)(काष्ठा vmw_resource *res,
-			      क्रमागत vmw_cmdbuf_res_state state);
-	पूर्णांक (*dirty_alloc)(काष्ठा vmw_resource *res);
-	व्योम (*dirty_मुक्त)(काष्ठा vmw_resource *res);
-	पूर्णांक (*dirty_sync)(काष्ठा vmw_resource *res);
-	व्योम (*dirty_range_add)(काष्ठा vmw_resource *res, माप_प्रकार start,
-				 माप_प्रकार end);
-	पूर्णांक (*clean)(काष्ठा vmw_resource *res);
-पूर्ण;
+	int (*create) (struct vmw_resource *res);
+	int (*destroy) (struct vmw_resource *res);
+	int (*bind) (struct vmw_resource *res,
+		     struct ttm_validate_buffer *val_buf);
+	int (*unbind) (struct vmw_resource *res,
+		       bool readback,
+		       struct ttm_validate_buffer *val_buf);
+	void (*commit_notify)(struct vmw_resource *res,
+			      enum vmw_cmdbuf_res_state state);
+	int (*dirty_alloc)(struct vmw_resource *res);
+	void (*dirty_free)(struct vmw_resource *res);
+	int (*dirty_sync)(struct vmw_resource *res);
+	void (*dirty_range_add)(struct vmw_resource *res, size_t start,
+				 size_t end);
+	int (*clean)(struct vmw_resource *res);
+};
 
 /**
- * काष्ठा vmw_simple_resource_func - members and functions common क्रम the
+ * struct vmw_simple_resource_func - members and functions common for the
  * simple resource helpers.
- * @res_func:  काष्ठा vmw_res_func as described above.
- * @tपंचांग_res_type:  TTM resource type used क्रम handle recognition.
- * @size:  Size of the simple resource inक्रमmation काष्ठा.
- * @init:  Initialize the simple resource inक्रमmation.
+ * @res_func:  struct vmw_res_func as described above.
+ * @ttm_res_type:  TTM resource type used for handle recognition.
+ * @size:  Size of the simple resource information struct.
+ * @init:  Initialize the simple resource information.
  * @hw_destroy:  A resource hw_destroy function.
- * @set_arg_handle:  Set the handle output argument of the ioctl create काष्ठा.
+ * @set_arg_handle:  Set the handle output argument of the ioctl create struct.
  */
-काष्ठा vmw_simple_resource_func अणु
-	स्थिर काष्ठा vmw_res_func res_func;
-	पूर्णांक tपंचांग_res_type;
-	माप_प्रकार size;
-	पूर्णांक (*init)(काष्ठा vmw_resource *res, व्योम *data);
-	व्योम (*hw_destroy)(काष्ठा vmw_resource *res);
-	व्योम (*set_arg_handle)(व्योम *data, u32 handle);
-पूर्ण;
+struct vmw_simple_resource_func {
+	const struct vmw_res_func res_func;
+	int ttm_res_type;
+	size_t size;
+	int (*init)(struct vmw_resource *res, void *data);
+	void (*hw_destroy)(struct vmw_resource *res);
+	void (*set_arg_handle)(void *data, u32 handle);
+};
 
 /**
- * काष्ठा vmw_simple_resource - Kernel only side simple resource
+ * struct vmw_simple_resource - Kernel only side simple resource
  * @res: The resource we derive from.
- * @func: The method and member भव table.
+ * @func: The method and member virtual table.
  */
-काष्ठा vmw_simple_resource अणु
-	काष्ठा vmw_resource res;
-	स्थिर काष्ठा vmw_simple_resource_func *func;
-पूर्ण;
+struct vmw_simple_resource {
+	struct vmw_resource res;
+	const struct vmw_simple_resource_func *func;
+};
 
-पूर्णांक vmw_resource_alloc_id(काष्ठा vmw_resource *res);
-व्योम vmw_resource_release_id(काष्ठा vmw_resource *res);
-पूर्णांक vmw_resource_init(काष्ठा vmw_निजी *dev_priv, काष्ठा vmw_resource *res,
+int vmw_resource_alloc_id(struct vmw_resource *res);
+void vmw_resource_release_id(struct vmw_resource *res);
+int vmw_resource_init(struct vmw_private *dev_priv, struct vmw_resource *res,
 		      bool delay_id,
-		      व्योम (*res_मुक्त) (काष्ठा vmw_resource *res),
-		      स्थिर काष्ठा vmw_res_func *func);
-पूर्णांक
-vmw_simple_resource_create_ioctl(काष्ठा drm_device *dev,
-				 व्योम *data,
-				 काष्ठा drm_file *file_priv,
-				 स्थिर काष्ठा vmw_simple_resource_func *func);
-काष्ठा vmw_resource *
-vmw_simple_resource_lookup(काष्ठा tपंचांग_object_file *tfile,
-			   uपूर्णांक32_t handle,
-			   स्थिर काष्ठा vmw_simple_resource_func *func);
-#पूर्ण_अगर
+		      void (*res_free) (struct vmw_resource *res),
+		      const struct vmw_res_func *func);
+int
+vmw_simple_resource_create_ioctl(struct drm_device *dev,
+				 void *data,
+				 struct drm_file *file_priv,
+				 const struct vmw_simple_resource_func *func);
+struct vmw_resource *
+vmw_simple_resource_lookup(struct ttm_object_file *tfile,
+			   uint32_t handle,
+			   const struct vmw_simple_resource_func *func);
+#endif

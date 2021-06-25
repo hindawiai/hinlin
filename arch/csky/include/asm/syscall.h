@@ -1,78 +1,77 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 
-#अगर_अघोषित __ASM_SYSCALL_H
-#घोषणा __ASM_SYSCALL_H
+#ifndef __ASM_SYSCALL_H
+#define __ASM_SYSCALL_H
 
-#समावेश <linux/sched.h>
-#समावेश <linux/err.h>
-#समावेश <abi/regdef.h>
-#समावेश <uapi/linux/audit.h>
+#include <linux/sched.h>
+#include <linux/err.h>
+#include <abi/regdef.h>
+#include <uapi/linux/audit.h>
 
-बाह्य व्योम *sys_call_table[];
+extern void *sys_call_table[];
 
-अटल अंतरभूत पूर्णांक
-syscall_get_nr(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs)
-अणु
-	वापस regs_syscallid(regs);
-पूर्ण
+static inline int
+syscall_get_nr(struct task_struct *task, struct pt_regs *regs)
+{
+	return regs_syscallid(regs);
+}
 
-अटल अंतरभूत व्योम
-syscall_set_nr(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs,
-	       पूर्णांक sysno)
-अणु
+static inline void
+syscall_set_nr(struct task_struct *task, struct pt_regs *regs,
+	       int sysno)
+{
 	regs_syscallid(regs) = sysno;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम
-syscall_rollback(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs)
-अणु
+static inline void
+syscall_rollback(struct task_struct *task, struct pt_regs *regs)
+{
 	regs->a0 = regs->orig_a0;
-पूर्ण
+}
 
-अटल अंतरभूत दीर्घ
-syscall_get_error(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs)
-अणु
-	अचिन्हित दीर्घ error = regs->a0;
+static inline long
+syscall_get_error(struct task_struct *task, struct pt_regs *regs)
+{
+	unsigned long error = regs->a0;
 
-	वापस IS_ERR_VALUE(error) ? error : 0;
-पूर्ण
+	return IS_ERR_VALUE(error) ? error : 0;
+}
 
-अटल अंतरभूत दीर्घ
-syscall_get_वापस_value(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs)
-अणु
-	वापस regs->a0;
-पूर्ण
+static inline long
+syscall_get_return_value(struct task_struct *task, struct pt_regs *regs)
+{
+	return regs->a0;
+}
 
-अटल अंतरभूत व्योम
-syscall_set_वापस_value(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs,
-		पूर्णांक error, दीर्घ val)
-अणु
-	regs->a0 = (दीर्घ) error ?: val;
-पूर्ण
+static inline void
+syscall_set_return_value(struct task_struct *task, struct pt_regs *regs,
+		int error, long val)
+{
+	regs->a0 = (long) error ?: val;
+}
 
-अटल अंतरभूत व्योम
-syscall_get_arguments(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs,
-		      अचिन्हित दीर्घ *args)
-अणु
+static inline void
+syscall_get_arguments(struct task_struct *task, struct pt_regs *regs,
+		      unsigned long *args)
+{
 	args[0] = regs->orig_a0;
 	args++;
-	स_नकल(args, &regs->a1, 5 * माप(args[0]));
-पूर्ण
+	memcpy(args, &regs->a1, 5 * sizeof(args[0]));
+}
 
-अटल अंतरभूत व्योम
-syscall_set_arguments(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs,
-		      स्थिर अचिन्हित दीर्घ *args)
-अणु
+static inline void
+syscall_set_arguments(struct task_struct *task, struct pt_regs *regs,
+		      const unsigned long *args)
+{
 	regs->orig_a0 = args[0];
 	args++;
-	स_नकल(&regs->a1, args, 5 * माप(regs->a1));
-पूर्ण
+	memcpy(&regs->a1, args, 5 * sizeof(regs->a1));
+}
 
-अटल अंतरभूत पूर्णांक
-syscall_get_arch(काष्ठा task_काष्ठा *task)
-अणु
-	वापस AUDIT_ARCH_CSKY;
-पूर्ण
+static inline int
+syscall_get_arch(struct task_struct *task)
+{
+	return AUDIT_ARCH_CSKY;
+}
 
-#पूर्ण_अगर	/* __ASM_SYSCALL_H */
+#endif	/* __ASM_SYSCALL_H */

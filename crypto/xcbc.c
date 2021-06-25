@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C)2006 USAGI/WIDE Project
  *
@@ -7,15 +6,15 @@
  * 	Kazunori Miyazawa <miyazawa@linux-ipv6.org>
  */
 
-#समावेश <crypto/पूर्णांकernal/cipher.h>
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <linux/err.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
+#include <crypto/internal/cipher.h>
+#include <crypto/internal/hash.h>
+#include <linux/err.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
 
-अटल u_पूर्णांक32_t ks[12] = अणु0x01010101, 0x01010101, 0x01010101, 0x01010101,
+static u_int32_t ks[12] = {0x01010101, 0x01010101, 0x01010101, 0x01010101,
 			   0x02020202, 0x02020202, 0x02020202, 0x02020202,
-			   0x03030303, 0x03030303, 0x03030303, 0x03030303पूर्ण;
+			   0x03030303, 0x03030303, 0x03030303, 0x03030303};
 
 /*
  * +------------------------
@@ -23,13 +22,13 @@
  * +------------------------
  * | xcbc_tfm_ctx
  * +------------------------
- * | स्थिरs (block size * 2)
+ * | consts (block size * 2)
  * +------------------------
  */
-काष्ठा xcbc_tfm_ctx अणु
-	काष्ठा crypto_cipher *child;
+struct xcbc_tfm_ctx {
+	struct crypto_cipher *child;
 	u8 ctx[];
-पूर्ण;
+};
 
 /*
  * +------------------------
@@ -42,68 +41,68 @@
  * | prev (block size)
  * +------------------------
  */
-काष्ठा xcbc_desc_ctx अणु
-	अचिन्हित पूर्णांक len;
+struct xcbc_desc_ctx {
+	unsigned int len;
 	u8 ctx[];
-पूर्ण;
+};
 
-#घोषणा XCBC_BLOCKSIZE	16
+#define XCBC_BLOCKSIZE	16
 
-अटल पूर्णांक crypto_xcbc_digest_setkey(काष्ठा crypto_shash *parent,
-				     स्थिर u8 *inkey, अचिन्हित पूर्णांक keylen)
-अणु
-	अचिन्हित दीर्घ alignmask = crypto_shash_alignmask(parent);
-	काष्ठा xcbc_tfm_ctx *ctx = crypto_shash_ctx(parent);
-	u8 *स्थिरs = PTR_ALIGN(&ctx->ctx[0], alignmask + 1);
-	पूर्णांक err = 0;
+static int crypto_xcbc_digest_setkey(struct crypto_shash *parent,
+				     const u8 *inkey, unsigned int keylen)
+{
+	unsigned long alignmask = crypto_shash_alignmask(parent);
+	struct xcbc_tfm_ctx *ctx = crypto_shash_ctx(parent);
+	u8 *consts = PTR_ALIGN(&ctx->ctx[0], alignmask + 1);
+	int err = 0;
 	u8 key1[XCBC_BLOCKSIZE];
-	पूर्णांक bs = माप(key1);
+	int bs = sizeof(key1);
 
-	अगर ((err = crypto_cipher_setkey(ctx->child, inkey, keylen)))
-		वापस err;
+	if ((err = crypto_cipher_setkey(ctx->child, inkey, keylen)))
+		return err;
 
-	crypto_cipher_encrypt_one(ctx->child, स्थिरs, (u8 *)ks + bs);
-	crypto_cipher_encrypt_one(ctx->child, स्थिरs + bs, (u8 *)ks + bs * 2);
+	crypto_cipher_encrypt_one(ctx->child, consts, (u8 *)ks + bs);
+	crypto_cipher_encrypt_one(ctx->child, consts + bs, (u8 *)ks + bs * 2);
 	crypto_cipher_encrypt_one(ctx->child, key1, (u8 *)ks);
 
-	वापस crypto_cipher_setkey(ctx->child, key1, bs);
+	return crypto_cipher_setkey(ctx->child, key1, bs);
 
-पूर्ण
+}
 
-अटल पूर्णांक crypto_xcbc_digest_init(काष्ठा shash_desc *pdesc)
-अणु
-	अचिन्हित दीर्घ alignmask = crypto_shash_alignmask(pdesc->tfm);
-	काष्ठा xcbc_desc_ctx *ctx = shash_desc_ctx(pdesc);
-	पूर्णांक bs = crypto_shash_blocksize(pdesc->tfm);
+static int crypto_xcbc_digest_init(struct shash_desc *pdesc)
+{
+	unsigned long alignmask = crypto_shash_alignmask(pdesc->tfm);
+	struct xcbc_desc_ctx *ctx = shash_desc_ctx(pdesc);
+	int bs = crypto_shash_blocksize(pdesc->tfm);
 	u8 *prev = PTR_ALIGN(&ctx->ctx[0], alignmask + 1) + bs;
 
 	ctx->len = 0;
-	स_रखो(prev, 0, bs);
+	memset(prev, 0, bs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक crypto_xcbc_digest_update(काष्ठा shash_desc *pdesc, स्थिर u8 *p,
-				     अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा crypto_shash *parent = pdesc->tfm;
-	अचिन्हित दीर्घ alignmask = crypto_shash_alignmask(parent);
-	काष्ठा xcbc_tfm_ctx *tctx = crypto_shash_ctx(parent);
-	काष्ठा xcbc_desc_ctx *ctx = shash_desc_ctx(pdesc);
-	काष्ठा crypto_cipher *tfm = tctx->child;
-	पूर्णांक bs = crypto_shash_blocksize(parent);
+static int crypto_xcbc_digest_update(struct shash_desc *pdesc, const u8 *p,
+				     unsigned int len)
+{
+	struct crypto_shash *parent = pdesc->tfm;
+	unsigned long alignmask = crypto_shash_alignmask(parent);
+	struct xcbc_tfm_ctx *tctx = crypto_shash_ctx(parent);
+	struct xcbc_desc_ctx *ctx = shash_desc_ctx(pdesc);
+	struct crypto_cipher *tfm = tctx->child;
+	int bs = crypto_shash_blocksize(parent);
 	u8 *odds = PTR_ALIGN(&ctx->ctx[0], alignmask + 1);
 	u8 *prev = odds + bs;
 
 	/* checking the data can fill the block */
-	अगर ((ctx->len + len) <= bs) अणु
-		स_नकल(odds + ctx->len, p, len);
+	if ((ctx->len + len) <= bs) {
+		memcpy(odds + ctx->len, p, len);
 		ctx->len += len;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* filling odds with new data and encrypting it */
-	स_नकल(odds + ctx->len, p, bs - ctx->len);
+	memcpy(odds + ctx->len, p, bs - ctx->len);
 	len -= bs - ctx->len;
 	p += bs - ctx->len;
 
@@ -114,110 +113,110 @@
 	ctx->len = 0;
 
 	/* encrypting the rest of data */
-	जबतक (len > bs) अणु
+	while (len > bs) {
 		crypto_xor(prev, p, bs);
 		crypto_cipher_encrypt_one(tfm, prev, prev);
 		p += bs;
 		len -= bs;
-	पूर्ण
+	}
 
 	/* keeping the surplus of blocksize */
-	अगर (len) अणु
-		स_नकल(odds, p, len);
+	if (len) {
+		memcpy(odds, p, len);
 		ctx->len = len;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक crypto_xcbc_digest_final(काष्ठा shash_desc *pdesc, u8 *out)
-अणु
-	काष्ठा crypto_shash *parent = pdesc->tfm;
-	अचिन्हित दीर्घ alignmask = crypto_shash_alignmask(parent);
-	काष्ठा xcbc_tfm_ctx *tctx = crypto_shash_ctx(parent);
-	काष्ठा xcbc_desc_ctx *ctx = shash_desc_ctx(pdesc);
-	काष्ठा crypto_cipher *tfm = tctx->child;
-	पूर्णांक bs = crypto_shash_blocksize(parent);
-	u8 *स्थिरs = PTR_ALIGN(&tctx->ctx[0], alignmask + 1);
+static int crypto_xcbc_digest_final(struct shash_desc *pdesc, u8 *out)
+{
+	struct crypto_shash *parent = pdesc->tfm;
+	unsigned long alignmask = crypto_shash_alignmask(parent);
+	struct xcbc_tfm_ctx *tctx = crypto_shash_ctx(parent);
+	struct xcbc_desc_ctx *ctx = shash_desc_ctx(pdesc);
+	struct crypto_cipher *tfm = tctx->child;
+	int bs = crypto_shash_blocksize(parent);
+	u8 *consts = PTR_ALIGN(&tctx->ctx[0], alignmask + 1);
 	u8 *odds = PTR_ALIGN(&ctx->ctx[0], alignmask + 1);
 	u8 *prev = odds + bs;
-	अचिन्हित पूर्णांक offset = 0;
+	unsigned int offset = 0;
 
-	अगर (ctx->len != bs) अणु
-		अचिन्हित पूर्णांक rlen;
+	if (ctx->len != bs) {
+		unsigned int rlen;
 		u8 *p = odds + ctx->len;
 
 		*p = 0x80;
 		p++;
 
 		rlen = bs - ctx->len -1;
-		अगर (rlen)
-			स_रखो(p, 0, rlen);
+		if (rlen)
+			memset(p, 0, rlen);
 
 		offset += bs;
-	पूर्ण
+	}
 
 	crypto_xor(prev, odds, bs);
-	crypto_xor(prev, स्थिरs + offset, bs);
+	crypto_xor(prev, consts + offset, bs);
 
 	crypto_cipher_encrypt_one(tfm, out, prev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xcbc_init_tfm(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा crypto_cipher *cipher;
-	काष्ठा crypto_instance *inst = (व्योम *)tfm->__crt_alg;
-	काष्ठा crypto_cipher_spawn *spawn = crypto_instance_ctx(inst);
-	काष्ठा xcbc_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
+static int xcbc_init_tfm(struct crypto_tfm *tfm)
+{
+	struct crypto_cipher *cipher;
+	struct crypto_instance *inst = (void *)tfm->__crt_alg;
+	struct crypto_cipher_spawn *spawn = crypto_instance_ctx(inst);
+	struct xcbc_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	cipher = crypto_spawn_cipher(spawn);
-	अगर (IS_ERR(cipher))
-		वापस PTR_ERR(cipher);
+	if (IS_ERR(cipher))
+		return PTR_ERR(cipher);
 
 	ctx->child = cipher;
 
-	वापस 0;
-पूर्ण;
+	return 0;
+};
 
-अटल व्योम xcbc_निकास_tfm(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा xcbc_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
-	crypto_मुक्त_cipher(ctx->child);
-पूर्ण
+static void xcbc_exit_tfm(struct crypto_tfm *tfm)
+{
+	struct xcbc_tfm_ctx *ctx = crypto_tfm_ctx(tfm);
+	crypto_free_cipher(ctx->child);
+}
 
-अटल पूर्णांक xcbc_create(काष्ठा crypto_ढाँचा *पंचांगpl, काष्ठा rtattr **tb)
-अणु
-	काष्ठा shash_instance *inst;
-	काष्ठा crypto_cipher_spawn *spawn;
-	काष्ठा crypto_alg *alg;
-	अचिन्हित दीर्घ alignmask;
+static int xcbc_create(struct crypto_template *tmpl, struct rtattr **tb)
+{
+	struct shash_instance *inst;
+	struct crypto_cipher_spawn *spawn;
+	struct crypto_alg *alg;
+	unsigned long alignmask;
 	u32 mask;
-	पूर्णांक err;
+	int err;
 
 	err = crypto_check_attr_type(tb, CRYPTO_ALG_TYPE_SHASH, &mask);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	inst = kzalloc(माप(*inst) + माप(*spawn), GFP_KERNEL);
-	अगर (!inst)
-		वापस -ENOMEM;
+	inst = kzalloc(sizeof(*inst) + sizeof(*spawn), GFP_KERNEL);
+	if (!inst)
+		return -ENOMEM;
 	spawn = shash_instance_ctx(inst);
 
 	err = crypto_grab_cipher(spawn, shash_crypto_instance(inst),
 				 crypto_attr_alg_name(tb[1]), 0, mask);
-	अगर (err)
-		जाओ err_मुक्त_inst;
+	if (err)
+		goto err_free_inst;
 	alg = crypto_spawn_cipher_alg(spawn);
 
 	err = -EINVAL;
-	अगर (alg->cra_blocksize != XCBC_BLOCKSIZE)
-		जाओ err_मुक्त_inst;
+	if (alg->cra_blocksize != XCBC_BLOCKSIZE)
+		goto err_free_inst;
 
-	err = crypto_inst_setname(shash_crypto_instance(inst), पंचांगpl->name, alg);
-	अगर (err)
-		जाओ err_मुक्त_inst;
+	err = crypto_inst_setname(shash_crypto_instance(inst), tmpl->name, alg);
+	if (err)
+		goto err_free_inst;
 
 	alignmask = alg->cra_alignmask | 3;
 	inst->alg.base.cra_alignmask = alignmask;
@@ -225,51 +224,51 @@
 	inst->alg.base.cra_blocksize = alg->cra_blocksize;
 
 	inst->alg.digestsize = alg->cra_blocksize;
-	inst->alg.descsize = ALIGN(माप(काष्ठा xcbc_desc_ctx),
+	inst->alg.descsize = ALIGN(sizeof(struct xcbc_desc_ctx),
 				   crypto_tfm_ctx_alignment()) +
 			     (alignmask &
 			      ~(crypto_tfm_ctx_alignment() - 1)) +
 			     alg->cra_blocksize * 2;
 
-	inst->alg.base.cra_ctxsize = ALIGN(माप(काष्ठा xcbc_tfm_ctx),
+	inst->alg.base.cra_ctxsize = ALIGN(sizeof(struct xcbc_tfm_ctx),
 					   alignmask + 1) +
 				     alg->cra_blocksize * 2;
 	inst->alg.base.cra_init = xcbc_init_tfm;
-	inst->alg.base.cra_निकास = xcbc_निकास_tfm;
+	inst->alg.base.cra_exit = xcbc_exit_tfm;
 
 	inst->alg.init = crypto_xcbc_digest_init;
 	inst->alg.update = crypto_xcbc_digest_update;
 	inst->alg.final = crypto_xcbc_digest_final;
 	inst->alg.setkey = crypto_xcbc_digest_setkey;
 
-	inst->मुक्त = shash_मुक्त_singlespawn_instance;
+	inst->free = shash_free_singlespawn_instance;
 
-	err = shash_रेजिस्टर_instance(पंचांगpl, inst);
-	अगर (err) अणु
-err_मुक्त_inst:
-		shash_मुक्त_singlespawn_instance(inst);
-	पूर्ण
-	वापस err;
-पूर्ण
+	err = shash_register_instance(tmpl, inst);
+	if (err) {
+err_free_inst:
+		shash_free_singlespawn_instance(inst);
+	}
+	return err;
+}
 
-अटल काष्ठा crypto_ढाँचा crypto_xcbc_पंचांगpl = अणु
+static struct crypto_template crypto_xcbc_tmpl = {
 	.name = "xcbc",
 	.create = xcbc_create,
 	.module = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init crypto_xcbc_module_init(व्योम)
-अणु
-	वापस crypto_रेजिस्टर_ढाँचा(&crypto_xcbc_पंचांगpl);
-पूर्ण
+static int __init crypto_xcbc_module_init(void)
+{
+	return crypto_register_template(&crypto_xcbc_tmpl);
+}
 
-अटल व्योम __निकास crypto_xcbc_module_निकास(व्योम)
-अणु
-	crypto_unरेजिस्टर_ढाँचा(&crypto_xcbc_पंचांगpl);
-पूर्ण
+static void __exit crypto_xcbc_module_exit(void)
+{
+	crypto_unregister_template(&crypto_xcbc_tmpl);
+}
 
 subsys_initcall(crypto_xcbc_module_init);
-module_निकास(crypto_xcbc_module_निकास);
+module_exit(crypto_xcbc_module_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("XCBC keyed hash algorithm");

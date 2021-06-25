@@ -1,498 +1,497 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * (C) 1999-2001 Paul `Rusty' Russell
  * (C) 2002-2006 Netfilter Core Team <coreteam@netfilter.org>
  * (C) 2011 Patrick McHardy <kaber@trash.net>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/gfp.h>
-#समावेश <net/xfrm.h>
-#समावेश <linux/jhash.h>
-#समावेश <linux/rtnetlink.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/timer.h>
+#include <linux/skbuff.h>
+#include <linux/gfp.h>
+#include <net/xfrm.h>
+#include <linux/jhash.h>
+#include <linux/rtnetlink.h>
 
-#समावेश <net/netfilter/nf_conntrack.h>
-#समावेश <net/netfilter/nf_conntrack_core.h>
-#समावेश <net/netfilter/nf_conntrack_helper.h>
-#समावेश <net/netfilter/nf_conntrack_seqadj.h>
-#समावेश <net/netfilter/nf_conntrack_zones.h>
-#समावेश <net/netfilter/nf_nat.h>
-#समावेश <net/netfilter/nf_nat_helper.h>
-#समावेश <uapi/linux/netfilter/nf_nat.h>
+#include <net/netfilter/nf_conntrack.h>
+#include <net/netfilter/nf_conntrack_core.h>
+#include <net/netfilter/nf_conntrack_helper.h>
+#include <net/netfilter/nf_conntrack_seqadj.h>
+#include <net/netfilter/nf_conntrack_zones.h>
+#include <net/netfilter/nf_nat.h>
+#include <net/netfilter/nf_nat_helper.h>
+#include <uapi/linux/netfilter/nf_nat.h>
 
-#समावेश "nf_internals.h"
+#include "nf_internals.h"
 
-अटल spinlock_t nf_nat_locks[CONNTRACK_LOCKS];
+static spinlock_t nf_nat_locks[CONNTRACK_LOCKS];
 
-अटल DEFINE_MUTEX(nf_nat_proto_mutex);
-अटल अचिन्हित पूर्णांक nat_net_id __पढ़ो_mostly;
+static DEFINE_MUTEX(nf_nat_proto_mutex);
+static unsigned int nat_net_id __read_mostly;
 
-अटल काष्ठा hlist_head *nf_nat_bysource __पढ़ो_mostly;
-अटल अचिन्हित पूर्णांक nf_nat_htable_size __पढ़ो_mostly;
-अटल अचिन्हित पूर्णांक nf_nat_hash_rnd __पढ़ो_mostly;
+static struct hlist_head *nf_nat_bysource __read_mostly;
+static unsigned int nf_nat_htable_size __read_mostly;
+static unsigned int nf_nat_hash_rnd __read_mostly;
 
-काष्ठा nf_nat_lookup_hook_priv अणु
-	काष्ठा nf_hook_entries __rcu *entries;
+struct nf_nat_lookup_hook_priv {
+	struct nf_hook_entries __rcu *entries;
 
-	काष्ठा rcu_head rcu_head;
-पूर्ण;
+	struct rcu_head rcu_head;
+};
 
-काष्ठा nf_nat_hooks_net अणु
-	काष्ठा nf_hook_ops *nat_hook_ops;
-	अचिन्हित पूर्णांक users;
-पूर्ण;
+struct nf_nat_hooks_net {
+	struct nf_hook_ops *nat_hook_ops;
+	unsigned int users;
+};
 
-काष्ठा nat_net अणु
-	काष्ठा nf_nat_hooks_net nat_proto_net[NFPROTO_NUMPROTO];
-पूर्ण;
+struct nat_net {
+	struct nf_nat_hooks_net nat_proto_net[NFPROTO_NUMPROTO];
+};
 
-#अगर_घोषित CONFIG_XFRM
-अटल व्योम nf_nat_ipv4_decode_session(काष्ठा sk_buff *skb,
-				       स्थिर काष्ठा nf_conn *ct,
-				       क्रमागत ip_conntrack_dir dir,
-				       अचिन्हित दीर्घ statusbit,
-				       काष्ठा flowi *fl)
-अणु
-	स्थिर काष्ठा nf_conntrack_tuple *t = &ct->tuplehash[dir].tuple;
-	काष्ठा flowi4 *fl4 = &fl->u.ip4;
+#ifdef CONFIG_XFRM
+static void nf_nat_ipv4_decode_session(struct sk_buff *skb,
+				       const struct nf_conn *ct,
+				       enum ip_conntrack_dir dir,
+				       unsigned long statusbit,
+				       struct flowi *fl)
+{
+	const struct nf_conntrack_tuple *t = &ct->tuplehash[dir].tuple;
+	struct flowi4 *fl4 = &fl->u.ip4;
 
-	अगर (ct->status & statusbit) अणु
+	if (ct->status & statusbit) {
 		fl4->daddr = t->dst.u3.ip;
-		अगर (t->dst.protonum == IPPROTO_TCP ||
+		if (t->dst.protonum == IPPROTO_TCP ||
 		    t->dst.protonum == IPPROTO_UDP ||
 		    t->dst.protonum == IPPROTO_UDPLITE ||
 		    t->dst.protonum == IPPROTO_DCCP ||
 		    t->dst.protonum == IPPROTO_SCTP)
 			fl4->fl4_dport = t->dst.u.all;
-	पूर्ण
+	}
 
 	statusbit ^= IPS_NAT_MASK;
 
-	अगर (ct->status & statusbit) अणु
+	if (ct->status & statusbit) {
 		fl4->saddr = t->src.u3.ip;
-		अगर (t->dst.protonum == IPPROTO_TCP ||
+		if (t->dst.protonum == IPPROTO_TCP ||
 		    t->dst.protonum == IPPROTO_UDP ||
 		    t->dst.protonum == IPPROTO_UDPLITE ||
 		    t->dst.protonum == IPPROTO_DCCP ||
 		    t->dst.protonum == IPPROTO_SCTP)
 			fl4->fl4_sport = t->src.u.all;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम nf_nat_ipv6_decode_session(काष्ठा sk_buff *skb,
-				       स्थिर काष्ठा nf_conn *ct,
-				       क्रमागत ip_conntrack_dir dir,
-				       अचिन्हित दीर्घ statusbit,
-				       काष्ठा flowi *fl)
-अणु
-#अगर IS_ENABLED(CONFIG_IPV6)
-	स्थिर काष्ठा nf_conntrack_tuple *t = &ct->tuplehash[dir].tuple;
-	काष्ठा flowi6 *fl6 = &fl->u.ip6;
+static void nf_nat_ipv6_decode_session(struct sk_buff *skb,
+				       const struct nf_conn *ct,
+				       enum ip_conntrack_dir dir,
+				       unsigned long statusbit,
+				       struct flowi *fl)
+{
+#if IS_ENABLED(CONFIG_IPV6)
+	const struct nf_conntrack_tuple *t = &ct->tuplehash[dir].tuple;
+	struct flowi6 *fl6 = &fl->u.ip6;
 
-	अगर (ct->status & statusbit) अणु
+	if (ct->status & statusbit) {
 		fl6->daddr = t->dst.u3.in6;
-		अगर (t->dst.protonum == IPPROTO_TCP ||
+		if (t->dst.protonum == IPPROTO_TCP ||
 		    t->dst.protonum == IPPROTO_UDP ||
 		    t->dst.protonum == IPPROTO_UDPLITE ||
 		    t->dst.protonum == IPPROTO_DCCP ||
 		    t->dst.protonum == IPPROTO_SCTP)
 			fl6->fl6_dport = t->dst.u.all;
-	पूर्ण
+	}
 
 	statusbit ^= IPS_NAT_MASK;
 
-	अगर (ct->status & statusbit) अणु
+	if (ct->status & statusbit) {
 		fl6->saddr = t->src.u3.in6;
-		अगर (t->dst.protonum == IPPROTO_TCP ||
+		if (t->dst.protonum == IPPROTO_TCP ||
 		    t->dst.protonum == IPPROTO_UDP ||
 		    t->dst.protonum == IPPROTO_UDPLITE ||
 		    t->dst.protonum == IPPROTO_DCCP ||
 		    t->dst.protonum == IPPROTO_SCTP)
 			fl6->fl6_sport = t->src.u.all;
-	पूर्ण
-#पूर्ण_अगर
-पूर्ण
+	}
+#endif
+}
 
-अटल व्योम __nf_nat_decode_session(काष्ठा sk_buff *skb, काष्ठा flowi *fl)
-अणु
-	स्थिर काष्ठा nf_conn *ct;
-	क्रमागत ip_conntrack_info ctinfo;
-	क्रमागत ip_conntrack_dir dir;
-	अचिन्हित  दीर्घ statusbit;
+static void __nf_nat_decode_session(struct sk_buff *skb, struct flowi *fl)
+{
+	const struct nf_conn *ct;
+	enum ip_conntrack_info ctinfo;
+	enum ip_conntrack_dir dir;
+	unsigned  long statusbit;
 	u8 family;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	अगर (ct == शून्य)
-		वापस;
+	if (ct == NULL)
+		return;
 
 	family = nf_ct_l3num(ct);
-	dir = CTINFO2सूची(ctinfo);
-	अगर (dir == IP_CT_सूची_ORIGINAL)
+	dir = CTINFO2DIR(ctinfo);
+	if (dir == IP_CT_DIR_ORIGINAL)
 		statusbit = IPS_DST_NAT;
-	अन्यथा
+	else
 		statusbit = IPS_SRC_NAT;
 
-	चयन (family) अणु
-	हाल NFPROTO_IPV4:
+	switch (family) {
+	case NFPROTO_IPV4:
 		nf_nat_ipv4_decode_session(skb, ct, dir, statusbit, fl);
-		वापस;
-	हाल NFPROTO_IPV6:
+		return;
+	case NFPROTO_IPV6:
 		nf_nat_ipv6_decode_session(skb, ct, dir, statusbit, fl);
-		वापस;
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर /* CONFIG_XFRM */
+		return;
+	}
+}
+#endif /* CONFIG_XFRM */
 
-/* We keep an extra hash क्रम each conntrack, क्रम fast searching. */
-अटल अचिन्हित पूर्णांक
-hash_by_src(स्थिर काष्ठा net *n, स्थिर काष्ठा nf_conntrack_tuple *tuple)
-अणु
-	अचिन्हित पूर्णांक hash;
+/* We keep an extra hash for each conntrack, for fast searching. */
+static unsigned int
+hash_by_src(const struct net *n, const struct nf_conntrack_tuple *tuple)
+{
+	unsigned int hash;
 
-	get_अक्रमom_once(&nf_nat_hash_rnd, माप(nf_nat_hash_rnd));
+	get_random_once(&nf_nat_hash_rnd, sizeof(nf_nat_hash_rnd));
 
-	/* Original src, to ensure we map it consistently अगर poss. */
-	hash = jhash2((u32 *)&tuple->src, माप(tuple->src) / माप(u32),
+	/* Original src, to ensure we map it consistently if poss. */
+	hash = jhash2((u32 *)&tuple->src, sizeof(tuple->src) / sizeof(u32),
 		      tuple->dst.protonum ^ nf_nat_hash_rnd ^ net_hash_mix(n));
 
-	वापस reciprocal_scale(hash, nf_nat_htable_size);
-पूर्ण
+	return reciprocal_scale(hash, nf_nat_htable_size);
+}
 
-/* Is this tuple alपढ़ोy taken? (not by us) */
-अटल पूर्णांक
-nf_nat_used_tuple(स्थिर काष्ठा nf_conntrack_tuple *tuple,
-		  स्थिर काष्ठा nf_conn *ignored_conntrack)
-अणु
-	/* Conntrack tracking करोesn't keep track of outgoing tuples; only
-	 * incoming ones.  NAT means they करोn't have a fixed mapping,
-	 * so we invert the tuple and look क्रम the incoming reply.
+/* Is this tuple already taken? (not by us) */
+static int
+nf_nat_used_tuple(const struct nf_conntrack_tuple *tuple,
+		  const struct nf_conn *ignored_conntrack)
+{
+	/* Conntrack tracking doesn't keep track of outgoing tuples; only
+	 * incoming ones.  NAT means they don't have a fixed mapping,
+	 * so we invert the tuple and look for the incoming reply.
 	 *
-	 * We could keep a separate hash अगर this proves too slow.
+	 * We could keep a separate hash if this proves too slow.
 	 */
-	काष्ठा nf_conntrack_tuple reply;
+	struct nf_conntrack_tuple reply;
 
 	nf_ct_invert_tuple(&reply, tuple);
-	वापस nf_conntrack_tuple_taken(&reply, ignored_conntrack);
-पूर्ण
+	return nf_conntrack_tuple_taken(&reply, ignored_conntrack);
+}
 
-अटल bool nf_nat_inet_in_range(स्थिर काष्ठा nf_conntrack_tuple *t,
-				 स्थिर काष्ठा nf_nat_range2 *range)
-अणु
-	अगर (t->src.l3num == NFPROTO_IPV4)
-		वापस ntohl(t->src.u3.ip) >= ntohl(range->min_addr.ip) &&
+static bool nf_nat_inet_in_range(const struct nf_conntrack_tuple *t,
+				 const struct nf_nat_range2 *range)
+{
+	if (t->src.l3num == NFPROTO_IPV4)
+		return ntohl(t->src.u3.ip) >= ntohl(range->min_addr.ip) &&
 		       ntohl(t->src.u3.ip) <= ntohl(range->max_addr.ip);
 
-	वापस ipv6_addr_cmp(&t->src.u3.in6, &range->min_addr.in6) >= 0 &&
+	return ipv6_addr_cmp(&t->src.u3.in6, &range->min_addr.in6) >= 0 &&
 	       ipv6_addr_cmp(&t->src.u3.in6, &range->max_addr.in6) <= 0;
-पूर्ण
+}
 
 /* Is the manipable part of the tuple between min and max incl? */
-अटल bool l4proto_in_range(स्थिर काष्ठा nf_conntrack_tuple *tuple,
-			     क्रमागत nf_nat_manip_type maniptype,
-			     स्थिर जोड़ nf_conntrack_man_proto *min,
-			     स्थिर जोड़ nf_conntrack_man_proto *max)
-अणु
+static bool l4proto_in_range(const struct nf_conntrack_tuple *tuple,
+			     enum nf_nat_manip_type maniptype,
+			     const union nf_conntrack_man_proto *min,
+			     const union nf_conntrack_man_proto *max)
+{
 	__be16 port;
 
-	चयन (tuple->dst.protonum) अणु
-	हाल IPPROTO_ICMP:
-	हाल IPPROTO_ICMPV6:
-		वापस ntohs(tuple->src.u.icmp.id) >= ntohs(min->icmp.id) &&
+	switch (tuple->dst.protonum) {
+	case IPPROTO_ICMP:
+	case IPPROTO_ICMPV6:
+		return ntohs(tuple->src.u.icmp.id) >= ntohs(min->icmp.id) &&
 		       ntohs(tuple->src.u.icmp.id) <= ntohs(max->icmp.id);
-	हाल IPPROTO_GRE: /* all fall though */
-	हाल IPPROTO_TCP:
-	हाल IPPROTO_UDP:
-	हाल IPPROTO_UDPLITE:
-	हाल IPPROTO_DCCP:
-	हाल IPPROTO_SCTP:
-		अगर (maniptype == NF_NAT_MANIP_SRC)
+	case IPPROTO_GRE: /* all fall though */
+	case IPPROTO_TCP:
+	case IPPROTO_UDP:
+	case IPPROTO_UDPLITE:
+	case IPPROTO_DCCP:
+	case IPPROTO_SCTP:
+		if (maniptype == NF_NAT_MANIP_SRC)
 			port = tuple->src.u.all;
-		अन्यथा
+		else
 			port = tuple->dst.u.all;
 
-		वापस ntohs(port) >= ntohs(min->all) &&
+		return ntohs(port) >= ntohs(min->all) &&
 		       ntohs(port) <= ntohs(max->all);
-	शेष:
-		वापस true;
-	पूर्ण
-पूर्ण
+	default:
+		return true;
+	}
+}
 
 /* If we source map this tuple so reply looks like reply_tuple, will
- * that meet the स्थिरraपूर्णांकs of range.
+ * that meet the constraints of range.
  */
-अटल पूर्णांक in_range(स्थिर काष्ठा nf_conntrack_tuple *tuple,
-		    स्थिर काष्ठा nf_nat_range2 *range)
-अणु
+static int in_range(const struct nf_conntrack_tuple *tuple,
+		    const struct nf_nat_range2 *range)
+{
 	/* If we are supposed to map IPs, then we must be in the
-	 * range specअगरied, otherwise let this drag us onto a new src IP.
+	 * range specified, otherwise let this drag us onto a new src IP.
 	 */
-	अगर (range->flags & NF_NAT_RANGE_MAP_IPS &&
+	if (range->flags & NF_NAT_RANGE_MAP_IPS &&
 	    !nf_nat_inet_in_range(tuple, range))
-		वापस 0;
+		return 0;
 
-	अगर (!(range->flags & NF_NAT_RANGE_PROTO_SPECIFIED))
-		वापस 1;
+	if (!(range->flags & NF_NAT_RANGE_PROTO_SPECIFIED))
+		return 1;
 
-	वापस l4proto_in_range(tuple, NF_NAT_MANIP_SRC,
+	return l4proto_in_range(tuple, NF_NAT_MANIP_SRC,
 				&range->min_proto, &range->max_proto);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक
-same_src(स्थिर काष्ठा nf_conn *ct,
-	 स्थिर काष्ठा nf_conntrack_tuple *tuple)
-अणु
-	स्थिर काष्ठा nf_conntrack_tuple *t;
+static inline int
+same_src(const struct nf_conn *ct,
+	 const struct nf_conntrack_tuple *tuple)
+{
+	const struct nf_conntrack_tuple *t;
 
-	t = &ct->tuplehash[IP_CT_सूची_ORIGINAL].tuple;
-	वापस (t->dst.protonum == tuple->dst.protonum &&
+	t = &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple;
+	return (t->dst.protonum == tuple->dst.protonum &&
 		nf_inet_addr_cmp(&t->src.u3, &tuple->src.u3) &&
 		t->src.u.all == tuple->src.u.all);
-पूर्ण
+}
 
-/* Only called क्रम SRC manip */
-अटल पूर्णांक
-find_appropriate_src(काष्ठा net *net,
-		     स्थिर काष्ठा nf_conntrack_zone *zone,
-		     स्थिर काष्ठा nf_conntrack_tuple *tuple,
-		     काष्ठा nf_conntrack_tuple *result,
-		     स्थिर काष्ठा nf_nat_range2 *range)
-अणु
-	अचिन्हित पूर्णांक h = hash_by_src(net, tuple);
-	स्थिर काष्ठा nf_conn *ct;
+/* Only called for SRC manip */
+static int
+find_appropriate_src(struct net *net,
+		     const struct nf_conntrack_zone *zone,
+		     const struct nf_conntrack_tuple *tuple,
+		     struct nf_conntrack_tuple *result,
+		     const struct nf_nat_range2 *range)
+{
+	unsigned int h = hash_by_src(net, tuple);
+	const struct nf_conn *ct;
 
-	hlist_क्रम_each_entry_rcu(ct, &nf_nat_bysource[h], nat_bysource) अणु
-		अगर (same_src(ct, tuple) &&
+	hlist_for_each_entry_rcu(ct, &nf_nat_bysource[h], nat_bysource) {
+		if (same_src(ct, tuple) &&
 		    net_eq(net, nf_ct_net(ct)) &&
-		    nf_ct_zone_equal(ct, zone, IP_CT_सूची_ORIGINAL)) अणु
+		    nf_ct_zone_equal(ct, zone, IP_CT_DIR_ORIGINAL)) {
 			/* Copy source part from reply tuple. */
 			nf_ct_invert_tuple(result,
-				       &ct->tuplehash[IP_CT_सूची_REPLY].tuple);
+				       &ct->tuplehash[IP_CT_DIR_REPLY].tuple);
 			result->dst = tuple->dst;
 
-			अगर (in_range(result, range))
-				वापस 1;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			if (in_range(result, range))
+				return 1;
+		}
+	}
+	return 0;
+}
 
 /* For [FUTURE] fragmentation handling, we want the least-used
- * src-ip/dst-ip/proto triple.  Fairness करोesn't come पूर्णांकo it.  Thus
- * अगर the range specअगरies 1.2.3.4 ports 10000-10005 and 1.2.3.5 ports
- * 1-65535, we करोn't करो pro-rata allocation based on ports; we choose
+ * src-ip/dst-ip/proto triple.  Fairness doesn't come into it.  Thus
+ * if the range specifies 1.2.3.4 ports 10000-10005 and 1.2.3.5 ports
+ * 1-65535, we don't do pro-rata allocation based on ports; we choose
  * the ip with the lowest src-ip/dst-ip/proto usage.
  */
-अटल व्योम
-find_best_ips_proto(स्थिर काष्ठा nf_conntrack_zone *zone,
-		    काष्ठा nf_conntrack_tuple *tuple,
-		    स्थिर काष्ठा nf_nat_range2 *range,
-		    स्थिर काष्ठा nf_conn *ct,
-		    क्रमागत nf_nat_manip_type maniptype)
-अणु
-	जोड़ nf_inet_addr *var_ipp;
-	अचिन्हित पूर्णांक i, max;
+static void
+find_best_ips_proto(const struct nf_conntrack_zone *zone,
+		    struct nf_conntrack_tuple *tuple,
+		    const struct nf_nat_range2 *range,
+		    const struct nf_conn *ct,
+		    enum nf_nat_manip_type maniptype)
+{
+	union nf_inet_addr *var_ipp;
+	unsigned int i, max;
 	/* Host order */
 	u32 minip, maxip, j, dist;
 	bool full_range;
 
 	/* No IP mapping?  Do nothing. */
-	अगर (!(range->flags & NF_NAT_RANGE_MAP_IPS))
-		वापस;
+	if (!(range->flags & NF_NAT_RANGE_MAP_IPS))
+		return;
 
-	अगर (maniptype == NF_NAT_MANIP_SRC)
+	if (maniptype == NF_NAT_MANIP_SRC)
 		var_ipp = &tuple->src.u3;
-	अन्यथा
+	else
 		var_ipp = &tuple->dst.u3;
 
 	/* Fast path: only one choice. */
-	अगर (nf_inet_addr_cmp(&range->min_addr, &range->max_addr)) अणु
+	if (nf_inet_addr_cmp(&range->min_addr, &range->max_addr)) {
 		*var_ipp = range->min_addr;
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (nf_ct_l3num(ct) == NFPROTO_IPV4)
-		max = माप(var_ipp->ip) / माप(u32) - 1;
-	अन्यथा
-		max = माप(var_ipp->ip6) / माप(u32) - 1;
+	if (nf_ct_l3num(ct) == NFPROTO_IPV4)
+		max = sizeof(var_ipp->ip) / sizeof(u32) - 1;
+	else
+		max = sizeof(var_ipp->ip6) / sizeof(u32) - 1;
 
 	/* Hashing source and destination IPs gives a fairly even
-	 * spपढ़ो in practice (अगर there are a small number of IPs
+	 * spread in practice (if there are a small number of IPs
 	 * involved, there usually aren't that many connections
 	 * anyway).  The consistency means that servers see the same
 	 * client coming from the same IP (some Internet Banking sites
 	 * like this), even across reboots.
 	 */
-	j = jhash2((u32 *)&tuple->src.u3, माप(tuple->src.u3) / माप(u32),
+	j = jhash2((u32 *)&tuple->src.u3, sizeof(tuple->src.u3) / sizeof(u32),
 		   range->flags & NF_NAT_RANGE_PERSISTENT ?
-			0 : (__क्रमce u32)tuple->dst.u3.all[max] ^ zone->id);
+			0 : (__force u32)tuple->dst.u3.all[max] ^ zone->id);
 
 	full_range = false;
-	क्रम (i = 0; i <= max; i++) अणु
+	for (i = 0; i <= max; i++) {
 		/* If first bytes of the address are at the maximum, use the
 		 * distance. Otherwise use the full range.
 		 */
-		अगर (!full_range) अणु
-			minip = ntohl((__क्रमce __be32)range->min_addr.all[i]);
-			maxip = ntohl((__क्रमce __be32)range->max_addr.all[i]);
+		if (!full_range) {
+			minip = ntohl((__force __be32)range->min_addr.all[i]);
+			maxip = ntohl((__force __be32)range->max_addr.all[i]);
 			dist  = maxip - minip + 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			minip = 0;
 			dist  = ~0;
-		पूर्ण
+		}
 
-		var_ipp->all[i] = (__क्रमce __u32)
+		var_ipp->all[i] = (__force __u32)
 			htonl(minip + reciprocal_scale(j, dist));
-		अगर (var_ipp->all[i] != range->max_addr.all[i])
+		if (var_ipp->all[i] != range->max_addr.all[i])
 			full_range = true;
 
-		अगर (!(range->flags & NF_NAT_RANGE_PERSISTENT))
-			j ^= (__क्रमce u32)tuple->dst.u3.all[i];
-	पूर्ण
-पूर्ण
+		if (!(range->flags & NF_NAT_RANGE_PERSISTENT))
+			j ^= (__force u32)tuple->dst.u3.all[i];
+	}
+}
 
 /* Alter the per-proto part of the tuple (depending on maniptype), to
- * give a unique tuple in the given range अगर possible.
+ * give a unique tuple in the given range if possible.
  *
  * Per-protocol part of tuple is initialized to the incoming packet.
  */
-अटल व्योम nf_nat_l4proto_unique_tuple(काष्ठा nf_conntrack_tuple *tuple,
-					स्थिर काष्ठा nf_nat_range2 *range,
-					क्रमागत nf_nat_manip_type maniptype,
-					स्थिर काष्ठा nf_conn *ct)
-अणु
-	अचिन्हित पूर्णांक range_size, min, max, i, attempts;
+static void nf_nat_l4proto_unique_tuple(struct nf_conntrack_tuple *tuple,
+					const struct nf_nat_range2 *range,
+					enum nf_nat_manip_type maniptype,
+					const struct nf_conn *ct)
+{
+	unsigned int range_size, min, max, i, attempts;
 	__be16 *keyptr;
 	u16 off;
-	अटल स्थिर अचिन्हित पूर्णांक max_attempts = 128;
+	static const unsigned int max_attempts = 128;
 
-	चयन (tuple->dst.protonum) अणु
-	हाल IPPROTO_ICMP:
-	हाल IPPROTO_ICMPV6:
-		/* id is same क्रम either direction... */
+	switch (tuple->dst.protonum) {
+	case IPPROTO_ICMP:
+	case IPPROTO_ICMPV6:
+		/* id is same for either direction... */
 		keyptr = &tuple->src.u.icmp.id;
-		अगर (!(range->flags & NF_NAT_RANGE_PROTO_SPECIFIED)) अणु
+		if (!(range->flags & NF_NAT_RANGE_PROTO_SPECIFIED)) {
 			min = 0;
 			range_size = 65536;
-		पूर्ण अन्यथा अणु
+		} else {
 			min = ntohs(range->min_proto.icmp.id);
 			range_size = ntohs(range->max_proto.icmp.id) -
 				     ntohs(range->min_proto.icmp.id) + 1;
-		पूर्ण
-		जाओ find_मुक्त_id;
-#अगर IS_ENABLED(CONFIG_NF_CT_PROTO_GRE)
-	हाल IPPROTO_GRE:
+		}
+		goto find_free_id;
+#if IS_ENABLED(CONFIG_NF_CT_PROTO_GRE)
+	case IPPROTO_GRE:
 		/* If there is no master conntrack we are not PPTP,
-		   करो not change tuples */
-		अगर (!ct->master)
-			वापस;
+		   do not change tuples */
+		if (!ct->master)
+			return;
 
-		अगर (maniptype == NF_NAT_MANIP_SRC)
+		if (maniptype == NF_NAT_MANIP_SRC)
 			keyptr = &tuple->src.u.gre.key;
-		अन्यथा
+		else
 			keyptr = &tuple->dst.u.gre.key;
 
-		अगर (!(range->flags & NF_NAT_RANGE_PROTO_SPECIFIED)) अणु
+		if (!(range->flags & NF_NAT_RANGE_PROTO_SPECIFIED)) {
 			min = 1;
 			range_size = 65535;
-		पूर्ण अन्यथा अणु
+		} else {
 			min = ntohs(range->min_proto.gre.key);
 			range_size = ntohs(range->max_proto.gre.key) - min + 1;
-		पूर्ण
-		जाओ find_मुक्त_id;
-#पूर्ण_अगर
-	हाल IPPROTO_UDP:
-	हाल IPPROTO_UDPLITE:
-	हाल IPPROTO_TCP:
-	हाल IPPROTO_SCTP:
-	हाल IPPROTO_DCCP:
-		अगर (maniptype == NF_NAT_MANIP_SRC)
+		}
+		goto find_free_id;
+#endif
+	case IPPROTO_UDP:
+	case IPPROTO_UDPLITE:
+	case IPPROTO_TCP:
+	case IPPROTO_SCTP:
+	case IPPROTO_DCCP:
+		if (maniptype == NF_NAT_MANIP_SRC)
 			keyptr = &tuple->src.u.all;
-		अन्यथा
+		else
 			keyptr = &tuple->dst.u.all;
 
-		अवरोध;
-	शेष:
-		वापस;
-	पूर्ण
+		break;
+	default:
+		return;
+	}
 
-	/* If no range specअगरied... */
-	अगर (!(range->flags & NF_NAT_RANGE_PROTO_SPECIFIED)) अणु
+	/* If no range specified... */
+	if (!(range->flags & NF_NAT_RANGE_PROTO_SPECIFIED)) {
 		/* If it's dst rewrite, can't change port */
-		अगर (maniptype == NF_NAT_MANIP_DST)
-			वापस;
+		if (maniptype == NF_NAT_MANIP_DST)
+			return;
 
-		अगर (ntohs(*keyptr) < 1024) अणु
+		if (ntohs(*keyptr) < 1024) {
 			/* Loose convention: >> 512 is credential passing */
-			अगर (ntohs(*keyptr) < 512) अणु
+			if (ntohs(*keyptr) < 512) {
 				min = 1;
 				range_size = 511 - min + 1;
-			पूर्ण अन्यथा अणु
+			} else {
 				min = 600;
 				range_size = 1023 - min + 1;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+			}
+		} else {
 			min = 1024;
 			range_size = 65535 - 1024 + 1;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		min = ntohs(range->min_proto.all);
 		max = ntohs(range->max_proto.all);
-		अगर (unlikely(max < min))
+		if (unlikely(max < min))
 			swap(max, min);
 		range_size = max - min + 1;
-	पूर्ण
+	}
 
-find_मुक्त_id:
-	अगर (range->flags & NF_NAT_RANGE_PROTO_OFFSET)
+find_free_id:
+	if (range->flags & NF_NAT_RANGE_PROTO_OFFSET)
 		off = (ntohs(*keyptr) - ntohs(range->base_proto.all));
-	अन्यथा
-		off = pअक्रमom_u32();
+	else
+		off = prandom_u32();
 
 	attempts = range_size;
-	अगर (attempts > max_attempts)
+	if (attempts > max_attempts)
 		attempts = max_attempts;
 
-	/* We are in softirq; करोing a search of the entire range risks
-	 * soft lockup when all tuples are alपढ़ोy used.
+	/* We are in softirq; doing a search of the entire range risks
+	 * soft lockup when all tuples are already used.
 	 *
-	 * If we can't find any मुक्त port from first offset, pick a new
-	 * one and try again, with ever smaller search winकरोw.
+	 * If we can't find any free port from first offset, pick a new
+	 * one and try again, with ever smaller search window.
 	 */
 another_round:
-	क्रम (i = 0; i < attempts; i++, off++) अणु
+	for (i = 0; i < attempts; i++, off++) {
 		*keyptr = htons(min + off % range_size);
-		अगर (!nf_nat_used_tuple(tuple, ct))
-			वापस;
-	पूर्ण
+		if (!nf_nat_used_tuple(tuple, ct))
+			return;
+	}
 
-	अगर (attempts >= range_size || attempts < 16)
-		वापस;
+	if (attempts >= range_size || attempts < 16)
+		return;
 	attempts /= 2;
-	off = pअक्रमom_u32();
-	जाओ another_round;
-पूर्ण
+	off = prandom_u32();
+	goto another_round;
+}
 
-/* Manipulate the tuple पूर्णांकo the range given. For NF_INET_POST_ROUTING,
- * we change the source to map पूर्णांकo the range. For NF_INET_PRE_ROUTING
- * and NF_INET_LOCAL_OUT, we change the destination to map पूर्णांकo the
+/* Manipulate the tuple into the range given. For NF_INET_POST_ROUTING,
+ * we change the source to map into the range. For NF_INET_PRE_ROUTING
+ * and NF_INET_LOCAL_OUT, we change the destination to map into the
  * range. It might not be possible to get a unique tuple, but we try.
- * At worst (or अगर we race), we will end up with a final duplicate in
+ * At worst (or if we race), we will end up with a final duplicate in
  * __nf_conntrack_confirm and drop the packet. */
-अटल व्योम
-get_unique_tuple(काष्ठा nf_conntrack_tuple *tuple,
-		 स्थिर काष्ठा nf_conntrack_tuple *orig_tuple,
-		 स्थिर काष्ठा nf_nat_range2 *range,
-		 काष्ठा nf_conn *ct,
-		 क्रमागत nf_nat_manip_type maniptype)
-अणु
-	स्थिर काष्ठा nf_conntrack_zone *zone;
-	काष्ठा net *net = nf_ct_net(ct);
+static void
+get_unique_tuple(struct nf_conntrack_tuple *tuple,
+		 const struct nf_conntrack_tuple *orig_tuple,
+		 const struct nf_nat_range2 *range,
+		 struct nf_conn *ct,
+		 enum nf_nat_manip_type maniptype)
+{
+	const struct nf_conntrack_zone *zone;
+	struct net *net = nf_ct_net(ct);
 
 	zone = nf_ct_zone(ct);
 
@@ -500,672 +499,672 @@ get_unique_tuple(काष्ठा nf_conntrack_tuple *tuple,
 	 * and that same mapping gives a unique tuple within the given
 	 * range, use that.
 	 *
-	 * This is only required क्रम source (ie. NAT/masq) mappings.
-	 * So far, we करोn't करो local source mappings, so multiple
+	 * This is only required for source (ie. NAT/masq) mappings.
+	 * So far, we don't do local source mappings, so multiple
 	 * manips not an issue.
 	 */
-	अगर (maniptype == NF_NAT_MANIP_SRC &&
-	    !(range->flags & NF_NAT_RANGE_PROTO_RANDOM_ALL)) अणु
+	if (maniptype == NF_NAT_MANIP_SRC &&
+	    !(range->flags & NF_NAT_RANGE_PROTO_RANDOM_ALL)) {
 		/* try the original tuple first */
-		अगर (in_range(orig_tuple, range)) अणु
-			अगर (!nf_nat_used_tuple(orig_tuple, ct)) अणु
+		if (in_range(orig_tuple, range)) {
+			if (!nf_nat_used_tuple(orig_tuple, ct)) {
 				*tuple = *orig_tuple;
-				वापस;
-			पूर्ण
-		पूर्ण अन्यथा अगर (find_appropriate_src(net, zone,
-						orig_tuple, tuple, range)) अणु
+				return;
+			}
+		} else if (find_appropriate_src(net, zone,
+						orig_tuple, tuple, range)) {
 			pr_debug("get_unique_tuple: Found current src map\n");
-			अगर (!nf_nat_used_tuple(tuple, ct))
-				वापस;
-		पूर्ण
-	पूर्ण
+			if (!nf_nat_used_tuple(tuple, ct))
+				return;
+		}
+	}
 
 	/* 2) Select the least-used IP/proto combination in the given range */
 	*tuple = *orig_tuple;
 	find_best_ips_proto(zone, tuple, range, ct, maniptype);
 
-	/* 3) The per-protocol part of the manip is made to map पूर्णांकo
+	/* 3) The per-protocol part of the manip is made to map into
 	 * the range to make a unique tuple.
 	 */
 
-	/* Only bother mapping अगर it's not alपढ़ोy in range and unique */
-	अगर (!(range->flags & NF_NAT_RANGE_PROTO_RANDOM_ALL)) अणु
-		अगर (range->flags & NF_NAT_RANGE_PROTO_SPECIFIED) अणु
-			अगर (!(range->flags & NF_NAT_RANGE_PROTO_OFFSET) &&
+	/* Only bother mapping if it's not already in range and unique */
+	if (!(range->flags & NF_NAT_RANGE_PROTO_RANDOM_ALL)) {
+		if (range->flags & NF_NAT_RANGE_PROTO_SPECIFIED) {
+			if (!(range->flags & NF_NAT_RANGE_PROTO_OFFSET) &&
 			    l4proto_in_range(tuple, maniptype,
 			          &range->min_proto,
 			          &range->max_proto) &&
 			    (range->min_proto.all == range->max_proto.all ||
 			     !nf_nat_used_tuple(tuple, ct)))
-				वापस;
-		पूर्ण अन्यथा अगर (!nf_nat_used_tuple(tuple, ct)) अणु
-			वापस;
-		पूर्ण
-	पूर्ण
+				return;
+		} else if (!nf_nat_used_tuple(tuple, ct)) {
+			return;
+		}
+	}
 
 	/* Last chance: get protocol to try to obtain unique tuple. */
 	nf_nat_l4proto_unique_tuple(tuple, range, maniptype, ct);
-पूर्ण
+}
 
-काष्ठा nf_conn_nat *nf_ct_nat_ext_add(काष्ठा nf_conn *ct)
-अणु
-	काष्ठा nf_conn_nat *nat = nfct_nat(ct);
-	अगर (nat)
-		वापस nat;
+struct nf_conn_nat *nf_ct_nat_ext_add(struct nf_conn *ct)
+{
+	struct nf_conn_nat *nat = nfct_nat(ct);
+	if (nat)
+		return nat;
 
-	अगर (!nf_ct_is_confirmed(ct))
+	if (!nf_ct_is_confirmed(ct))
 		nat = nf_ct_ext_add(ct, NF_CT_EXT_NAT, GFP_ATOMIC);
 
-	वापस nat;
-पूर्ण
+	return nat;
+}
 EXPORT_SYMBOL_GPL(nf_ct_nat_ext_add);
 
-अचिन्हित पूर्णांक
-nf_nat_setup_info(काष्ठा nf_conn *ct,
-		  स्थिर काष्ठा nf_nat_range2 *range,
-		  क्रमागत nf_nat_manip_type maniptype)
-अणु
-	काष्ठा net *net = nf_ct_net(ct);
-	काष्ठा nf_conntrack_tuple curr_tuple, new_tuple;
+unsigned int
+nf_nat_setup_info(struct nf_conn *ct,
+		  const struct nf_nat_range2 *range,
+		  enum nf_nat_manip_type maniptype)
+{
+	struct net *net = nf_ct_net(ct);
+	struct nf_conntrack_tuple curr_tuple, new_tuple;
 
-	/* Can't setup nat info क्रम confirmed ct. */
-	अगर (nf_ct_is_confirmed(ct))
-		वापस NF_ACCEPT;
+	/* Can't setup nat info for confirmed ct. */
+	if (nf_ct_is_confirmed(ct))
+		return NF_ACCEPT;
 
 	WARN_ON(maniptype != NF_NAT_MANIP_SRC &&
 		maniptype != NF_NAT_MANIP_DST);
 
-	अगर (WARN_ON(nf_nat_initialized(ct, maniptype)))
-		वापस NF_DROP;
+	if (WARN_ON(nf_nat_initialized(ct, maniptype)))
+		return NF_DROP;
 
 	/* What we've got will look like inverse of reply. Normally
-	 * this is what is in the conntrack, except क्रम prior
-	 * manipulations (future optimization: अगर num_manips == 0,
-	 * orig_tp = ct->tuplehash[IP_CT_सूची_ORIGINAL].tuple)
+	 * this is what is in the conntrack, except for prior
+	 * manipulations (future optimization: if num_manips == 0,
+	 * orig_tp = ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple)
 	 */
 	nf_ct_invert_tuple(&curr_tuple,
-			   &ct->tuplehash[IP_CT_सूची_REPLY].tuple);
+			   &ct->tuplehash[IP_CT_DIR_REPLY].tuple);
 
 	get_unique_tuple(&new_tuple, &curr_tuple, range, ct, maniptype);
 
-	अगर (!nf_ct_tuple_equal(&new_tuple, &curr_tuple)) अणु
-		काष्ठा nf_conntrack_tuple reply;
+	if (!nf_ct_tuple_equal(&new_tuple, &curr_tuple)) {
+		struct nf_conntrack_tuple reply;
 
 		/* Alter conntrack table so will recognize replies. */
 		nf_ct_invert_tuple(&reply, &new_tuple);
 		nf_conntrack_alter_reply(ct, &reply);
 
 		/* Non-atomic: we own this at the moment. */
-		अगर (maniptype == NF_NAT_MANIP_SRC)
+		if (maniptype == NF_NAT_MANIP_SRC)
 			ct->status |= IPS_SRC_NAT;
-		अन्यथा
+		else
 			ct->status |= IPS_DST_NAT;
 
-		अगर (nfct_help(ct) && !nfct_seqadj(ct))
-			अगर (!nfct_seqadj_ext_add(ct))
-				वापस NF_DROP;
-	पूर्ण
+		if (nfct_help(ct) && !nfct_seqadj(ct))
+			if (!nfct_seqadj_ext_add(ct))
+				return NF_DROP;
+	}
 
-	अगर (maniptype == NF_NAT_MANIP_SRC) अणु
-		अचिन्हित पूर्णांक srchash;
+	if (maniptype == NF_NAT_MANIP_SRC) {
+		unsigned int srchash;
 		spinlock_t *lock;
 
 		srchash = hash_by_src(net,
-				      &ct->tuplehash[IP_CT_सूची_ORIGINAL].tuple);
+				      &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple);
 		lock = &nf_nat_locks[srchash % CONNTRACK_LOCKS];
 		spin_lock_bh(lock);
 		hlist_add_head_rcu(&ct->nat_bysource,
 				   &nf_nat_bysource[srchash]);
 		spin_unlock_bh(lock);
-	पूर्ण
+	}
 
-	/* It's करोne. */
-	अगर (maniptype == NF_NAT_MANIP_DST)
+	/* It's done. */
+	if (maniptype == NF_NAT_MANIP_DST)
 		ct->status |= IPS_DST_NAT_DONE;
-	अन्यथा
+	else
 		ct->status |= IPS_SRC_NAT_DONE;
 
-	वापस NF_ACCEPT;
-पूर्ण
+	return NF_ACCEPT;
+}
 EXPORT_SYMBOL(nf_nat_setup_info);
 
-अटल अचिन्हित पूर्णांक
-__nf_nat_alloc_null_binding(काष्ठा nf_conn *ct, क्रमागत nf_nat_manip_type manip)
-अणु
-	/* Force range to this IP; let proto decide mapping क्रम
+static unsigned int
+__nf_nat_alloc_null_binding(struct nf_conn *ct, enum nf_nat_manip_type manip)
+{
+	/* Force range to this IP; let proto decide mapping for
 	 * per-proto parts (hence not IP_NAT_RANGE_PROTO_SPECIFIED).
-	 * Use reply in हाल it's alपढ़ोy been mangled (eg local packet).
+	 * Use reply in case it's already been mangled (eg local packet).
 	 */
-	जोड़ nf_inet_addr ip =
+	union nf_inet_addr ip =
 		(manip == NF_NAT_MANIP_SRC ?
-		ct->tuplehash[IP_CT_सूची_REPLY].tuple.dst.u3 :
-		ct->tuplehash[IP_CT_सूची_REPLY].tuple.src.u3);
-	काष्ठा nf_nat_range2 range = अणु
+		ct->tuplehash[IP_CT_DIR_REPLY].tuple.dst.u3 :
+		ct->tuplehash[IP_CT_DIR_REPLY].tuple.src.u3);
+	struct nf_nat_range2 range = {
 		.flags		= NF_NAT_RANGE_MAP_IPS,
 		.min_addr	= ip,
 		.max_addr	= ip,
-	पूर्ण;
-	वापस nf_nat_setup_info(ct, &range, manip);
-पूर्ण
+	};
+	return nf_nat_setup_info(ct, &range, manip);
+}
 
-अचिन्हित पूर्णांक
-nf_nat_alloc_null_binding(काष्ठा nf_conn *ct, अचिन्हित पूर्णांक hooknum)
-अणु
-	वापस __nf_nat_alloc_null_binding(ct, HOOK2MANIP(hooknum));
-पूर्ण
+unsigned int
+nf_nat_alloc_null_binding(struct nf_conn *ct, unsigned int hooknum)
+{
+	return __nf_nat_alloc_null_binding(ct, HOOK2MANIP(hooknum));
+}
 EXPORT_SYMBOL_GPL(nf_nat_alloc_null_binding);
 
 /* Do packet manipulations according to nf_nat_setup_info. */
-अचिन्हित पूर्णांक nf_nat_packet(काष्ठा nf_conn *ct,
-			   क्रमागत ip_conntrack_info ctinfo,
-			   अचिन्हित पूर्णांक hooknum,
-			   काष्ठा sk_buff *skb)
-अणु
-	क्रमागत nf_nat_manip_type mtype = HOOK2MANIP(hooknum);
-	क्रमागत ip_conntrack_dir dir = CTINFO2सूची(ctinfo);
-	अचिन्हित पूर्णांक verdict = NF_ACCEPT;
-	अचिन्हित दीर्घ statusbit;
+unsigned int nf_nat_packet(struct nf_conn *ct,
+			   enum ip_conntrack_info ctinfo,
+			   unsigned int hooknum,
+			   struct sk_buff *skb)
+{
+	enum nf_nat_manip_type mtype = HOOK2MANIP(hooknum);
+	enum ip_conntrack_dir dir = CTINFO2DIR(ctinfo);
+	unsigned int verdict = NF_ACCEPT;
+	unsigned long statusbit;
 
-	अगर (mtype == NF_NAT_MANIP_SRC)
+	if (mtype == NF_NAT_MANIP_SRC)
 		statusbit = IPS_SRC_NAT;
-	अन्यथा
+	else
 		statusbit = IPS_DST_NAT;
 
-	/* Invert अगर this is reply dir. */
-	अगर (dir == IP_CT_सूची_REPLY)
+	/* Invert if this is reply dir. */
+	if (dir == IP_CT_DIR_REPLY)
 		statusbit ^= IPS_NAT_MASK;
 
-	/* Non-atomic: these bits करोn't change. */
-	अगर (ct->status & statusbit)
+	/* Non-atomic: these bits don't change. */
+	if (ct->status & statusbit)
 		verdict = nf_nat_manip_pkt(skb, ct, mtype, dir);
 
-	वापस verdict;
-पूर्ण
+	return verdict;
+}
 EXPORT_SYMBOL_GPL(nf_nat_packet);
 
-अचिन्हित पूर्णांक
-nf_nat_inet_fn(व्योम *priv, काष्ठा sk_buff *skb,
-	       स्थिर काष्ठा nf_hook_state *state)
-अणु
-	काष्ठा nf_conn *ct;
-	क्रमागत ip_conntrack_info ctinfo;
-	काष्ठा nf_conn_nat *nat;
-	/* maniptype == SRC क्रम postrouting. */
-	क्रमागत nf_nat_manip_type maniptype = HOOK2MANIP(state->hook);
+unsigned int
+nf_nat_inet_fn(void *priv, struct sk_buff *skb,
+	       const struct nf_hook_state *state)
+{
+	struct nf_conn *ct;
+	enum ip_conntrack_info ctinfo;
+	struct nf_conn_nat *nat;
+	/* maniptype == SRC for postrouting. */
+	enum nf_nat_manip_type maniptype = HOOK2MANIP(state->hook);
 
 	ct = nf_ct_get(skb, &ctinfo);
 	/* Can't track?  It's not due to stress, or conntrack would
 	 * have dropped it.  Hence it's the user's responsibilty to
-	 * packet filter it out, or implement conntrack/NAT क्रम that
+	 * packet filter it out, or implement conntrack/NAT for that
 	 * protocol. 8) --RR
 	 */
-	अगर (!ct)
-		वापस NF_ACCEPT;
+	if (!ct)
+		return NF_ACCEPT;
 
 	nat = nfct_nat(ct);
 
-	चयन (ctinfo) अणु
-	हाल IP_CT_RELATED:
-	हाल IP_CT_RELATED_REPLY:
+	switch (ctinfo) {
+	case IP_CT_RELATED:
+	case IP_CT_RELATED_REPLY:
 		/* Only ICMPs can be IP_CT_IS_REPLY.  Fallthrough */
-	हाल IP_CT_NEW:
-		/* Seen it beक्रमe?  This can happen क्रम loopback, retrans,
+	case IP_CT_NEW:
+		/* Seen it before?  This can happen for loopback, retrans,
 		 * or local packets.
 		 */
-		अगर (!nf_nat_initialized(ct, maniptype)) अणु
-			काष्ठा nf_nat_lookup_hook_priv *lpriv = priv;
-			काष्ठा nf_hook_entries *e = rcu_dereference(lpriv->entries);
-			अचिन्हित पूर्णांक ret;
-			पूर्णांक i;
+		if (!nf_nat_initialized(ct, maniptype)) {
+			struct nf_nat_lookup_hook_priv *lpriv = priv;
+			struct nf_hook_entries *e = rcu_dereference(lpriv->entries);
+			unsigned int ret;
+			int i;
 
-			अगर (!e)
-				जाओ null_bind;
+			if (!e)
+				goto null_bind;
 
-			क्रम (i = 0; i < e->num_hook_entries; i++) अणु
+			for (i = 0; i < e->num_hook_entries; i++) {
 				ret = e->hooks[i].hook(e->hooks[i].priv, skb,
 						       state);
-				अगर (ret != NF_ACCEPT)
-					वापस ret;
-				अगर (nf_nat_initialized(ct, maniptype))
-					जाओ करो_nat;
-			पूर्ण
+				if (ret != NF_ACCEPT)
+					return ret;
+				if (nf_nat_initialized(ct, maniptype))
+					goto do_nat;
+			}
 null_bind:
 			ret = nf_nat_alloc_null_binding(ct, state->hook);
-			अगर (ret != NF_ACCEPT)
-				वापस ret;
-		पूर्ण अन्यथा अणु
+			if (ret != NF_ACCEPT)
+				return ret;
+		} else {
 			pr_debug("Already setup manip %s for ct %p (status bits 0x%lx)\n",
 				 maniptype == NF_NAT_MANIP_SRC ? "SRC" : "DST",
 				 ct, ct->status);
-			अगर (nf_nat_oअगर_changed(state->hook, ctinfo, nat,
+			if (nf_nat_oif_changed(state->hook, ctinfo, nat,
 					       state->out))
-				जाओ oअगर_changed;
-		पूर्ण
-		अवरोध;
-	शेष:
+				goto oif_changed;
+		}
+		break;
+	default:
 		/* ESTABLISHED */
 		WARN_ON(ctinfo != IP_CT_ESTABLISHED &&
 			ctinfo != IP_CT_ESTABLISHED_REPLY);
-		अगर (nf_nat_oअगर_changed(state->hook, ctinfo, nat, state->out))
-			जाओ oअगर_changed;
-	पूर्ण
-करो_nat:
-	वापस nf_nat_packet(ct, ctinfo, state->hook, skb);
+		if (nf_nat_oif_changed(state->hook, ctinfo, nat, state->out))
+			goto oif_changed;
+	}
+do_nat:
+	return nf_nat_packet(ct, ctinfo, state->hook, skb);
 
-oअगर_changed:
-	nf_ct_समाप्त_acct(ct, ctinfo, skb);
-	वापस NF_DROP;
-पूर्ण
+oif_changed:
+	nf_ct_kill_acct(ct, ctinfo, skb);
+	return NF_DROP;
+}
 EXPORT_SYMBOL_GPL(nf_nat_inet_fn);
 
-काष्ठा nf_nat_proto_clean अणु
+struct nf_nat_proto_clean {
 	u8	l3proto;
 	u8	l4proto;
-पूर्ण;
+};
 
-/* समाप्त conntracks with affected NAT section */
-अटल पूर्णांक nf_nat_proto_हटाओ(काष्ठा nf_conn *i, व्योम *data)
-अणु
-	स्थिर काष्ठा nf_nat_proto_clean *clean = data;
+/* kill conntracks with affected NAT section */
+static int nf_nat_proto_remove(struct nf_conn *i, void *data)
+{
+	const struct nf_nat_proto_clean *clean = data;
 
-	अगर ((clean->l3proto && nf_ct_l3num(i) != clean->l3proto) ||
+	if ((clean->l3proto && nf_ct_l3num(i) != clean->l3proto) ||
 	    (clean->l4proto && nf_ct_protonum(i) != clean->l4proto))
-		वापस 0;
+		return 0;
 
-	वापस i->status & IPS_NAT_MASK ? 1 : 0;
-पूर्ण
+	return i->status & IPS_NAT_MASK ? 1 : 0;
+}
 
-अटल व्योम __nf_nat_cleanup_conntrack(काष्ठा nf_conn *ct)
-अणु
-	अचिन्हित पूर्णांक h;
+static void __nf_nat_cleanup_conntrack(struct nf_conn *ct)
+{
+	unsigned int h;
 
-	h = hash_by_src(nf_ct_net(ct), &ct->tuplehash[IP_CT_सूची_ORIGINAL].tuple);
+	h = hash_by_src(nf_ct_net(ct), &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple);
 	spin_lock_bh(&nf_nat_locks[h % CONNTRACK_LOCKS]);
 	hlist_del_rcu(&ct->nat_bysource);
 	spin_unlock_bh(&nf_nat_locks[h % CONNTRACK_LOCKS]);
-पूर्ण
+}
 
-अटल पूर्णांक nf_nat_proto_clean(काष्ठा nf_conn *ct, व्योम *data)
-अणु
-	अगर (nf_nat_proto_हटाओ(ct, data))
-		वापस 1;
+static int nf_nat_proto_clean(struct nf_conn *ct, void *data)
+{
+	if (nf_nat_proto_remove(ct, data))
+		return 1;
 
-	/* This module is being हटाओd and conntrack has nat null binding.
-	 * Remove it from bysource hash, as the table will be मुक्तd soon.
+	/* This module is being removed and conntrack has nat null binding.
+	 * Remove it from bysource hash, as the table will be freed soon.
 	 *
 	 * Else, when the conntrack is destoyed, nf_nat_cleanup_conntrack()
-	 * will delete entry from alपढ़ोy-मुक्तd table.
+	 * will delete entry from already-freed table.
 	 */
-	अगर (test_and_clear_bit(IPS_SRC_NAT_DONE_BIT, &ct->status))
+	if (test_and_clear_bit(IPS_SRC_NAT_DONE_BIT, &ct->status))
 		__nf_nat_cleanup_conntrack(ct);
 
-	/* करोn't delete conntrack.  Although that would make things a lot
+	/* don't delete conntrack.  Although that would make things a lot
 	 * simpler, we'd end up flushing all conntracks on nat rmmod.
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* No one using conntrack by the समय this called. */
-अटल व्योम nf_nat_cleanup_conntrack(काष्ठा nf_conn *ct)
-अणु
-	अगर (ct->status & IPS_SRC_NAT_DONE)
+/* No one using conntrack by the time this called. */
+static void nf_nat_cleanup_conntrack(struct nf_conn *ct)
+{
+	if (ct->status & IPS_SRC_NAT_DONE)
 		__nf_nat_cleanup_conntrack(ct);
-पूर्ण
+}
 
-अटल काष्ठा nf_ct_ext_type nat_extend __पढ़ो_mostly = अणु
-	.len		= माप(काष्ठा nf_conn_nat),
-	.align		= __alignof__(काष्ठा nf_conn_nat),
+static struct nf_ct_ext_type nat_extend __read_mostly = {
+	.len		= sizeof(struct nf_conn_nat),
+	.align		= __alignof__(struct nf_conn_nat),
 	.destroy	= nf_nat_cleanup_conntrack,
 	.id		= NF_CT_EXT_NAT,
-पूर्ण;
+};
 
-#अगर IS_ENABLED(CONFIG_NF_CT_NETLINK)
+#if IS_ENABLED(CONFIG_NF_CT_NETLINK)
 
-#समावेश <linux/netfilter/nfnetlink.h>
-#समावेश <linux/netfilter/nfnetlink_conntrack.h>
+#include <linux/netfilter/nfnetlink.h>
+#include <linux/netfilter/nfnetlink_conntrack.h>
 
-अटल स्थिर काष्ठा nla_policy protonat_nla_policy[CTA_PROTONAT_MAX+1] = अणु
-	[CTA_PROTONAT_PORT_MIN]	= अणु .type = NLA_U16 पूर्ण,
-	[CTA_PROTONAT_PORT_MAX]	= अणु .type = NLA_U16 पूर्ण,
-पूर्ण;
+static const struct nla_policy protonat_nla_policy[CTA_PROTONAT_MAX+1] = {
+	[CTA_PROTONAT_PORT_MIN]	= { .type = NLA_U16 },
+	[CTA_PROTONAT_PORT_MAX]	= { .type = NLA_U16 },
+};
 
-अटल पूर्णांक nf_nat_l4proto_nlattr_to_range(काष्ठा nlattr *tb[],
-					  काष्ठा nf_nat_range2 *range)
-अणु
-	अगर (tb[CTA_PROTONAT_PORT_MIN]) अणु
+static int nf_nat_l4proto_nlattr_to_range(struct nlattr *tb[],
+					  struct nf_nat_range2 *range)
+{
+	if (tb[CTA_PROTONAT_PORT_MIN]) {
 		range->min_proto.all = nla_get_be16(tb[CTA_PROTONAT_PORT_MIN]);
 		range->max_proto.all = range->min_proto.all;
 		range->flags |= NF_NAT_RANGE_PROTO_SPECIFIED;
-	पूर्ण
-	अगर (tb[CTA_PROTONAT_PORT_MAX]) अणु
+	}
+	if (tb[CTA_PROTONAT_PORT_MAX]) {
 		range->max_proto.all = nla_get_be16(tb[CTA_PROTONAT_PORT_MAX]);
 		range->flags |= NF_NAT_RANGE_PROTO_SPECIFIED;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक nfnetlink_parse_nat_proto(काष्ठा nlattr *attr,
-				     स्थिर काष्ठा nf_conn *ct,
-				     काष्ठा nf_nat_range2 *range)
-अणु
-	काष्ठा nlattr *tb[CTA_PROTONAT_MAX+1];
-	पूर्णांक err;
+static int nfnetlink_parse_nat_proto(struct nlattr *attr,
+				     const struct nf_conn *ct,
+				     struct nf_nat_range2 *range)
+{
+	struct nlattr *tb[CTA_PROTONAT_MAX+1];
+	int err;
 
 	err = nla_parse_nested_deprecated(tb, CTA_PROTONAT_MAX, attr,
-					  protonat_nla_policy, शून्य);
-	अगर (err < 0)
-		वापस err;
+					  protonat_nla_policy, NULL);
+	if (err < 0)
+		return err;
 
-	वापस nf_nat_l4proto_nlattr_to_range(tb, range);
-पूर्ण
+	return nf_nat_l4proto_nlattr_to_range(tb, range);
+}
 
-अटल स्थिर काष्ठा nla_policy nat_nla_policy[CTA_NAT_MAX+1] = अणु
-	[CTA_NAT_V4_MINIP]	= अणु .type = NLA_U32 पूर्ण,
-	[CTA_NAT_V4_MAXIP]	= अणु .type = NLA_U32 पूर्ण,
-	[CTA_NAT_V6_MINIP]	= अणु .len = माप(काष्ठा in6_addr) पूर्ण,
-	[CTA_NAT_V6_MAXIP]	= अणु .len = माप(काष्ठा in6_addr) पूर्ण,
-	[CTA_NAT_PROTO]		= अणु .type = NLA_NESTED पूर्ण,
-पूर्ण;
+static const struct nla_policy nat_nla_policy[CTA_NAT_MAX+1] = {
+	[CTA_NAT_V4_MINIP]	= { .type = NLA_U32 },
+	[CTA_NAT_V4_MAXIP]	= { .type = NLA_U32 },
+	[CTA_NAT_V6_MINIP]	= { .len = sizeof(struct in6_addr) },
+	[CTA_NAT_V6_MAXIP]	= { .len = sizeof(struct in6_addr) },
+	[CTA_NAT_PROTO]		= { .type = NLA_NESTED },
+};
 
-अटल पूर्णांक nf_nat_ipv4_nlattr_to_range(काष्ठा nlattr *tb[],
-				       काष्ठा nf_nat_range2 *range)
-अणु
-	अगर (tb[CTA_NAT_V4_MINIP]) अणु
+static int nf_nat_ipv4_nlattr_to_range(struct nlattr *tb[],
+				       struct nf_nat_range2 *range)
+{
+	if (tb[CTA_NAT_V4_MINIP]) {
 		range->min_addr.ip = nla_get_be32(tb[CTA_NAT_V4_MINIP]);
 		range->flags |= NF_NAT_RANGE_MAP_IPS;
-	पूर्ण
+	}
 
-	अगर (tb[CTA_NAT_V4_MAXIP])
+	if (tb[CTA_NAT_V4_MAXIP])
 		range->max_addr.ip = nla_get_be32(tb[CTA_NAT_V4_MAXIP]);
-	अन्यथा
+	else
 		range->max_addr.ip = range->min_addr.ip;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक nf_nat_ipv6_nlattr_to_range(काष्ठा nlattr *tb[],
-				       काष्ठा nf_nat_range2 *range)
-अणु
-	अगर (tb[CTA_NAT_V6_MINIP]) अणु
-		nla_स_नकल(&range->min_addr.ip6, tb[CTA_NAT_V6_MINIP],
-			   माप(काष्ठा in6_addr));
+static int nf_nat_ipv6_nlattr_to_range(struct nlattr *tb[],
+				       struct nf_nat_range2 *range)
+{
+	if (tb[CTA_NAT_V6_MINIP]) {
+		nla_memcpy(&range->min_addr.ip6, tb[CTA_NAT_V6_MINIP],
+			   sizeof(struct in6_addr));
 		range->flags |= NF_NAT_RANGE_MAP_IPS;
-	पूर्ण
+	}
 
-	अगर (tb[CTA_NAT_V6_MAXIP])
-		nla_स_नकल(&range->max_addr.ip6, tb[CTA_NAT_V6_MAXIP],
-			   माप(काष्ठा in6_addr));
-	अन्यथा
+	if (tb[CTA_NAT_V6_MAXIP])
+		nla_memcpy(&range->max_addr.ip6, tb[CTA_NAT_V6_MAXIP],
+			   sizeof(struct in6_addr));
+	else
 		range->max_addr = range->min_addr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nfnetlink_parse_nat(स्थिर काष्ठा nlattr *nat,
-		    स्थिर काष्ठा nf_conn *ct, काष्ठा nf_nat_range2 *range)
-अणु
-	काष्ठा nlattr *tb[CTA_NAT_MAX+1];
-	पूर्णांक err;
+static int
+nfnetlink_parse_nat(const struct nlattr *nat,
+		    const struct nf_conn *ct, struct nf_nat_range2 *range)
+{
+	struct nlattr *tb[CTA_NAT_MAX+1];
+	int err;
 
-	स_रखो(range, 0, माप(*range));
+	memset(range, 0, sizeof(*range));
 
 	err = nla_parse_nested_deprecated(tb, CTA_NAT_MAX, nat,
-					  nat_nla_policy, शून्य);
-	अगर (err < 0)
-		वापस err;
+					  nat_nla_policy, NULL);
+	if (err < 0)
+		return err;
 
-	चयन (nf_ct_l3num(ct)) अणु
-	हाल NFPROTO_IPV4:
+	switch (nf_ct_l3num(ct)) {
+	case NFPROTO_IPV4:
 		err = nf_nat_ipv4_nlattr_to_range(tb, range);
-		अवरोध;
-	हाल NFPROTO_IPV6:
+		break;
+	case NFPROTO_IPV6:
 		err = nf_nat_ipv6_nlattr_to_range(tb, range);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		err = -EPROTONOSUPPORT;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!tb[CTA_NAT_PROTO])
-		वापस 0;
+	if (!tb[CTA_NAT_PROTO])
+		return 0;
 
-	वापस nfnetlink_parse_nat_proto(tb[CTA_NAT_PROTO], ct, range);
-पूर्ण
+	return nfnetlink_parse_nat_proto(tb[CTA_NAT_PROTO], ct, range);
+}
 
-/* This function is called under rcu_पढ़ो_lock() */
-अटल पूर्णांक
-nfnetlink_parse_nat_setup(काष्ठा nf_conn *ct,
-			  क्रमागत nf_nat_manip_type manip,
-			  स्थिर काष्ठा nlattr *attr)
-अणु
-	काष्ठा nf_nat_range2 range;
-	पूर्णांक err;
+/* This function is called under rcu_read_lock() */
+static int
+nfnetlink_parse_nat_setup(struct nf_conn *ct,
+			  enum nf_nat_manip_type manip,
+			  const struct nlattr *attr)
+{
+	struct nf_nat_range2 range;
+	int err;
 
 	/* Should not happen, restricted to creating new conntracks
 	 * via ctnetlink.
 	 */
-	अगर (WARN_ON_ONCE(nf_nat_initialized(ct, manip)))
-		वापस -EEXIST;
+	if (WARN_ON_ONCE(nf_nat_initialized(ct, manip)))
+		return -EEXIST;
 
-	/* No NAT inक्रमmation has been passed, allocate the null-binding */
-	अगर (attr == शून्य)
-		वापस __nf_nat_alloc_null_binding(ct, manip) == NF_DROP ? -ENOMEM : 0;
+	/* No NAT information has been passed, allocate the null-binding */
+	if (attr == NULL)
+		return __nf_nat_alloc_null_binding(ct, manip) == NF_DROP ? -ENOMEM : 0;
 
 	err = nfnetlink_parse_nat(attr, ct, &range);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	वापस nf_nat_setup_info(ct, &range, manip) == NF_DROP ? -ENOMEM : 0;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक
-nfnetlink_parse_nat_setup(काष्ठा nf_conn *ct,
-			  क्रमागत nf_nat_manip_type manip,
-			  स्थिर काष्ठा nlattr *attr)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
-#पूर्ण_अगर
+	return nf_nat_setup_info(ct, &range, manip) == NF_DROP ? -ENOMEM : 0;
+}
+#else
+static int
+nfnetlink_parse_nat_setup(struct nf_conn *ct,
+			  enum nf_nat_manip_type manip,
+			  const struct nlattr *attr)
+{
+	return -EOPNOTSUPP;
+}
+#endif
 
-अटल काष्ठा nf_ct_helper_expectfn follow_master_nat = अणु
+static struct nf_ct_helper_expectfn follow_master_nat = {
 	.name		= "nat-follow-master",
 	.expectfn	= nf_nat_follow_master,
-पूर्ण;
+};
 
-पूर्णांक nf_nat_रेजिस्टर_fn(काष्ठा net *net, u8 pf, स्थिर काष्ठा nf_hook_ops *ops,
-		       स्थिर काष्ठा nf_hook_ops *orig_nat_ops, अचिन्हित पूर्णांक ops_count)
-अणु
-	काष्ठा nat_net *nat_net = net_generic(net, nat_net_id);
-	काष्ठा nf_nat_hooks_net *nat_proto_net;
-	काष्ठा nf_nat_lookup_hook_priv *priv;
-	अचिन्हित पूर्णांक hooknum = ops->hooknum;
-	काष्ठा nf_hook_ops *nat_ops;
-	पूर्णांक i, ret;
+int nf_nat_register_fn(struct net *net, u8 pf, const struct nf_hook_ops *ops,
+		       const struct nf_hook_ops *orig_nat_ops, unsigned int ops_count)
+{
+	struct nat_net *nat_net = net_generic(net, nat_net_id);
+	struct nf_nat_hooks_net *nat_proto_net;
+	struct nf_nat_lookup_hook_priv *priv;
+	unsigned int hooknum = ops->hooknum;
+	struct nf_hook_ops *nat_ops;
+	int i, ret;
 
-	अगर (WARN_ON_ONCE(pf >= ARRAY_SIZE(nat_net->nat_proto_net)))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(pf >= ARRAY_SIZE(nat_net->nat_proto_net)))
+		return -EINVAL;
 
 	nat_proto_net = &nat_net->nat_proto_net[pf];
 
-	क्रम (i = 0; i < ops_count; i++) अणु
-		अगर (orig_nat_ops[i].hooknum == hooknum) अणु
+	for (i = 0; i < ops_count; i++) {
+		if (orig_nat_ops[i].hooknum == hooknum) {
 			hooknum = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (WARN_ON_ONCE(i == ops_count))
-		वापस -EINVAL;
+	if (WARN_ON_ONCE(i == ops_count))
+		return -EINVAL;
 
 	mutex_lock(&nf_nat_proto_mutex);
-	अगर (!nat_proto_net->nat_hook_ops) अणु
+	if (!nat_proto_net->nat_hook_ops) {
 		WARN_ON(nat_proto_net->users != 0);
 
-		nat_ops = kmemdup(orig_nat_ops, माप(*orig_nat_ops) * ops_count, GFP_KERNEL);
-		अगर (!nat_ops) अणु
+		nat_ops = kmemdup(orig_nat_ops, sizeof(*orig_nat_ops) * ops_count, GFP_KERNEL);
+		if (!nat_ops) {
 			mutex_unlock(&nf_nat_proto_mutex);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
-		क्रम (i = 0; i < ops_count; i++) अणु
-			priv = kzalloc(माप(*priv), GFP_KERNEL);
-			अगर (priv) अणु
+		for (i = 0; i < ops_count; i++) {
+			priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+			if (priv) {
 				nat_ops[i].priv = priv;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			mutex_unlock(&nf_nat_proto_mutex);
-			जबतक (i)
-				kमुक्त(nat_ops[--i].priv);
-			kमुक्त(nat_ops);
-			वापस -ENOMEM;
-		पूर्ण
+			while (i)
+				kfree(nat_ops[--i].priv);
+			kfree(nat_ops);
+			return -ENOMEM;
+		}
 
-		ret = nf_रेजिस्टर_net_hooks(net, nat_ops, ops_count);
-		अगर (ret < 0) अणु
+		ret = nf_register_net_hooks(net, nat_ops, ops_count);
+		if (ret < 0) {
 			mutex_unlock(&nf_nat_proto_mutex);
-			क्रम (i = 0; i < ops_count; i++)
-				kमुक्त(nat_ops[i].priv);
-			kमुक्त(nat_ops);
-			वापस ret;
-		पूर्ण
+			for (i = 0; i < ops_count; i++)
+				kfree(nat_ops[i].priv);
+			kfree(nat_ops);
+			return ret;
+		}
 
 		nat_proto_net->nat_hook_ops = nat_ops;
-	पूर्ण
+	}
 
 	nat_ops = nat_proto_net->nat_hook_ops;
 	priv = nat_ops[hooknum].priv;
-	अगर (WARN_ON_ONCE(!priv)) अणु
+	if (WARN_ON_ONCE(!priv)) {
 		mutex_unlock(&nf_nat_proto_mutex);
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		return -EOPNOTSUPP;
+	}
 
 	ret = nf_hook_entries_insert_raw(&priv->entries, ops);
-	अगर (ret == 0)
+	if (ret == 0)
 		nat_proto_net->users++;
 
 	mutex_unlock(&nf_nat_proto_mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम nf_nat_unरेजिस्टर_fn(काष्ठा net *net, u8 pf, स्थिर काष्ठा nf_hook_ops *ops,
-			  अचिन्हित पूर्णांक ops_count)
-अणु
-	काष्ठा nat_net *nat_net = net_generic(net, nat_net_id);
-	काष्ठा nf_nat_hooks_net *nat_proto_net;
-	काष्ठा nf_nat_lookup_hook_priv *priv;
-	काष्ठा nf_hook_ops *nat_ops;
-	पूर्णांक hooknum = ops->hooknum;
-	पूर्णांक i;
+void nf_nat_unregister_fn(struct net *net, u8 pf, const struct nf_hook_ops *ops,
+			  unsigned int ops_count)
+{
+	struct nat_net *nat_net = net_generic(net, nat_net_id);
+	struct nf_nat_hooks_net *nat_proto_net;
+	struct nf_nat_lookup_hook_priv *priv;
+	struct nf_hook_ops *nat_ops;
+	int hooknum = ops->hooknum;
+	int i;
 
-	अगर (pf >= ARRAY_SIZE(nat_net->nat_proto_net))
-		वापस;
+	if (pf >= ARRAY_SIZE(nat_net->nat_proto_net))
+		return;
 
 	nat_proto_net = &nat_net->nat_proto_net[pf];
 
 	mutex_lock(&nf_nat_proto_mutex);
-	अगर (WARN_ON(nat_proto_net->users == 0))
-		जाओ unlock;
+	if (WARN_ON(nat_proto_net->users == 0))
+		goto unlock;
 
 	nat_proto_net->users--;
 
 	nat_ops = nat_proto_net->nat_hook_ops;
-	क्रम (i = 0; i < ops_count; i++) अणु
-		अगर (nat_ops[i].hooknum == hooknum) अणु
+	for (i = 0; i < ops_count; i++) {
+		if (nat_ops[i].hooknum == hooknum) {
 			hooknum = i;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (WARN_ON_ONCE(i == ops_count))
-		जाओ unlock;
+			break;
+		}
+	}
+	if (WARN_ON_ONCE(i == ops_count))
+		goto unlock;
 	priv = nat_ops[hooknum].priv;
 	nf_hook_entries_delete_raw(&priv->entries, ops);
 
-	अगर (nat_proto_net->users == 0) अणु
-		nf_unरेजिस्टर_net_hooks(net, nat_ops, ops_count);
+	if (nat_proto_net->users == 0) {
+		nf_unregister_net_hooks(net, nat_ops, ops_count);
 
-		क्रम (i = 0; i < ops_count; i++) अणु
+		for (i = 0; i < ops_count; i++) {
 			priv = nat_ops[i].priv;
-			kमुक्त_rcu(priv, rcu_head);
-		पूर्ण
+			kfree_rcu(priv, rcu_head);
+		}
 
-		nat_proto_net->nat_hook_ops = शून्य;
-		kमुक्त(nat_ops);
-	पूर्ण
+		nat_proto_net->nat_hook_ops = NULL;
+		kfree(nat_ops);
+	}
 unlock:
 	mutex_unlock(&nf_nat_proto_mutex);
-पूर्ण
+}
 
-अटल काष्ठा pernet_operations nat_net_ops = अणु
+static struct pernet_operations nat_net_ops = {
 	.id = &nat_net_id,
-	.size = माप(काष्ठा nat_net),
-पूर्ण;
+	.size = sizeof(struct nat_net),
+};
 
-अटल काष्ठा nf_nat_hook nat_hook = अणु
+static struct nf_nat_hook nat_hook = {
 	.parse_nat_setup	= nfnetlink_parse_nat_setup,
-#अगर_घोषित CONFIG_XFRM
+#ifdef CONFIG_XFRM
 	.decode_session		= __nf_nat_decode_session,
-#पूर्ण_अगर
+#endif
 	.manip_pkt		= nf_nat_manip_pkt,
-पूर्ण;
+};
 
-अटल पूर्णांक __init nf_nat_init(व्योम)
-अणु
-	पूर्णांक ret, i;
+static int __init nf_nat_init(void)
+{
+	int ret, i;
 
-	/* Leave them the same क्रम the moment. */
+	/* Leave them the same for the moment. */
 	nf_nat_htable_size = nf_conntrack_htable_size;
-	अगर (nf_nat_htable_size < CONNTRACK_LOCKS)
+	if (nf_nat_htable_size < CONNTRACK_LOCKS)
 		nf_nat_htable_size = CONNTRACK_LOCKS;
 
 	nf_nat_bysource = nf_ct_alloc_hashtable(&nf_nat_htable_size, 0);
-	अगर (!nf_nat_bysource)
-		वापस -ENOMEM;
+	if (!nf_nat_bysource)
+		return -ENOMEM;
 
-	ret = nf_ct_extend_रेजिस्टर(&nat_extend);
-	अगर (ret < 0) अणु
-		kvमुक्त(nf_nat_bysource);
+	ret = nf_ct_extend_register(&nat_extend);
+	if (ret < 0) {
+		kvfree(nf_nat_bysource);
 		pr_err("Unable to register extension\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (i = 0; i < CONNTRACK_LOCKS; i++)
+	for (i = 0; i < CONNTRACK_LOCKS; i++)
 		spin_lock_init(&nf_nat_locks[i]);
 
-	ret = रेजिस्टर_pernet_subsys(&nat_net_ops);
-	अगर (ret < 0) अणु
-		nf_ct_extend_unरेजिस्टर(&nat_extend);
-		kvमुक्त(nf_nat_bysource);
-		वापस ret;
-	पूर्ण
+	ret = register_pernet_subsys(&nat_net_ops);
+	if (ret < 0) {
+		nf_ct_extend_unregister(&nat_extend);
+		kvfree(nf_nat_bysource);
+		return ret;
+	}
 
-	nf_ct_helper_expectfn_रेजिस्टर(&follow_master_nat);
+	nf_ct_helper_expectfn_register(&follow_master_nat);
 
-	WARN_ON(nf_nat_hook != शून्य);
+	WARN_ON(nf_nat_hook != NULL);
 	RCU_INIT_POINTER(nf_nat_hook, &nat_hook);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास nf_nat_cleanup(व्योम)
-अणु
-	काष्ठा nf_nat_proto_clean clean = अणुपूर्ण;
+static void __exit nf_nat_cleanup(void)
+{
+	struct nf_nat_proto_clean clean = {};
 
 	nf_ct_iterate_destroy(nf_nat_proto_clean, &clean);
 
-	nf_ct_extend_unरेजिस्टर(&nat_extend);
-	nf_ct_helper_expectfn_unरेजिस्टर(&follow_master_nat);
-	RCU_INIT_POINTER(nf_nat_hook, शून्य);
+	nf_ct_extend_unregister(&nat_extend);
+	nf_ct_helper_expectfn_unregister(&follow_master_nat);
+	RCU_INIT_POINTER(nf_nat_hook, NULL);
 
 	synchronize_net();
-	kvमुक्त(nf_nat_bysource);
-	unरेजिस्टर_pernet_subsys(&nat_net_ops);
-पूर्ण
+	kvfree(nf_nat_bysource);
+	unregister_pernet_subsys(&nat_net_ops);
+}
 
 MODULE_LICENSE("GPL");
 
 module_init(nf_nat_init);
-module_निकास(nf_nat_cleanup);
+module_exit(nf_nat_cleanup);

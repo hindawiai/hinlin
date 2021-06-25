@@ -1,149 +1,148 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * I/O delay strategies क्रम inb_p/outb_p
+ * I/O delay strategies for inb_p/outb_p
  *
- * Allow क्रम a DMI based override of port 0x80, needed क्रम certain HP laptops
- * and possibly other प्रणालीs. Also allow क्रम the gradual elimination of
+ * Allow for a DMI based override of port 0x80, needed for certain HP laptops
+ * and possibly other systems. Also allow for the gradual elimination of
  * outb_p/inb_p API uses.
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/dmi.h>
-#समावेश <linux/पन.स>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/dmi.h>
+#include <linux/io.h>
 
-#घोषणा IO_DELAY_TYPE_0X80	0
-#घोषणा IO_DELAY_TYPE_0XED	1
-#घोषणा IO_DELAY_TYPE_UDELAY	2
-#घोषणा IO_DELAY_TYPE_NONE	3
+#define IO_DELAY_TYPE_0X80	0
+#define IO_DELAY_TYPE_0XED	1
+#define IO_DELAY_TYPE_UDELAY	2
+#define IO_DELAY_TYPE_NONE	3
 
-#अगर defined(CONFIG_IO_DELAY_0X80)
-#घोषणा DEFAULT_IO_DELAY_TYPE	IO_DELAY_TYPE_0X80
-#या_अगर defined(CONFIG_IO_DELAY_0XED)
-#घोषणा DEFAULT_IO_DELAY_TYPE	IO_DELAY_TYPE_0XED
-#या_अगर defined(CONFIG_IO_DELAY_UDELAY)
-#घोषणा DEFAULT_IO_DELAY_TYPE	IO_DELAY_TYPE_UDELAY
-#या_अगर defined(CONFIG_IO_DELAY_NONE)
-#घोषणा DEFAULT_IO_DELAY_TYPE	IO_DELAY_TYPE_NONE
-#पूर्ण_अगर
+#if defined(CONFIG_IO_DELAY_0X80)
+#define DEFAULT_IO_DELAY_TYPE	IO_DELAY_TYPE_0X80
+#elif defined(CONFIG_IO_DELAY_0XED)
+#define DEFAULT_IO_DELAY_TYPE	IO_DELAY_TYPE_0XED
+#elif defined(CONFIG_IO_DELAY_UDELAY)
+#define DEFAULT_IO_DELAY_TYPE	IO_DELAY_TYPE_UDELAY
+#elif defined(CONFIG_IO_DELAY_NONE)
+#define DEFAULT_IO_DELAY_TYPE	IO_DELAY_TYPE_NONE
+#endif
 
-पूर्णांक io_delay_type __पढ़ो_mostly = DEFAULT_IO_DELAY_TYPE;
+int io_delay_type __read_mostly = DEFAULT_IO_DELAY_TYPE;
 
-अटल पूर्णांक __initdata io_delay_override;
+static int __initdata io_delay_override;
 
 /*
- * Paravirt wants native_io_delay to be a स्थिरant.
+ * Paravirt wants native_io_delay to be a constant.
  */
-व्योम native_io_delay(व्योम)
-अणु
-	चयन (io_delay_type) अणु
-	शेष:
-	हाल IO_DELAY_TYPE_0X80:
-		यंत्र अस्थिर ("outb %al, $0x80");
-		अवरोध;
-	हाल IO_DELAY_TYPE_0XED:
-		यंत्र अस्थिर ("outb %al, $0xed");
-		अवरोध;
-	हाल IO_DELAY_TYPE_UDELAY:
+void native_io_delay(void)
+{
+	switch (io_delay_type) {
+	default:
+	case IO_DELAY_TYPE_0X80:
+		asm volatile ("outb %al, $0x80");
+		break;
+	case IO_DELAY_TYPE_0XED:
+		asm volatile ("outb %al, $0xed");
+		break;
+	case IO_DELAY_TYPE_UDELAY:
 		/*
-		 * 2 usecs is an upper-bound क्रम the outb delay but
-		 * note that udelay करोesn't have the bus-level
-		 * side-effects that outb करोes, nor करोes udelay() have
+		 * 2 usecs is an upper-bound for the outb delay but
+		 * note that udelay doesn't have the bus-level
+		 * side-effects that outb does, nor does udelay() have
 		 * precise timings during very early bootup (the delays
-		 * are लघुer until calibrated):
+		 * are shorter until calibrated):
 		 */
 		udelay(2);
-		अवरोध;
-	हाल IO_DELAY_TYPE_NONE:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	case IO_DELAY_TYPE_NONE:
+		break;
+	}
+}
 EXPORT_SYMBOL(native_io_delay);
 
-अटल पूर्णांक __init dmi_io_delay_0xed_port(स्थिर काष्ठा dmi_प्रणाली_id *id)
-अणु
-	अगर (io_delay_type == IO_DELAY_TYPE_0X80) अणु
+static int __init dmi_io_delay_0xed_port(const struct dmi_system_id *id)
+{
+	if (io_delay_type == IO_DELAY_TYPE_0X80) {
 		pr_notice("%s: using 0xed I/O delay port\n", id->ident);
 		io_delay_type = IO_DELAY_TYPE_0XED;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Quirk table क्रम प्रणालीs that misbehave (lock up, etc.) अगर port
+ * Quirk table for systems that misbehave (lock up, etc.) if port
  * 0x80 is used:
  */
-अटल स्थिर काष्ठा dmi_प्रणाली_id io_delay_0xed_port_dmi_table[] __initस्थिर = अणु
-	अणु
+static const struct dmi_system_id io_delay_0xed_port_dmi_table[] __initconst = {
+	{
 		.callback	= dmi_io_delay_0xed_port,
 		.ident		= "Compaq Presario V6000",
-		.matches	= अणु
+		.matches	= {
 			DMI_MATCH(DMI_BOARD_VENDOR,	"Quanta"),
 			DMI_MATCH(DMI_BOARD_NAME,	"30B7")
-		पूर्ण
-	पूर्ण,
-	अणु
+		}
+	},
+	{
 		.callback	= dmi_io_delay_0xed_port,
 		.ident		= "HP Pavilion dv9000z",
-		.matches	= अणु
+		.matches	= {
 			DMI_MATCH(DMI_BOARD_VENDOR,	"Quanta"),
 			DMI_MATCH(DMI_BOARD_NAME,	"30B9")
-		पूर्ण
-	पूर्ण,
-	अणु
+		}
+	},
+	{
 		.callback	= dmi_io_delay_0xed_port,
 		.ident		= "HP Pavilion dv6000",
-		.matches	= अणु
+		.matches	= {
 			DMI_MATCH(DMI_BOARD_VENDOR,	"Quanta"),
 			DMI_MATCH(DMI_BOARD_NAME,	"30B8")
-		पूर्ण
-	पूर्ण,
-	अणु
+		}
+	},
+	{
 		.callback	= dmi_io_delay_0xed_port,
 		.ident		= "HP Pavilion tx1000",
-		.matches	= अणु
+		.matches	= {
 			DMI_MATCH(DMI_BOARD_VENDOR,	"Quanta"),
 			DMI_MATCH(DMI_BOARD_NAME,	"30BF")
-		पूर्ण
-	पूर्ण,
-	अणु
+		}
+	},
+	{
 		.callback	= dmi_io_delay_0xed_port,
 		.ident		= "Presario F700",
-		.matches	= अणु
+		.matches	= {
 			DMI_MATCH(DMI_BOARD_VENDOR,	"Quanta"),
 			DMI_MATCH(DMI_BOARD_NAME,	"30D3")
-		पूर्ण
-	पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+		}
+	},
+	{ }
+};
 
-व्योम __init io_delay_init(व्योम)
-अणु
-	अगर (!io_delay_override)
-		dmi_check_प्रणाली(io_delay_0xed_port_dmi_table);
-पूर्ण
+void __init io_delay_init(void)
+{
+	if (!io_delay_override)
+		dmi_check_system(io_delay_0xed_port_dmi_table);
+}
 
-अटल पूर्णांक __init io_delay_param(अक्षर *s)
-अणु
-	अगर (!s)
-		वापस -EINVAL;
+static int __init io_delay_param(char *s)
+{
+	if (!s)
+		return -EINVAL;
 
-	अगर (!म_भेद(s, "0x80"))
+	if (!strcmp(s, "0x80"))
 		io_delay_type = IO_DELAY_TYPE_0X80;
-	अन्यथा अगर (!म_भेद(s, "0xed"))
+	else if (!strcmp(s, "0xed"))
 		io_delay_type = IO_DELAY_TYPE_0XED;
-	अन्यथा अगर (!म_भेद(s, "udelay"))
+	else if (!strcmp(s, "udelay"))
 		io_delay_type = IO_DELAY_TYPE_UDELAY;
-	अन्यथा अगर (!म_भेद(s, "none"))
+	else if (!strcmp(s, "none"))
 		io_delay_type = IO_DELAY_TYPE_NONE;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
 	io_delay_override = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 early_param("io_delay", io_delay_param);

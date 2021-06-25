@@ -1,20 +1,19 @@
-<शैली गुरु>
 /*
- * linux/arch/arm/mach-omap1/समयr32k.c
+ * linux/arch/arm/mach-omap1/timer32k.c
  *
  * OMAP 32K Timer
  *
  * Copyright (C) 2004 - 2005 Nokia Corporation
- * Partial समयr reग_लिखो and additional dynamic tick समयr support by
+ * Partial timer rewrite and additional dynamic tick timer support by
  * Tony Lindgen <tony@atomide.com> and
  * Tuukka Tikkanen <tuukka.tikkanen@elektrobit.com>
- * OMAP Dual-mode समयr framework support by Timo Teras
+ * OMAP Dual-mode timer framework support by Timo Teras
  *
- * MPU समयr code based on the older MPU समयr code क्रम OMAP
+ * MPU timer code based on the older MPU timer code for OMAP
  * Copyright (C) 2000 RidgeRun, Inc.
  * Author: Greg Lonnon <glonnon@ridgerun.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation; either version 2 of the License, or (at your
  * option) any later version.
@@ -22,7 +21,7 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- * NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY सूचीECT, INसूचीECT,
+ * NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
  * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
@@ -30,164 +29,164 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * You should have received a copy of the  GNU General Public License aदीर्घ
- * with this program; अगर not, ग_लिखो  to the Free Software Foundation, Inc.,
+ * You should have received a copy of the  GNU General Public License along
+ * with this program; if not, write  to the Free Software Foundation, Inc.,
  * 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/init.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/err.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/पन.स>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/sched.h>
+#include <linux/spinlock.h>
+#include <linux/err.h>
+#include <linux/clk.h>
+#include <linux/clocksource.h>
+#include <linux/clockchips.h>
+#include <linux/io.h>
 
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/mach/irq.h>
-#समावेश <यंत्र/mach/समय.स>
+#include <asm/irq.h>
+#include <asm/mach/irq.h>
+#include <asm/mach/time.h>
 
-#समावेश <plat/counter-32k.h>
+#include <plat/counter-32k.h>
 
-#समावेश <mach/hardware.h>
+#include <mach/hardware.h>
 
-#समावेश "common.h"
+#include "common.h"
 
 /*
  * ---------------------------------------------------------------------------
- * 32KHz OS समयr
+ * 32KHz OS timer
  *
- * This currently works only on 16xx, as 1510 करोes not have the continuous
- * 32KHz synchronous समयr. The 32KHz synchronous समयr is used to keep track
- * of समय in addition to the 32KHz OS समयr. Using only the 32KHz OS समयr
- * on 1510 would be possible, but the समयr would not be as accurate as
- * with the 32KHz synchronized समयr.
+ * This currently works only on 16xx, as 1510 does not have the continuous
+ * 32KHz synchronous timer. The 32KHz synchronous timer is used to keep track
+ * of time in addition to the 32KHz OS timer. Using only the 32KHz OS timer
+ * on 1510 would be possible, but the timer would not be as accurate as
+ * with the 32KHz synchronized timer.
  * ---------------------------------------------------------------------------
  */
 
-/* 16xx specअगरic defines */
-#घोषणा OMAP1_32K_TIMER_BASE		0xfffb9000
-#घोषणा OMAP1_32KSYNC_TIMER_BASE	0xfffbc400
-#घोषणा OMAP1_32K_TIMER_CR		0x08
-#घोषणा OMAP1_32K_TIMER_TVR		0x00
-#घोषणा OMAP1_32K_TIMER_TCR		0x04
+/* 16xx specific defines */
+#define OMAP1_32K_TIMER_BASE		0xfffb9000
+#define OMAP1_32KSYNC_TIMER_BASE	0xfffbc400
+#define OMAP1_32K_TIMER_CR		0x08
+#define OMAP1_32K_TIMER_TVR		0x00
+#define OMAP1_32K_TIMER_TCR		0x04
 
-#घोषणा OMAP_32K_TICKS_PER_SEC		(32768)
+#define OMAP_32K_TICKS_PER_SEC		(32768)
 
 /*
  * TRM says 1 / HZ = ( TVR + 1) / 32768, so TRV = (32768 / HZ) - 1
  * so with HZ = 128, TVR = 255.
  */
-#घोषणा OMAP_32K_TIMER_TICK_PERIOD	((OMAP_32K_TICKS_PER_SEC / HZ) - 1)
+#define OMAP_32K_TIMER_TICK_PERIOD	((OMAP_32K_TICKS_PER_SEC / HZ) - 1)
 
-#घोषणा JIFFIES_TO_HW_TICKS(nr_jअगरfies, घड़ी_rate)			\
-				(((nr_jअगरfies) * (घड़ी_rate)) / HZ)
+#define JIFFIES_TO_HW_TICKS(nr_jiffies, clock_rate)			\
+				(((nr_jiffies) * (clock_rate)) / HZ)
 
-अटल अंतरभूत व्योम omap_32k_समयr_ग_लिखो(पूर्णांक val, पूर्णांक reg)
-अणु
-	omap_ग_लिखोw(val, OMAP1_32K_TIMER_BASE + reg);
-पूर्ण
+static inline void omap_32k_timer_write(int val, int reg)
+{
+	omap_writew(val, OMAP1_32K_TIMER_BASE + reg);
+}
 
-अटल अंतरभूत व्योम omap_32k_समयr_start(अचिन्हित दीर्घ load_val)
-अणु
-	अगर (!load_val)
+static inline void omap_32k_timer_start(unsigned long load_val)
+{
+	if (!load_val)
 		load_val = 1;
-	omap_32k_समयr_ग_लिखो(load_val, OMAP1_32K_TIMER_TVR);
-	omap_32k_समयr_ग_लिखो(0x0f, OMAP1_32K_TIMER_CR);
-पूर्ण
+	omap_32k_timer_write(load_val, OMAP1_32K_TIMER_TVR);
+	omap_32k_timer_write(0x0f, OMAP1_32K_TIMER_CR);
+}
 
-अटल अंतरभूत व्योम omap_32k_समयr_stop(व्योम)
-अणु
-	omap_32k_समयr_ग_लिखो(0x0, OMAP1_32K_TIMER_CR);
-पूर्ण
+static inline void omap_32k_timer_stop(void)
+{
+	omap_32k_timer_write(0x0, OMAP1_32K_TIMER_CR);
+}
 
-#घोषणा omap_32k_समयr_ack_irq()
+#define omap_32k_timer_ack_irq()
 
-अटल पूर्णांक omap_32k_समयr_set_next_event(अचिन्हित दीर्घ delta,
-					 काष्ठा घड़ी_event_device *dev)
-अणु
-	omap_32k_समयr_start(delta);
+static int omap_32k_timer_set_next_event(unsigned long delta,
+					 struct clock_event_device *dev)
+{
+	omap_32k_timer_start(delta);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omap_32k_समयr_shutकरोwn(काष्ठा घड़ी_event_device *evt)
-अणु
-	omap_32k_समयr_stop();
-	वापस 0;
-पूर्ण
+static int omap_32k_timer_shutdown(struct clock_event_device *evt)
+{
+	omap_32k_timer_stop();
+	return 0;
+}
 
-अटल पूर्णांक omap_32k_समयr_set_periodic(काष्ठा घड़ी_event_device *evt)
-अणु
-	omap_32k_समयr_stop();
-	omap_32k_समयr_start(OMAP_32K_TIMER_TICK_PERIOD);
-	वापस 0;
-पूर्ण
+static int omap_32k_timer_set_periodic(struct clock_event_device *evt)
+{
+	omap_32k_timer_stop();
+	omap_32k_timer_start(OMAP_32K_TIMER_TICK_PERIOD);
+	return 0;
+}
 
-अटल काष्ठा घड़ी_event_device घड़ीevent_32k_समयr = अणु
+static struct clock_event_device clockevent_32k_timer = {
 	.name			= "32k-timer",
 	.features		= CLOCK_EVT_FEAT_PERIODIC |
 				  CLOCK_EVT_FEAT_ONESHOT,
-	.set_next_event		= omap_32k_समयr_set_next_event,
-	.set_state_shutकरोwn	= omap_32k_समयr_shutकरोwn,
-	.set_state_periodic	= omap_32k_समयr_set_periodic,
-	.set_state_oneshot	= omap_32k_समयr_shutकरोwn,
-	.tick_resume		= omap_32k_समयr_shutकरोwn,
-पूर्ण;
+	.set_next_event		= omap_32k_timer_set_next_event,
+	.set_state_shutdown	= omap_32k_timer_shutdown,
+	.set_state_periodic	= omap_32k_timer_set_periodic,
+	.set_state_oneshot	= omap_32k_timer_shutdown,
+	.tick_resume		= omap_32k_timer_shutdown,
+};
 
-अटल irqवापस_t omap_32k_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा घड़ी_event_device *evt = &घड़ीevent_32k_समयr;
-	omap_32k_समयr_ack_irq();
+static irqreturn_t omap_32k_timer_interrupt(int irq, void *dev_id)
+{
+	struct clock_event_device *evt = &clockevent_32k_timer;
+	omap_32k_timer_ack_irq();
 
 	evt->event_handler(evt);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल __init व्योम omap_init_32k_समयr(व्योम)
-अणु
-	अगर (request_irq(INT_OS_TIMER, omap_32k_समयr_पूर्णांकerrupt,
-			IRQF_TIMER | IRQF_IRQPOLL, "32KHz timer", शून्य))
+static __init void omap_init_32k_timer(void)
+{
+	if (request_irq(INT_OS_TIMER, omap_32k_timer_interrupt,
+			IRQF_TIMER | IRQF_IRQPOLL, "32KHz timer", NULL))
 		pr_err("Failed to request irq %d(32KHz timer)\n", INT_OS_TIMER);
 
-	घड़ीevent_32k_समयr.cpumask = cpumask_of(0);
-	घड़ीevents_config_and_रेजिस्टर(&घड़ीevent_32k_समयr,
+	clockevent_32k_timer.cpumask = cpumask_of(0);
+	clockevents_config_and_register(&clockevent_32k_timer,
 					OMAP_32K_TICKS_PER_SEC, 1, 0xfffffffe);
-पूर्ण
+}
 
 /*
  * ---------------------------------------------------------------------------
  * Timer initialization
  * ---------------------------------------------------------------------------
  */
-पूर्णांक __init omap_32k_समयr_init(व्योम)
-अणु
-	पूर्णांक ret = -ENODEV;
+int __init omap_32k_timer_init(void)
+{
+	int ret = -ENODEV;
 
-	अगर (cpu_is_omap16xx()) अणु
-		व्योम __iomem *base;
-		काष्ठा clk *sync32k_ick;
+	if (cpu_is_omap16xx()) {
+		void __iomem *base;
+		struct clk *sync32k_ick;
 
 		base = ioremap(OMAP1_32KSYNC_TIMER_BASE, SZ_1K);
-		अगर (!base) अणु
+		if (!base) {
 			pr_err("32k_counter: failed to map base addr\n");
-			वापस -ENODEV;
-		पूर्ण
+			return -ENODEV;
+		}
 
-		sync32k_ick = clk_get(शून्य, "omap_32ksync_ick");
-		अगर (!IS_ERR(sync32k_ick))
+		sync32k_ick = clk_get(NULL, "omap_32ksync_ick");
+		if (!IS_ERR(sync32k_ick))
 			clk_enable(sync32k_ick);
 
-		ret = omap_init_घड़ीsource_32k(base);
-	पूर्ण
+		ret = omap_init_clocksource_32k(base);
+	}
 
-	अगर (!ret)
-		omap_init_32k_समयr();
+	if (!ret)
+		omap_init_32k_timer();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

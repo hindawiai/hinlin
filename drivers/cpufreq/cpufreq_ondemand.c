@@ -1,466 +1,465 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  drivers/cpufreq/cpufreq_ondemand.c
  *
  *  Copyright (C)  2001 Russell King
- *            (C)  2003 Venkatesh Pallipadi <venkatesh.pallipadi@पूर्णांकel.com>.
- *                      Jun Nakajima <jun.nakajima@पूर्णांकel.com>
+ *            (C)  2003 Venkatesh Pallipadi <venkatesh.pallipadi@intel.com>.
+ *                      Jun Nakajima <jun.nakajima@intel.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/cpu.h>
-#समावेश <linux/percpu-defs.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/tick.h>
-#समावेश <linux/sched/cpufreq.h>
+#include <linux/cpu.h>
+#include <linux/percpu-defs.h>
+#include <linux/slab.h>
+#include <linux/tick.h>
+#include <linux/sched/cpufreq.h>
 
-#समावेश "cpufreq_ondemand.h"
+#include "cpufreq_ondemand.h"
 
 /* On-demand governor macros */
-#घोषणा DEF_FREQUENCY_UP_THRESHOLD		(80)
-#घोषणा DEF_SAMPLING_DOWN_FACTOR		(1)
-#घोषणा MAX_SAMPLING_DOWN_FACTOR		(100000)
-#घोषणा MICRO_FREQUENCY_UP_THRESHOLD		(95)
-#घोषणा MICRO_FREQUENCY_MIN_SAMPLE_RATE		(10000)
-#घोषणा MIN_FREQUENCY_UP_THRESHOLD		(1)
-#घोषणा MAX_FREQUENCY_UP_THRESHOLD		(100)
+#define DEF_FREQUENCY_UP_THRESHOLD		(80)
+#define DEF_SAMPLING_DOWN_FACTOR		(1)
+#define MAX_SAMPLING_DOWN_FACTOR		(100000)
+#define MICRO_FREQUENCY_UP_THRESHOLD		(95)
+#define MICRO_FREQUENCY_MIN_SAMPLE_RATE		(10000)
+#define MIN_FREQUENCY_UP_THRESHOLD		(1)
+#define MAX_FREQUENCY_UP_THRESHOLD		(100)
 
-अटल काष्ठा od_ops od_ops;
+static struct od_ops od_ops;
 
-अटल अचिन्हित पूर्णांक शेष_घातersave_bias;
+static unsigned int default_powersave_bias;
 
 /*
- * Not all CPUs want IO समय to be accounted as busy; this depends on how
+ * Not all CPUs want IO time to be accounted as busy; this depends on how
  * efficient idling at a higher frequency/voltage is.
- * Pavel Machek says this is not so क्रम various generations of AMD and old
- * Intel प्रणालीs.
- * Mike Chan (android.com) claims this is also not true क्रम ARM.
- * Because of this, whitelist specअगरic known (series) of CPUs by शेष, and
+ * Pavel Machek says this is not so for various generations of AMD and old
+ * Intel systems.
+ * Mike Chan (android.com) claims this is also not true for ARM.
+ * Because of this, whitelist specific known (series) of CPUs by default, and
  * leave all others up to the user.
  */
-अटल पूर्णांक should_io_be_busy(व्योम)
-अणु
-#अगर defined(CONFIG_X86)
+static int should_io_be_busy(void)
+{
+#if defined(CONFIG_X86)
 	/*
 	 * For Intel, Core 2 (model 15) and later have an efficient idle.
 	 */
-	अगर (boot_cpu_data.x86_venकरोr == X86_VENDOR_INTEL &&
+	if (boot_cpu_data.x86_vendor == X86_VENDOR_INTEL &&
 			boot_cpu_data.x86 == 6 &&
 			boot_cpu_data.x86_model >= 15)
-		वापस 1;
-#पूर्ण_अगर
-	वापस 0;
-पूर्ण
+		return 1;
+#endif
+	return 0;
+}
 
 /*
- * Find right freq to be set now with घातersave_bias on.
+ * Find right freq to be set now with powersave_bias on.
  * Returns the freq_hi to be used right now and will set freq_hi_delay_us,
- * freq_lo, and freq_lo_delay_us in percpu area क्रम averaging freqs.
+ * freq_lo, and freq_lo_delay_us in percpu area for averaging freqs.
  */
-अटल अचिन्हित पूर्णांक generic_घातersave_bias_target(काष्ठा cpufreq_policy *policy,
-		अचिन्हित पूर्णांक freq_next, अचिन्हित पूर्णांक relation)
-अणु
-	अचिन्हित पूर्णांक freq_req, freq_reduc, freq_avg;
-	अचिन्हित पूर्णांक freq_hi, freq_lo;
-	अचिन्हित पूर्णांक index;
-	अचिन्हित पूर्णांक delay_hi_us;
-	काष्ठा policy_dbs_info *policy_dbs = policy->governor_data;
-	काष्ठा od_policy_dbs_info *dbs_info = to_dbs_info(policy_dbs);
-	काष्ठा dbs_data *dbs_data = policy_dbs->dbs_data;
-	काष्ठा od_dbs_tuners *od_tuners = dbs_data->tuners;
-	काष्ठा cpufreq_frequency_table *freq_table = policy->freq_table;
+static unsigned int generic_powersave_bias_target(struct cpufreq_policy *policy,
+		unsigned int freq_next, unsigned int relation)
+{
+	unsigned int freq_req, freq_reduc, freq_avg;
+	unsigned int freq_hi, freq_lo;
+	unsigned int index;
+	unsigned int delay_hi_us;
+	struct policy_dbs_info *policy_dbs = policy->governor_data;
+	struct od_policy_dbs_info *dbs_info = to_dbs_info(policy_dbs);
+	struct dbs_data *dbs_data = policy_dbs->dbs_data;
+	struct od_dbs_tuners *od_tuners = dbs_data->tuners;
+	struct cpufreq_frequency_table *freq_table = policy->freq_table;
 
-	अगर (!freq_table) अणु
+	if (!freq_table) {
 		dbs_info->freq_lo = 0;
 		dbs_info->freq_lo_delay_us = 0;
-		वापस freq_next;
-	पूर्ण
+		return freq_next;
+	}
 
 	index = cpufreq_frequency_table_target(policy, freq_next, relation);
 	freq_req = freq_table[index].frequency;
-	freq_reduc = freq_req * od_tuners->घातersave_bias / 1000;
+	freq_reduc = freq_req * od_tuners->powersave_bias / 1000;
 	freq_avg = freq_req - freq_reduc;
 
-	/* Find freq bounds क्रम freq_avg in freq_table */
+	/* Find freq bounds for freq_avg in freq_table */
 	index = cpufreq_table_find_index_h(policy, freq_avg);
 	freq_lo = freq_table[index].frequency;
 	index = cpufreq_table_find_index_l(policy, freq_avg);
 	freq_hi = freq_table[index].frequency;
 
-	/* Find out how दीर्घ we have to be in hi and lo freqs */
-	अगर (freq_hi == freq_lo) अणु
+	/* Find out how long we have to be in hi and lo freqs */
+	if (freq_hi == freq_lo) {
 		dbs_info->freq_lo = 0;
 		dbs_info->freq_lo_delay_us = 0;
-		वापस freq_lo;
-	पूर्ण
+		return freq_lo;
+	}
 	delay_hi_us = (freq_avg - freq_lo) * dbs_data->sampling_rate;
 	delay_hi_us += (freq_hi - freq_lo) / 2;
 	delay_hi_us /= freq_hi - freq_lo;
 	dbs_info->freq_hi_delay_us = delay_hi_us;
 	dbs_info->freq_lo = freq_lo;
 	dbs_info->freq_lo_delay_us = dbs_data->sampling_rate - delay_hi_us;
-	वापस freq_hi;
-पूर्ण
+	return freq_hi;
+}
 
-अटल व्योम ondemand_घातersave_bias_init(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा od_policy_dbs_info *dbs_info = to_dbs_info(policy->governor_data);
+static void ondemand_powersave_bias_init(struct cpufreq_policy *policy)
+{
+	struct od_policy_dbs_info *dbs_info = to_dbs_info(policy->governor_data);
 
 	dbs_info->freq_lo = 0;
-पूर्ण
+}
 
-अटल व्योम dbs_freq_increase(काष्ठा cpufreq_policy *policy, अचिन्हित पूर्णांक freq)
-अणु
-	काष्ठा policy_dbs_info *policy_dbs = policy->governor_data;
-	काष्ठा dbs_data *dbs_data = policy_dbs->dbs_data;
-	काष्ठा od_dbs_tuners *od_tuners = dbs_data->tuners;
+static void dbs_freq_increase(struct cpufreq_policy *policy, unsigned int freq)
+{
+	struct policy_dbs_info *policy_dbs = policy->governor_data;
+	struct dbs_data *dbs_data = policy_dbs->dbs_data;
+	struct od_dbs_tuners *od_tuners = dbs_data->tuners;
 
-	अगर (od_tuners->घातersave_bias)
-		freq = od_ops.घातersave_bias_target(policy, freq,
+	if (od_tuners->powersave_bias)
+		freq = od_ops.powersave_bias_target(policy, freq,
 				CPUFREQ_RELATION_H);
-	अन्यथा अगर (policy->cur == policy->max)
-		वापस;
+	else if (policy->cur == policy->max)
+		return;
 
-	__cpufreq_driver_target(policy, freq, od_tuners->घातersave_bias ?
+	__cpufreq_driver_target(policy, freq, od_tuners->powersave_bias ?
 			CPUFREQ_RELATION_L : CPUFREQ_RELATION_H);
-पूर्ण
+}
 
 /*
- * Every sampling_rate, we check, अगर current idle समय is less than 20%
- * (शेष), then we try to increase frequency. Else, we adjust the frequency
+ * Every sampling_rate, we check, if current idle time is less than 20%
+ * (default), then we try to increase frequency. Else, we adjust the frequency
  * proportional to load.
  */
-अटल व्योम od_update(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा policy_dbs_info *policy_dbs = policy->governor_data;
-	काष्ठा od_policy_dbs_info *dbs_info = to_dbs_info(policy_dbs);
-	काष्ठा dbs_data *dbs_data = policy_dbs->dbs_data;
-	काष्ठा od_dbs_tuners *od_tuners = dbs_data->tuners;
-	अचिन्हित पूर्णांक load = dbs_update(policy);
+static void od_update(struct cpufreq_policy *policy)
+{
+	struct policy_dbs_info *policy_dbs = policy->governor_data;
+	struct od_policy_dbs_info *dbs_info = to_dbs_info(policy_dbs);
+	struct dbs_data *dbs_data = policy_dbs->dbs_data;
+	struct od_dbs_tuners *od_tuners = dbs_data->tuners;
+	unsigned int load = dbs_update(policy);
 
 	dbs_info->freq_lo = 0;
 
-	/* Check क्रम frequency increase */
-	अगर (load > dbs_data->up_threshold) अणु
-		/* If चयनing to max speed, apply sampling_करोwn_factor */
-		अगर (policy->cur < policy->max)
-			policy_dbs->rate_mult = dbs_data->sampling_करोwn_factor;
+	/* Check for frequency increase */
+	if (load > dbs_data->up_threshold) {
+		/* If switching to max speed, apply sampling_down_factor */
+		if (policy->cur < policy->max)
+			policy_dbs->rate_mult = dbs_data->sampling_down_factor;
 		dbs_freq_increase(policy, policy->max);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Calculate the next frequency proportional to load */
-		अचिन्हित पूर्णांक freq_next, min_f, max_f;
+		unsigned int freq_next, min_f, max_f;
 
 		min_f = policy->cpuinfo.min_freq;
 		max_f = policy->cpuinfo.max_freq;
 		freq_next = min_f + load * (max_f - min_f) / 100;
 
-		/* No दीर्घer fully busy, reset rate_mult */
+		/* No longer fully busy, reset rate_mult */
 		policy_dbs->rate_mult = 1;
 
-		अगर (od_tuners->घातersave_bias)
-			freq_next = od_ops.घातersave_bias_target(policy,
+		if (od_tuners->powersave_bias)
+			freq_next = od_ops.powersave_bias_target(policy,
 								 freq_next,
 								 CPUFREQ_RELATION_L);
 
 		__cpufreq_driver_target(policy, freq_next, CPUFREQ_RELATION_C);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अचिन्हित पूर्णांक od_dbs_update(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा policy_dbs_info *policy_dbs = policy->governor_data;
-	काष्ठा dbs_data *dbs_data = policy_dbs->dbs_data;
-	काष्ठा od_policy_dbs_info *dbs_info = to_dbs_info(policy_dbs);
-	पूर्णांक sample_type = dbs_info->sample_type;
+static unsigned int od_dbs_update(struct cpufreq_policy *policy)
+{
+	struct policy_dbs_info *policy_dbs = policy->governor_data;
+	struct dbs_data *dbs_data = policy_dbs->dbs_data;
+	struct od_policy_dbs_info *dbs_info = to_dbs_info(policy_dbs);
+	int sample_type = dbs_info->sample_type;
 
 	/* Common NORMAL_SAMPLE setup */
 	dbs_info->sample_type = OD_NORMAL_SAMPLE;
 	/*
-	 * OD_SUB_SAMPLE करोesn't make sense अगर sample_delay_ns is 0, so ignore
+	 * OD_SUB_SAMPLE doesn't make sense if sample_delay_ns is 0, so ignore
 	 * it then.
 	 */
-	अगर (sample_type == OD_SUB_SAMPLE && policy_dbs->sample_delay_ns > 0) अणु
+	if (sample_type == OD_SUB_SAMPLE && policy_dbs->sample_delay_ns > 0) {
 		__cpufreq_driver_target(policy, dbs_info->freq_lo,
 					CPUFREQ_RELATION_H);
-		वापस dbs_info->freq_lo_delay_us;
-	पूर्ण
+		return dbs_info->freq_lo_delay_us;
+	}
 
 	od_update(policy);
 
-	अगर (dbs_info->freq_lo) अणु
+	if (dbs_info->freq_lo) {
 		/* Setup SUB_SAMPLE */
 		dbs_info->sample_type = OD_SUB_SAMPLE;
-		वापस dbs_info->freq_hi_delay_us;
-	पूर्ण
+		return dbs_info->freq_hi_delay_us;
+	}
 
-	वापस dbs_data->sampling_rate * policy_dbs->rate_mult;
-पूर्ण
+	return dbs_data->sampling_rate * policy_dbs->rate_mult;
+}
 
-/************************** sysfs पूर्णांकerface ************************/
-अटल काष्ठा dbs_governor od_dbs_gov;
+/************************** sysfs interface ************************/
+static struct dbs_governor od_dbs_gov;
 
-अटल sमाप_प्रकार store_io_is_busy(काष्ठा gov_attr_set *attr_set, स्थिर अक्षर *buf,
-				माप_प्रकार count)
-अणु
-	काष्ठा dbs_data *dbs_data = to_dbs_data(attr_set);
-	अचिन्हित पूर्णांक input;
-	पूर्णांक ret;
+static ssize_t store_io_is_busy(struct gov_attr_set *attr_set, const char *buf,
+				size_t count)
+{
+	struct dbs_data *dbs_data = to_dbs_data(attr_set);
+	unsigned int input;
+	int ret;
 
-	ret = माला_पूछो(buf, "%u", &input);
-	अगर (ret != 1)
-		वापस -EINVAL;
+	ret = sscanf(buf, "%u", &input);
+	if (ret != 1)
+		return -EINVAL;
 	dbs_data->io_is_busy = !!input;
 
 	/* we need to re-evaluate prev_cpu_idle */
 	gov_update_cpu_data(dbs_data);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार store_up_threshold(काष्ठा gov_attr_set *attr_set,
-				  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा dbs_data *dbs_data = to_dbs_data(attr_set);
-	अचिन्हित पूर्णांक input;
-	पूर्णांक ret;
-	ret = माला_पूछो(buf, "%u", &input);
+static ssize_t store_up_threshold(struct gov_attr_set *attr_set,
+				  const char *buf, size_t count)
+{
+	struct dbs_data *dbs_data = to_dbs_data(attr_set);
+	unsigned int input;
+	int ret;
+	ret = sscanf(buf, "%u", &input);
 
-	अगर (ret != 1 || input > MAX_FREQUENCY_UP_THRESHOLD ||
-			input < MIN_FREQUENCY_UP_THRESHOLD) अणु
-		वापस -EINVAL;
-	पूर्ण
+	if (ret != 1 || input > MAX_FREQUENCY_UP_THRESHOLD ||
+			input < MIN_FREQUENCY_UP_THRESHOLD) {
+		return -EINVAL;
+	}
 
 	dbs_data->up_threshold = input;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार store_sampling_करोwn_factor(काष्ठा gov_attr_set *attr_set,
-					  स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा dbs_data *dbs_data = to_dbs_data(attr_set);
-	काष्ठा policy_dbs_info *policy_dbs;
-	अचिन्हित पूर्णांक input;
-	पूर्णांक ret;
-	ret = माला_पूछो(buf, "%u", &input);
+static ssize_t store_sampling_down_factor(struct gov_attr_set *attr_set,
+					  const char *buf, size_t count)
+{
+	struct dbs_data *dbs_data = to_dbs_data(attr_set);
+	struct policy_dbs_info *policy_dbs;
+	unsigned int input;
+	int ret;
+	ret = sscanf(buf, "%u", &input);
 
-	अगर (ret != 1 || input > MAX_SAMPLING_DOWN_FACTOR || input < 1)
-		वापस -EINVAL;
+	if (ret != 1 || input > MAX_SAMPLING_DOWN_FACTOR || input < 1)
+		return -EINVAL;
 
-	dbs_data->sampling_करोwn_factor = input;
+	dbs_data->sampling_down_factor = input;
 
-	/* Reset करोwn sampling multiplier in हाल it was active */
-	list_क्रम_each_entry(policy_dbs, &attr_set->policy_list, list) अणु
+	/* Reset down sampling multiplier in case it was active */
+	list_for_each_entry(policy_dbs, &attr_set->policy_list, list) {
 		/*
-		 * Doing this without locking might lead to using dअगरferent
+		 * Doing this without locking might lead to using different
 		 * rate_mult values in od_update() and od_dbs_update().
 		 */
 		mutex_lock(&policy_dbs->update_mutex);
 		policy_dbs->rate_mult = 1;
 		mutex_unlock(&policy_dbs->update_mutex);
-	पूर्ण
+	}
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार store_ignore_nice_load(काष्ठा gov_attr_set *attr_set,
-				      स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा dbs_data *dbs_data = to_dbs_data(attr_set);
-	अचिन्हित पूर्णांक input;
-	पूर्णांक ret;
+static ssize_t store_ignore_nice_load(struct gov_attr_set *attr_set,
+				      const char *buf, size_t count)
+{
+	struct dbs_data *dbs_data = to_dbs_data(attr_set);
+	unsigned int input;
+	int ret;
 
-	ret = माला_पूछो(buf, "%u", &input);
-	अगर (ret != 1)
-		वापस -EINVAL;
+	ret = sscanf(buf, "%u", &input);
+	if (ret != 1)
+		return -EINVAL;
 
-	अगर (input > 1)
+	if (input > 1)
 		input = 1;
 
-	अगर (input == dbs_data->ignore_nice_load) अणु /* nothing to करो */
-		वापस count;
-	पूर्ण
+	if (input == dbs_data->ignore_nice_load) { /* nothing to do */
+		return count;
+	}
 	dbs_data->ignore_nice_load = input;
 
 	/* we need to re-evaluate prev_cpu_idle */
 	gov_update_cpu_data(dbs_data);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार store_घातersave_bias(काष्ठा gov_attr_set *attr_set,
-				    स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा dbs_data *dbs_data = to_dbs_data(attr_set);
-	काष्ठा od_dbs_tuners *od_tuners = dbs_data->tuners;
-	काष्ठा policy_dbs_info *policy_dbs;
-	अचिन्हित पूर्णांक input;
-	पूर्णांक ret;
-	ret = माला_पूछो(buf, "%u", &input);
+static ssize_t store_powersave_bias(struct gov_attr_set *attr_set,
+				    const char *buf, size_t count)
+{
+	struct dbs_data *dbs_data = to_dbs_data(attr_set);
+	struct od_dbs_tuners *od_tuners = dbs_data->tuners;
+	struct policy_dbs_info *policy_dbs;
+	unsigned int input;
+	int ret;
+	ret = sscanf(buf, "%u", &input);
 
-	अगर (ret != 1)
-		वापस -EINVAL;
+	if (ret != 1)
+		return -EINVAL;
 
-	अगर (input > 1000)
+	if (input > 1000)
 		input = 1000;
 
-	od_tuners->घातersave_bias = input;
+	od_tuners->powersave_bias = input;
 
-	list_क्रम_each_entry(policy_dbs, &attr_set->policy_list, list)
-		ondemand_घातersave_bias_init(policy_dbs->policy);
+	list_for_each_entry(policy_dbs, &attr_set->policy_list, list)
+		ondemand_powersave_bias_init(policy_dbs->policy);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 gov_show_one_common(sampling_rate);
 gov_show_one_common(up_threshold);
-gov_show_one_common(sampling_करोwn_factor);
+gov_show_one_common(sampling_down_factor);
 gov_show_one_common(ignore_nice_load);
 gov_show_one_common(io_is_busy);
-gov_show_one(od, घातersave_bias);
+gov_show_one(od, powersave_bias);
 
 gov_attr_rw(sampling_rate);
 gov_attr_rw(io_is_busy);
 gov_attr_rw(up_threshold);
-gov_attr_rw(sampling_करोwn_factor);
+gov_attr_rw(sampling_down_factor);
 gov_attr_rw(ignore_nice_load);
-gov_attr_rw(घातersave_bias);
+gov_attr_rw(powersave_bias);
 
-अटल काष्ठा attribute *od_attributes[] = अणु
+static struct attribute *od_attributes[] = {
 	&sampling_rate.attr,
 	&up_threshold.attr,
-	&sampling_करोwn_factor.attr,
+	&sampling_down_factor.attr,
 	&ignore_nice_load.attr,
-	&घातersave_bias.attr,
+	&powersave_bias.attr,
 	&io_is_busy.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 /************************** sysfs end ************************/
 
-अटल काष्ठा policy_dbs_info *od_alloc(व्योम)
-अणु
-	काष्ठा od_policy_dbs_info *dbs_info;
+static struct policy_dbs_info *od_alloc(void)
+{
+	struct od_policy_dbs_info *dbs_info;
 
-	dbs_info = kzalloc(माप(*dbs_info), GFP_KERNEL);
-	वापस dbs_info ? &dbs_info->policy_dbs : शून्य;
-पूर्ण
+	dbs_info = kzalloc(sizeof(*dbs_info), GFP_KERNEL);
+	return dbs_info ? &dbs_info->policy_dbs : NULL;
+}
 
-अटल व्योम od_मुक्त(काष्ठा policy_dbs_info *policy_dbs)
-अणु
-	kमुक्त(to_dbs_info(policy_dbs));
-पूर्ण
+static void od_free(struct policy_dbs_info *policy_dbs)
+{
+	kfree(to_dbs_info(policy_dbs));
+}
 
-अटल पूर्णांक od_init(काष्ठा dbs_data *dbs_data)
-अणु
-	काष्ठा od_dbs_tuners *tuners;
-	u64 idle_समय;
-	पूर्णांक cpu;
+static int od_init(struct dbs_data *dbs_data)
+{
+	struct od_dbs_tuners *tuners;
+	u64 idle_time;
+	int cpu;
 
-	tuners = kzalloc(माप(*tuners), GFP_KERNEL);
-	अगर (!tuners)
-		वापस -ENOMEM;
+	tuners = kzalloc(sizeof(*tuners), GFP_KERNEL);
+	if (!tuners)
+		return -ENOMEM;
 
 	cpu = get_cpu();
-	idle_समय = get_cpu_idle_समय_us(cpu, शून्य);
+	idle_time = get_cpu_idle_time_us(cpu, NULL);
 	put_cpu();
-	अगर (idle_समय != -1ULL) अणु
+	if (idle_time != -1ULL) {
 		/* Idle micro accounting is supported. Use finer thresholds */
 		dbs_data->up_threshold = MICRO_FREQUENCY_UP_THRESHOLD;
-	पूर्ण अन्यथा अणु
+	} else {
 		dbs_data->up_threshold = DEF_FREQUENCY_UP_THRESHOLD;
-	पूर्ण
+	}
 
-	dbs_data->sampling_करोwn_factor = DEF_SAMPLING_DOWN_FACTOR;
+	dbs_data->sampling_down_factor = DEF_SAMPLING_DOWN_FACTOR;
 	dbs_data->ignore_nice_load = 0;
-	tuners->घातersave_bias = शेष_घातersave_bias;
+	tuners->powersave_bias = default_powersave_bias;
 	dbs_data->io_is_busy = should_io_be_busy();
 
 	dbs_data->tuners = tuners;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम od_निकास(काष्ठा dbs_data *dbs_data)
-अणु
-	kमुक्त(dbs_data->tuners);
-पूर्ण
+static void od_exit(struct dbs_data *dbs_data)
+{
+	kfree(dbs_data->tuners);
+}
 
-अटल व्योम od_start(काष्ठा cpufreq_policy *policy)
-अणु
-	काष्ठा od_policy_dbs_info *dbs_info = to_dbs_info(policy->governor_data);
+static void od_start(struct cpufreq_policy *policy)
+{
+	struct od_policy_dbs_info *dbs_info = to_dbs_info(policy->governor_data);
 
 	dbs_info->sample_type = OD_NORMAL_SAMPLE;
-	ondemand_घातersave_bias_init(policy);
-पूर्ण
+	ondemand_powersave_bias_init(policy);
+}
 
-अटल काष्ठा od_ops od_ops = अणु
-	.घातersave_bias_target = generic_घातersave_bias_target,
-पूर्ण;
+static struct od_ops od_ops = {
+	.powersave_bias_target = generic_powersave_bias_target,
+};
 
-अटल काष्ठा dbs_governor od_dbs_gov = अणु
+static struct dbs_governor od_dbs_gov = {
 	.gov = CPUFREQ_DBS_GOVERNOR_INITIALIZER("ondemand"),
-	.kobj_type = अणु .शेष_attrs = od_attributes पूर्ण,
+	.kobj_type = { .default_attrs = od_attributes },
 	.gov_dbs_update = od_dbs_update,
 	.alloc = od_alloc,
-	.मुक्त = od_मुक्त,
+	.free = od_free,
 	.init = od_init,
-	.निकास = od_निकास,
+	.exit = od_exit,
 	.start = od_start,
-पूर्ण;
+};
 
-#घोषणा CPU_FREQ_GOV_ONDEMAND	(od_dbs_gov.gov)
+#define CPU_FREQ_GOV_ONDEMAND	(od_dbs_gov.gov)
 
-अटल व्योम od_set_घातersave_bias(अचिन्हित पूर्णांक घातersave_bias)
-अणु
-	अचिन्हित पूर्णांक cpu;
-	cpumask_t करोne;
+static void od_set_powersave_bias(unsigned int powersave_bias)
+{
+	unsigned int cpu;
+	cpumask_t done;
 
-	शेष_घातersave_bias = घातersave_bias;
-	cpumask_clear(&करोne);
+	default_powersave_bias = powersave_bias;
+	cpumask_clear(&done);
 
 	get_online_cpus();
-	क्रम_each_online_cpu(cpu) अणु
-		काष्ठा cpufreq_policy *policy;
-		काष्ठा policy_dbs_info *policy_dbs;
-		काष्ठा dbs_data *dbs_data;
-		काष्ठा od_dbs_tuners *od_tuners;
+	for_each_online_cpu(cpu) {
+		struct cpufreq_policy *policy;
+		struct policy_dbs_info *policy_dbs;
+		struct dbs_data *dbs_data;
+		struct od_dbs_tuners *od_tuners;
 
-		अगर (cpumask_test_cpu(cpu, &करोne))
-			जारी;
+		if (cpumask_test_cpu(cpu, &done))
+			continue;
 
 		policy = cpufreq_cpu_get_raw(cpu);
-		अगर (!policy || policy->governor != &CPU_FREQ_GOV_ONDEMAND)
-			जारी;
+		if (!policy || policy->governor != &CPU_FREQ_GOV_ONDEMAND)
+			continue;
 
 		policy_dbs = policy->governor_data;
-		अगर (!policy_dbs)
-			जारी;
+		if (!policy_dbs)
+			continue;
 
-		cpumask_or(&करोne, &करोne, policy->cpus);
+		cpumask_or(&done, &done, policy->cpus);
 
 		dbs_data = policy_dbs->dbs_data;
 		od_tuners = dbs_data->tuners;
-		od_tuners->घातersave_bias = शेष_घातersave_bias;
-	पूर्ण
+		od_tuners->powersave_bias = default_powersave_bias;
+	}
 	put_online_cpus();
-पूर्ण
+}
 
-व्योम od_रेजिस्टर_घातersave_bias_handler(अचिन्हित पूर्णांक (*f)
-		(काष्ठा cpufreq_policy *, अचिन्हित पूर्णांक, अचिन्हित पूर्णांक),
-		अचिन्हित पूर्णांक घातersave_bias)
-अणु
-	od_ops.घातersave_bias_target = f;
-	od_set_घातersave_bias(घातersave_bias);
-पूर्ण
-EXPORT_SYMBOL_GPL(od_रेजिस्टर_घातersave_bias_handler);
+void od_register_powersave_bias_handler(unsigned int (*f)
+		(struct cpufreq_policy *, unsigned int, unsigned int),
+		unsigned int powersave_bias)
+{
+	od_ops.powersave_bias_target = f;
+	od_set_powersave_bias(powersave_bias);
+}
+EXPORT_SYMBOL_GPL(od_register_powersave_bias_handler);
 
-व्योम od_unरेजिस्टर_घातersave_bias_handler(व्योम)
-अणु
-	od_ops.घातersave_bias_target = generic_घातersave_bias_target;
-	od_set_घातersave_bias(0);
-पूर्ण
-EXPORT_SYMBOL_GPL(od_unरेजिस्टर_घातersave_bias_handler);
+void od_unregister_powersave_bias_handler(void)
+{
+	od_ops.powersave_bias_target = generic_powersave_bias_target;
+	od_set_powersave_bias(0);
+}
+EXPORT_SYMBOL_GPL(od_unregister_powersave_bias_handler);
 
 MODULE_AUTHOR("Venkatesh Pallipadi <venkatesh.pallipadi@intel.com>");
 MODULE_AUTHOR("Alexey Starikovskiy <alexey.y.starikovskiy@intel.com>");
@@ -468,12 +467,12 @@ MODULE_DESCRIPTION("'cpufreq_ondemand' - A dynamic cpufreq governor for "
 	"Low Latency Frequency Transition capable processors");
 MODULE_LICENSE("GPL");
 
-#अगर_घोषित CONFIG_CPU_FREQ_DEFAULT_GOV_ONDEMAND
-काष्ठा cpufreq_governor *cpufreq_शेष_governor(व्योम)
-अणु
-	वापस &CPU_FREQ_GOV_ONDEMAND;
-पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_ONDEMAND
+struct cpufreq_governor *cpufreq_default_governor(void)
+{
+	return &CPU_FREQ_GOV_ONDEMAND;
+}
+#endif
 
 cpufreq_governor_init(CPU_FREQ_GOV_ONDEMAND);
-cpufreq_governor_निकास(CPU_FREQ_GOV_ONDEMAND);
+cpufreq_governor_exit(CPU_FREQ_GOV_ONDEMAND);

@@ -1,70 +1,69 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * sata_sil24.c - Driver क्रम Silicon Image 3124/3132 SATA-2 controllers
+ * sata_sil24.c - Driver for Silicon Image 3124/3132 SATA-2 controllers
  *
  * Copyright 2005  Tejun Heo
  *
  * Based on preview driver from Silicon Image.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/blkdev.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/device.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_cmnd.h>
-#समावेश <linux/libata.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/gfp.h>
+#include <linux/pci.h>
+#include <linux/blkdev.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/dma-mapping.h>
+#include <linux/device.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_cmnd.h>
+#include <linux/libata.h>
 
-#घोषणा DRV_NAME	"sata_sil24"
-#घोषणा DRV_VERSION	"1.1"
+#define DRV_NAME	"sata_sil24"
+#define DRV_VERSION	"1.1"
 
 /*
  * Port request block (PRB) 32 bytes
  */
-काष्ठा sil24_prb अणु
+struct sil24_prb {
 	__le16	ctrl;
 	__le16	prot;
 	__le32	rx_cnt;
 	u8	fis[6 * 4];
-पूर्ण;
+};
 
 /*
  * Scatter gather entry (SGE) 16 bytes
  */
-काष्ठा sil24_sge अणु
+struct sil24_sge {
 	__le64	addr;
 	__le32	cnt;
 	__le32	flags;
-पूर्ण;
+};
 
 
-क्रमागत अणु
+enum {
 	SIL24_HOST_BAR		= 0,
 	SIL24_PORT_BAR		= 2,
 
 	/* sil24 fetches in chunks of 64bytes.  The first block
 	 * contains the PRB and two SGEs.  From the second block, it's
 	 * consisted of four SGEs and called SGT.  Calculate the
-	 * number of SGTs that fit पूर्णांकo one page.
+	 * number of SGTs that fit into one page.
 	 */
-	SIL24_PRB_SZ		= माप(काष्ठा sil24_prb)
-				  + 2 * माप(काष्ठा sil24_sge),
+	SIL24_PRB_SZ		= sizeof(struct sil24_prb)
+				  + 2 * sizeof(struct sil24_sge),
 	SIL24_MAX_SGT		= (PAGE_SIZE - SIL24_PRB_SZ)
-				  / (4 * माप(काष्ठा sil24_sge)),
+				  / (4 * sizeof(struct sil24_sge)),
 
-	/* This will give us one unused SGEs क्रम ATA.  This extra SGE
-	 * will be used to store CDB क्रम ATAPI devices.
+	/* This will give us one unused SGEs for ATA.  This extra SGE
+	 * will be used to store CDB for ATAPI devices.
 	 */
 	SIL24_MAX_SGE		= 4 * SIL24_MAX_SGT + 1,
 
 	/*
-	 * Global controller रेजिस्टरs (128 bytes @ BAR0)
+	 * Global controller registers (128 bytes @ BAR0)
 	 */
 		/* 32 bit regs */
 	HOST_SLOT_STAT		= 0x00, /* 32 bit slot stat * 4 */
@@ -89,7 +88,7 @@
 	HOST_SSTAT_ATTN		= (1 << 31),
 
 	/* HOST_CTRL bits */
-	HOST_CTRL_M66EN		= (1 << 16), /* M66EN PCI bus संकेत */
+	HOST_CTRL_M66EN		= (1 << 16), /* M66EN PCI bus signal */
 	HOST_CTRL_TRDY		= (1 << 17), /* latched PCI TRDY */
 	HOST_CTRL_STOP		= (1 << 18), /* latched PCI STOP */
 	HOST_CTRL_DEVSEL	= (1 << 19), /* latched PCI DEVSEL */
@@ -97,7 +96,7 @@
 	HOST_CTRL_GLOBAL_RST	= (1 << 31), /* global reset */
 
 	/*
-	 * Port रेजिस्टरs
+	 * Port registers
 	 * (8192 bytes @ +0x0000, +0x2000, +0x4000 and +0x6000 @ BAR2)
 	 */
 	PORT_REGS_SIZE		= 0x2000,
@@ -111,13 +110,13 @@
 	PORT_PMP_SIZE		= 0x0008, /* 8 bytes per PMP */
 
 		/* 32 bit regs */
-	PORT_CTRL_STAT		= 0x1000, /* ग_लिखो: ctrl-set, पढ़ो: stat */
-	PORT_CTRL_CLR		= 0x1004, /* ग_लिखो: ctrl-clear */
-	PORT_IRQ_STAT		= 0x1008, /* high: status, low: पूर्णांकerrupt */
-	PORT_IRQ_ENABLE_SET	= 0x1010, /* ग_लिखो: enable-set */
-	PORT_IRQ_ENABLE_CLR	= 0x1014, /* ग_लिखो: enable-clear */
+	PORT_CTRL_STAT		= 0x1000, /* write: ctrl-set, read: stat */
+	PORT_CTRL_CLR		= 0x1004, /* write: ctrl-clear */
+	PORT_IRQ_STAT		= 0x1008, /* high: status, low: interrupt */
+	PORT_IRQ_ENABLE_SET	= 0x1010, /* write: enable-set */
+	PORT_IRQ_ENABLE_CLR	= 0x1014, /* write: enable-clear */
 	PORT_ACTIVATE_UPPER_ADDR= 0x101c,
-	PORT_EXEC_FIFO		= 0x1020, /* command execution fअगरo */
+	PORT_EXEC_FIFO		= 0x1020, /* command execution fifo */
 	PORT_CMD_ERR		= 0x1024, /* command error number */
 	PORT_FIS_CFG		= 0x1028,
 	PORT_FIFO_THRES		= 0x102c,
@@ -144,27 +143,27 @@
 	PORT_CS_PORT_RST	= (1 << 0), /* port reset */
 	PORT_CS_DEV_RST		= (1 << 1), /* device reset */
 	PORT_CS_INIT		= (1 << 2), /* port initialize */
-	PORT_CS_IRQ_WOC		= (1 << 3), /* पूर्णांकerrupt ग_लिखो one to clear */
+	PORT_CS_IRQ_WOC		= (1 << 3), /* interrupt write one to clear */
 	PORT_CS_CDB16		= (1 << 5), /* 0=12b cdb, 1=16b cdb */
 	PORT_CS_PMP_RESUME	= (1 << 6), /* PMP resume */
 	PORT_CS_32BIT_ACTV	= (1 << 10), /* 32-bit activation */
 	PORT_CS_PMP_EN		= (1 << 13), /* port multiplier enable */
-	PORT_CS_RDY		= (1 << 31), /* port पढ़ोy to accept commands */
+	PORT_CS_RDY		= (1 << 31), /* port ready to accept commands */
 
 	/* PORT_IRQ_STAT/ENABLE_SET/CLR */
 	/* bits[11:0] are masked */
 	PORT_IRQ_COMPLETE	= (1 << 0), /* command(s) completed */
 	PORT_IRQ_ERROR		= (1 << 1), /* command execution error */
-	PORT_IRQ_PORTRDY_CHG	= (1 << 2), /* port पढ़ोy change */
-	PORT_IRQ_PWR_CHG	= (1 << 3), /* घातer management change */
-	PORT_IRQ_PHYRDY_CHG	= (1 << 4), /* PHY पढ़ोy change */
+	PORT_IRQ_PORTRDY_CHG	= (1 << 2), /* port ready change */
+	PORT_IRQ_PWR_CHG	= (1 << 3), /* power management change */
+	PORT_IRQ_PHYRDY_CHG	= (1 << 4), /* PHY ready change */
 	PORT_IRQ_COMWAKE	= (1 << 5), /* COMWAKE received */
 	PORT_IRQ_UNK_FIS	= (1 << 6), /* unknown FIS received */
 	PORT_IRQ_DEV_XCHG	= (1 << 7), /* device exchanged */
 	PORT_IRQ_8B10B		= (1 << 8), /* 8b/10b decode error threshold */
 	PORT_IRQ_CRC		= (1 << 9), /* CRC error threshold */
 	PORT_IRQ_HANDSHAKE	= (1 << 10), /* handshake error threshold */
-	PORT_IRQ_SDB_NOTIFY	= (1 << 11), /* SDB notअगरy received */
+	PORT_IRQ_SDB_NOTIFY	= (1 << 11), /* SDB notify received */
 
 	DEF_PORT_IRQ		= PORT_IRQ_COMPLETE | PORT_IRQ_ERROR |
 				  PORT_IRQ_PHYRDY_CHG | PORT_IRQ_DEV_XCHG |
@@ -175,38 +174,38 @@
 	PORT_IRQ_MASKED_MASK	= 0x7ff,
 	PORT_IRQ_RAW_MASK	= (0x7ff << PORT_IRQ_RAW_SHIFT),
 
-	/* ENABLE_SET/CLR specअगरic, पूर्णांकr steering - 2 bit field */
+	/* ENABLE_SET/CLR specific, intr steering - 2 bit field */
 	PORT_IRQ_STEER_SHIFT	= 30,
 	PORT_IRQ_STEER_MASK	= (3 << PORT_IRQ_STEER_SHIFT),
 
-	/* PORT_CMD_ERR स्थिरants */
+	/* PORT_CMD_ERR constants */
 	PORT_CERR_DEV		= 1, /* Error bit in D2H Register FIS */
 	PORT_CERR_SDB		= 2, /* Error bit in SDB FIS */
 	PORT_CERR_DATA		= 3, /* Error in data FIS not detected by dev */
 	PORT_CERR_SEND		= 4, /* Initial cmd FIS transmission failure */
 	PORT_CERR_INCONSISTENT	= 5, /* Protocol mismatch */
-	PORT_CERR_सूचीECTION	= 6, /* Data direction mismatch */
-	PORT_CERR_UNDERRUN	= 7, /* Ran out of SGEs जबतक writing */
-	PORT_CERR_OVERRUN	= 8, /* Ran out of SGEs जबतक पढ़ोing */
-	PORT_CERR_PKT_PROT	= 11, /* सूची invalid in 1st PIO setup of ATAPI */
+	PORT_CERR_DIRECTION	= 6, /* Data direction mismatch */
+	PORT_CERR_UNDERRUN	= 7, /* Ran out of SGEs while writing */
+	PORT_CERR_OVERRUN	= 8, /* Ran out of SGEs while reading */
+	PORT_CERR_PKT_PROT	= 11, /* DIR invalid in 1st PIO setup of ATAPI */
 	PORT_CERR_SGT_BOUNDARY	= 16, /* PLD ecode 00 - SGT not on qword boundary */
-	PORT_CERR_SGT_TGTABRT	= 17, /* PLD ecode 01 - target पात */
-	PORT_CERR_SGT_MSTABRT	= 18, /* PLD ecode 10 - master पात */
-	PORT_CERR_SGT_PCIPERR	= 19, /* PLD ecode 11 - PCI parity err जबतक fetching SGT */
+	PORT_CERR_SGT_TGTABRT	= 17, /* PLD ecode 01 - target abort */
+	PORT_CERR_SGT_MSTABRT	= 18, /* PLD ecode 10 - master abort */
+	PORT_CERR_SGT_PCIPERR	= 19, /* PLD ecode 11 - PCI parity err while fetching SGT */
 	PORT_CERR_CMD_BOUNDARY	= 24, /* ctrl[15:13] 001 - PRB not on qword boundary */
-	PORT_CERR_CMD_TGTABRT	= 25, /* ctrl[15:13] 010 - target पात */
-	PORT_CERR_CMD_MSTABRT	= 26, /* ctrl[15:13] 100 - master पात */
-	PORT_CERR_CMD_PCIPERR	= 27, /* ctrl[15:13] 110 - PCI parity err जबतक fetching PRB */
+	PORT_CERR_CMD_TGTABRT	= 25, /* ctrl[15:13] 010 - target abort */
+	PORT_CERR_CMD_MSTABRT	= 26, /* ctrl[15:13] 100 - master abort */
+	PORT_CERR_CMD_PCIPERR	= 27, /* ctrl[15:13] 110 - PCI parity err while fetching PRB */
 	PORT_CERR_XFR_UNDEF	= 32, /* PSD ecode 00 - undefined */
-	PORT_CERR_XFR_TGTABRT	= 33, /* PSD ecode 01 - target पात */
-	PORT_CERR_XFR_MSTABRT	= 34, /* PSD ecode 10 - master पात */
+	PORT_CERR_XFR_TGTABRT	= 33, /* PSD ecode 01 - target abort */
+	PORT_CERR_XFR_MSTABRT	= 34, /* PSD ecode 10 - master abort */
 	PORT_CERR_XFR_PCIPERR	= 35, /* PSD ecode 11 - PCI prity err during transfer */
-	PORT_CERR_SENDSERVICE	= 36, /* FIS received जबतक sending service */
+	PORT_CERR_SENDSERVICE	= 36, /* FIS received while sending service */
 
 	/* bits of PRB control field */
 	PRB_CTRL_PROTOCOL	= (1 << 0), /* override def. ATA protocol */
-	PRB_CTRL_PACKET_READ	= (1 << 4), /* PACKET cmd पढ़ो */
-	PRB_CTRL_PACKET_WRITE	= (1 << 5), /* PACKET cmd ग_लिखो */
+	PRB_CTRL_PACKET_READ	= (1 << 4), /* PACKET cmd read */
+	PRB_CTRL_PACKET_WRITE	= (1 << 5), /* PACKET cmd write */
 	PRB_CTRL_NIEN		= (1 << 6), /* Mask completion irq */
 	PRB_CTRL_SRST		= (1 << 7), /* Soft reset request (ign BSY?) */
 
@@ -219,12 +218,12 @@
 	PRB_PROT_TRANSPARENT	= (1 << 5),
 
 	/*
-	 * Other स्थिरants
+	 * Other constants
 	 */
 	SGE_TRM			= (1 << 31), /* Last SGE in chain */
 	SGE_LNK			= (1 << 30), /* linked list
-						Poपूर्णांकs to SGT, not SGE */
-	SGE_DRD			= (1 << 29), /* discard data पढ़ो (/dev/null)
+						Points to SGT, not SGE */
+	SGE_DRD			= (1 << 29), /* discard data read (/dev/null)
 						data address ignored */
 
 	SIL24_MAX_CMDS		= 31,
@@ -241,148 +240,148 @@
 	SIL24_FLAG_PCIX_IRQ_WOC	= (1 << 24), /* IRQ loss errata on PCI-X */
 
 	IRQ_STAT_4PORTS		= 0xf,
-पूर्ण;
+};
 
-काष्ठा sil24_ata_block अणु
-	काष्ठा sil24_prb prb;
-	काष्ठा sil24_sge sge[SIL24_MAX_SGE];
-पूर्ण;
+struct sil24_ata_block {
+	struct sil24_prb prb;
+	struct sil24_sge sge[SIL24_MAX_SGE];
+};
 
-काष्ठा sil24_atapi_block अणु
-	काष्ठा sil24_prb prb;
+struct sil24_atapi_block {
+	struct sil24_prb prb;
 	u8 cdb[16];
-	काष्ठा sil24_sge sge[SIL24_MAX_SGE];
-पूर्ण;
+	struct sil24_sge sge[SIL24_MAX_SGE];
+};
 
-जोड़ sil24_cmd_block अणु
-	काष्ठा sil24_ata_block ata;
-	काष्ठा sil24_atapi_block atapi;
-पूर्ण;
+union sil24_cmd_block {
+	struct sil24_ata_block ata;
+	struct sil24_atapi_block atapi;
+};
 
-अटल स्थिर काष्ठा sil24_cerr_info अणु
-	अचिन्हित पूर्णांक err_mask, action;
-	स्थिर अक्षर *desc;
-पूर्ण sil24_cerr_db[] = अणु
-	[0]			= अणु AC_ERR_DEV, 0,
-				    "device error" पूर्ण,
-	[PORT_CERR_DEV]		= अणु AC_ERR_DEV, 0,
-				    "device error via D2H FIS" पूर्ण,
-	[PORT_CERR_SDB]		= अणु AC_ERR_DEV, 0,
-				    "device error via SDB FIS" पूर्ण,
-	[PORT_CERR_DATA]	= अणु AC_ERR_ATA_BUS, ATA_EH_RESET,
-				    "error in data FIS" पूर्ण,
-	[PORT_CERR_SEND]	= अणु AC_ERR_ATA_BUS, ATA_EH_RESET,
-				    "failed to transmit command FIS" पूर्ण,
-	[PORT_CERR_INCONSISTENT] = अणु AC_ERR_HSM, ATA_EH_RESET,
-				     "protocol mismatch" पूर्ण,
-	[PORT_CERR_सूचीECTION]	= अणु AC_ERR_HSM, ATA_EH_RESET,
-				    "data direction mismatch" पूर्ण,
-	[PORT_CERR_UNDERRUN]	= अणु AC_ERR_HSM, ATA_EH_RESET,
-				    "ran out of SGEs while writing" पूर्ण,
-	[PORT_CERR_OVERRUN]	= अणु AC_ERR_HSM, ATA_EH_RESET,
-				    "ran out of SGEs while reading" पूर्ण,
-	[PORT_CERR_PKT_PROT]	= अणु AC_ERR_HSM, ATA_EH_RESET,
-				    "invalid data direction for ATAPI CDB" पूर्ण,
-	[PORT_CERR_SGT_BOUNDARY] = अणु AC_ERR_SYSTEM, ATA_EH_RESET,
-				     "SGT not on qword boundary" पूर्ण,
-	[PORT_CERR_SGT_TGTABRT]	= अणु AC_ERR_HOST_BUS, ATA_EH_RESET,
-				    "PCI target abort while fetching SGT" पूर्ण,
-	[PORT_CERR_SGT_MSTABRT]	= अणु AC_ERR_HOST_BUS, ATA_EH_RESET,
-				    "PCI master abort while fetching SGT" पूर्ण,
-	[PORT_CERR_SGT_PCIPERR]	= अणु AC_ERR_HOST_BUS, ATA_EH_RESET,
-				    "PCI parity error while fetching SGT" पूर्ण,
-	[PORT_CERR_CMD_BOUNDARY] = अणु AC_ERR_SYSTEM, ATA_EH_RESET,
-				     "PRB not on qword boundary" पूर्ण,
-	[PORT_CERR_CMD_TGTABRT]	= अणु AC_ERR_HOST_BUS, ATA_EH_RESET,
-				    "PCI target abort while fetching PRB" पूर्ण,
-	[PORT_CERR_CMD_MSTABRT]	= अणु AC_ERR_HOST_BUS, ATA_EH_RESET,
-				    "PCI master abort while fetching PRB" पूर्ण,
-	[PORT_CERR_CMD_PCIPERR]	= अणु AC_ERR_HOST_BUS, ATA_EH_RESET,
-				    "PCI parity error while fetching PRB" पूर्ण,
-	[PORT_CERR_XFR_UNDEF]	= अणु AC_ERR_HOST_BUS, ATA_EH_RESET,
-				    "undefined error while transferring data" पूर्ण,
-	[PORT_CERR_XFR_TGTABRT]	= अणु AC_ERR_HOST_BUS, ATA_EH_RESET,
-				    "PCI target abort while transferring data" पूर्ण,
-	[PORT_CERR_XFR_MSTABRT]	= अणु AC_ERR_HOST_BUS, ATA_EH_RESET,
-				    "PCI master abort while transferring data" पूर्ण,
-	[PORT_CERR_XFR_PCIPERR]	= अणु AC_ERR_HOST_BUS, ATA_EH_RESET,
-				    "PCI parity error while transferring data" पूर्ण,
-	[PORT_CERR_SENDSERVICE]	= अणु AC_ERR_HSM, ATA_EH_RESET,
-				    "FIS received while sending service FIS" पूर्ण,
-पूर्ण;
+static const struct sil24_cerr_info {
+	unsigned int err_mask, action;
+	const char *desc;
+} sil24_cerr_db[] = {
+	[0]			= { AC_ERR_DEV, 0,
+				    "device error" },
+	[PORT_CERR_DEV]		= { AC_ERR_DEV, 0,
+				    "device error via D2H FIS" },
+	[PORT_CERR_SDB]		= { AC_ERR_DEV, 0,
+				    "device error via SDB FIS" },
+	[PORT_CERR_DATA]	= { AC_ERR_ATA_BUS, ATA_EH_RESET,
+				    "error in data FIS" },
+	[PORT_CERR_SEND]	= { AC_ERR_ATA_BUS, ATA_EH_RESET,
+				    "failed to transmit command FIS" },
+	[PORT_CERR_INCONSISTENT] = { AC_ERR_HSM, ATA_EH_RESET,
+				     "protocol mismatch" },
+	[PORT_CERR_DIRECTION]	= { AC_ERR_HSM, ATA_EH_RESET,
+				    "data direction mismatch" },
+	[PORT_CERR_UNDERRUN]	= { AC_ERR_HSM, ATA_EH_RESET,
+				    "ran out of SGEs while writing" },
+	[PORT_CERR_OVERRUN]	= { AC_ERR_HSM, ATA_EH_RESET,
+				    "ran out of SGEs while reading" },
+	[PORT_CERR_PKT_PROT]	= { AC_ERR_HSM, ATA_EH_RESET,
+				    "invalid data direction for ATAPI CDB" },
+	[PORT_CERR_SGT_BOUNDARY] = { AC_ERR_SYSTEM, ATA_EH_RESET,
+				     "SGT not on qword boundary" },
+	[PORT_CERR_SGT_TGTABRT]	= { AC_ERR_HOST_BUS, ATA_EH_RESET,
+				    "PCI target abort while fetching SGT" },
+	[PORT_CERR_SGT_MSTABRT]	= { AC_ERR_HOST_BUS, ATA_EH_RESET,
+				    "PCI master abort while fetching SGT" },
+	[PORT_CERR_SGT_PCIPERR]	= { AC_ERR_HOST_BUS, ATA_EH_RESET,
+				    "PCI parity error while fetching SGT" },
+	[PORT_CERR_CMD_BOUNDARY] = { AC_ERR_SYSTEM, ATA_EH_RESET,
+				     "PRB not on qword boundary" },
+	[PORT_CERR_CMD_TGTABRT]	= { AC_ERR_HOST_BUS, ATA_EH_RESET,
+				    "PCI target abort while fetching PRB" },
+	[PORT_CERR_CMD_MSTABRT]	= { AC_ERR_HOST_BUS, ATA_EH_RESET,
+				    "PCI master abort while fetching PRB" },
+	[PORT_CERR_CMD_PCIPERR]	= { AC_ERR_HOST_BUS, ATA_EH_RESET,
+				    "PCI parity error while fetching PRB" },
+	[PORT_CERR_XFR_UNDEF]	= { AC_ERR_HOST_BUS, ATA_EH_RESET,
+				    "undefined error while transferring data" },
+	[PORT_CERR_XFR_TGTABRT]	= { AC_ERR_HOST_BUS, ATA_EH_RESET,
+				    "PCI target abort while transferring data" },
+	[PORT_CERR_XFR_MSTABRT]	= { AC_ERR_HOST_BUS, ATA_EH_RESET,
+				    "PCI master abort while transferring data" },
+	[PORT_CERR_XFR_PCIPERR]	= { AC_ERR_HOST_BUS, ATA_EH_RESET,
+				    "PCI parity error while transferring data" },
+	[PORT_CERR_SENDSERVICE]	= { AC_ERR_HSM, ATA_EH_RESET,
+				    "FIS received while sending service FIS" },
+};
 
 /*
- * ap->निजी_data
+ * ap->private_data
  *
- * The preview driver always वापसed 0 क्रम status.  We emulate it
- * here from the previous पूर्णांकerrupt.
+ * The preview driver always returned 0 for status.  We emulate it
+ * here from the previous interrupt.
  */
-काष्ठा sil24_port_priv अणु
-	जोड़ sil24_cmd_block *cmd_block;	/* 32 cmd blocks */
-	dma_addr_t cmd_block_dma;		/* DMA base addr क्रम them */
-	पूर्णांक करो_port_rst;
-पूर्ण;
+struct sil24_port_priv {
+	union sil24_cmd_block *cmd_block;	/* 32 cmd blocks */
+	dma_addr_t cmd_block_dma;		/* DMA base addr for them */
+	int do_port_rst;
+};
 
-अटल व्योम sil24_dev_config(काष्ठा ata_device *dev);
-अटल पूर्णांक sil24_scr_पढ़ो(काष्ठा ata_link *link, अचिन्हित sc_reg, u32 *val);
-अटल पूर्णांक sil24_scr_ग_लिखो(काष्ठा ata_link *link, अचिन्हित sc_reg, u32 val);
-अटल पूर्णांक sil24_qc_defer(काष्ठा ata_queued_cmd *qc);
-अटल क्रमागत ata_completion_errors sil24_qc_prep(काष्ठा ata_queued_cmd *qc);
-अटल अचिन्हित पूर्णांक sil24_qc_issue(काष्ठा ata_queued_cmd *qc);
-अटल bool sil24_qc_fill_rtf(काष्ठा ata_queued_cmd *qc);
-अटल व्योम sil24_pmp_attach(काष्ठा ata_port *ap);
-अटल व्योम sil24_pmp_detach(काष्ठा ata_port *ap);
-अटल व्योम sil24_मुक्तze(काष्ठा ata_port *ap);
-अटल व्योम sil24_thaw(काष्ठा ata_port *ap);
-अटल पूर्णांक sil24_softreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
-			   अचिन्हित दीर्घ deadline);
-अटल पूर्णांक sil24_hardreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
-			   अचिन्हित दीर्घ deadline);
-अटल पूर्णांक sil24_pmp_hardreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
-			       अचिन्हित दीर्घ deadline);
-अटल व्योम sil24_error_handler(काष्ठा ata_port *ap);
-अटल व्योम sil24_post_पूर्णांकernal_cmd(काष्ठा ata_queued_cmd *qc);
-अटल पूर्णांक sil24_port_start(काष्ठा ata_port *ap);
-अटल पूर्णांक sil24_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent);
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक sil24_pci_device_resume(काष्ठा pci_dev *pdev);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक sil24_port_resume(काष्ठा ata_port *ap);
-#पूर्ण_अगर
+static void sil24_dev_config(struct ata_device *dev);
+static int sil24_scr_read(struct ata_link *link, unsigned sc_reg, u32 *val);
+static int sil24_scr_write(struct ata_link *link, unsigned sc_reg, u32 val);
+static int sil24_qc_defer(struct ata_queued_cmd *qc);
+static enum ata_completion_errors sil24_qc_prep(struct ata_queued_cmd *qc);
+static unsigned int sil24_qc_issue(struct ata_queued_cmd *qc);
+static bool sil24_qc_fill_rtf(struct ata_queued_cmd *qc);
+static void sil24_pmp_attach(struct ata_port *ap);
+static void sil24_pmp_detach(struct ata_port *ap);
+static void sil24_freeze(struct ata_port *ap);
+static void sil24_thaw(struct ata_port *ap);
+static int sil24_softreset(struct ata_link *link, unsigned int *class,
+			   unsigned long deadline);
+static int sil24_hardreset(struct ata_link *link, unsigned int *class,
+			   unsigned long deadline);
+static int sil24_pmp_hardreset(struct ata_link *link, unsigned int *class,
+			       unsigned long deadline);
+static void sil24_error_handler(struct ata_port *ap);
+static void sil24_post_internal_cmd(struct ata_queued_cmd *qc);
+static int sil24_port_start(struct ata_port *ap);
+static int sil24_init_one(struct pci_dev *pdev, const struct pci_device_id *ent);
+#ifdef CONFIG_PM_SLEEP
+static int sil24_pci_device_resume(struct pci_dev *pdev);
+#endif
+#ifdef CONFIG_PM
+static int sil24_port_resume(struct ata_port *ap);
+#endif
 
-अटल स्थिर काष्ठा pci_device_id sil24_pci_tbl[] = अणु
-	अणु PCI_VDEVICE(CMD, 0x3124), BID_SIL3124 पूर्ण,
-	अणु PCI_VDEVICE(INTEL, 0x3124), BID_SIL3124 पूर्ण,
-	अणु PCI_VDEVICE(CMD, 0x3132), BID_SIL3132 पूर्ण,
-	अणु PCI_VDEVICE(CMD, 0x0242), BID_SIL3132 पूर्ण,
-	अणु PCI_VDEVICE(CMD, 0x0244), BID_SIL3132 पूर्ण,
-	अणु PCI_VDEVICE(CMD, 0x3131), BID_SIL3131 पूर्ण,
-	अणु PCI_VDEVICE(CMD, 0x3531), BID_SIL3131 पूर्ण,
+static const struct pci_device_id sil24_pci_tbl[] = {
+	{ PCI_VDEVICE(CMD, 0x3124), BID_SIL3124 },
+	{ PCI_VDEVICE(INTEL, 0x3124), BID_SIL3124 },
+	{ PCI_VDEVICE(CMD, 0x3132), BID_SIL3132 },
+	{ PCI_VDEVICE(CMD, 0x0242), BID_SIL3132 },
+	{ PCI_VDEVICE(CMD, 0x0244), BID_SIL3132 },
+	{ PCI_VDEVICE(CMD, 0x3131), BID_SIL3131 },
+	{ PCI_VDEVICE(CMD, 0x3531), BID_SIL3131 },
 
-	अणु पूर्ण /* terminate list */
-पूर्ण;
+	{ } /* terminate list */
+};
 
-अटल काष्ठा pci_driver sil24_pci_driver = अणु
+static struct pci_driver sil24_pci_driver = {
 	.name			= DRV_NAME,
 	.id_table		= sil24_pci_tbl,
 	.probe			= sil24_init_one,
-	.हटाओ			= ata_pci_हटाओ_one,
-#अगर_घोषित CONFIG_PM_SLEEP
+	.remove			= ata_pci_remove_one,
+#ifdef CONFIG_PM_SLEEP
 	.suspend		= ata_pci_device_suspend,
 	.resume			= sil24_pci_device_resume,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल काष्ठा scsi_host_ढाँचा sil24_sht = अणु
+static struct scsi_host_template sil24_sht = {
 	ATA_NCQ_SHT(DRV_NAME),
 	.can_queue		= SIL24_MAX_CMDS,
 	.sg_tablesize		= SIL24_MAX_SGE,
 	.dma_boundary		= ATA_DMA_BOUNDARY,
 	.tag_alloc_policy	= BLK_TAG_ALLOC_FIFO,
-पूर्ण;
+};
 
-अटल काष्ठा ata_port_operations sil24_ops = अणु
+static struct ata_port_operations sil24_ops = {
 	.inherits		= &sata_pmp_port_ops,
 
 	.qc_defer		= sil24_qc_defer,
@@ -390,28 +389,28 @@
 	.qc_issue		= sil24_qc_issue,
 	.qc_fill_rtf		= sil24_qc_fill_rtf,
 
-	.मुक्तze			= sil24_मुक्तze,
+	.freeze			= sil24_freeze,
 	.thaw			= sil24_thaw,
 	.softreset		= sil24_softreset,
 	.hardreset		= sil24_hardreset,
 	.pmp_softreset		= sil24_softreset,
 	.pmp_hardreset		= sil24_pmp_hardreset,
 	.error_handler		= sil24_error_handler,
-	.post_पूर्णांकernal_cmd	= sil24_post_पूर्णांकernal_cmd,
+	.post_internal_cmd	= sil24_post_internal_cmd,
 	.dev_config		= sil24_dev_config,
 
-	.scr_पढ़ो		= sil24_scr_पढ़ो,
-	.scr_ग_लिखो		= sil24_scr_ग_लिखो,
+	.scr_read		= sil24_scr_read,
+	.scr_write		= sil24_scr_write,
 	.pmp_attach		= sil24_pmp_attach,
 	.pmp_detach		= sil24_pmp_detach,
 
 	.port_start		= sil24_port_start,
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	.port_resume		= sil24_port_resume,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल bool sata_sil24_msi;    /* Disable MSI */
+static bool sata_sil24_msi;    /* Disable MSI */
 module_param_named(msi, sata_sil24_msi, bool, S_IRUGO);
 MODULE_PARM_DESC(msi, "Enable MSI (Default: false)");
 
@@ -419,391 +418,391 @@ MODULE_PARM_DESC(msi, "Enable MSI (Default: false)");
  * Use bits 30-31 of port_flags to encode available port numbers.
  * Current maxium is 4.
  */
-#घोषणा SIL24_NPORTS2FLAG(nports)	((((अचिन्हित)(nports) - 1) & 0x3) << 30)
-#घोषणा SIL24_FLAG2NPORTS(flag)		((((flag) >> 30) & 0x3) + 1)
+#define SIL24_NPORTS2FLAG(nports)	((((unsigned)(nports) - 1) & 0x3) << 30)
+#define SIL24_FLAG2NPORTS(flag)		((((flag) >> 30) & 0x3) + 1)
 
-अटल स्थिर काष्ठा ata_port_info sil24_port_info[] = अणु
+static const struct ata_port_info sil24_port_info[] = {
 	/* sil_3124 */
-	अणु
+	{
 		.flags		= SIL24_COMMON_FLAGS | SIL24_NPORTS2FLAG(4) |
 				  SIL24_FLAG_PCIX_IRQ_WOC,
 		.pio_mask	= ATA_PIO4,
 		.mwdma_mask	= ATA_MWDMA2,
 		.udma_mask	= ATA_UDMA5,
 		.port_ops	= &sil24_ops,
-	पूर्ण,
+	},
 	/* sil_3132 */
-	अणु
+	{
 		.flags		= SIL24_COMMON_FLAGS | SIL24_NPORTS2FLAG(2),
 		.pio_mask	= ATA_PIO4,
 		.mwdma_mask	= ATA_MWDMA2,
 		.udma_mask	= ATA_UDMA5,
 		.port_ops	= &sil24_ops,
-	पूर्ण,
+	},
 	/* sil_3131/sil_3531 */
-	अणु
+	{
 		.flags		= SIL24_COMMON_FLAGS | SIL24_NPORTS2FLAG(1),
 		.pio_mask	= ATA_PIO4,
 		.mwdma_mask	= ATA_MWDMA2,
 		.udma_mask	= ATA_UDMA5,
 		.port_ops	= &sil24_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक sil24_tag(पूर्णांक tag)
-अणु
-	अगर (unlikely(ata_tag_पूर्णांकernal(tag)))
-		वापस 0;
-	वापस tag;
-पूर्ण
+static int sil24_tag(int tag)
+{
+	if (unlikely(ata_tag_internal(tag)))
+		return 0;
+	return tag;
+}
 
-अटल अचिन्हित दीर्घ sil24_port_offset(काष्ठा ata_port *ap)
-अणु
-	वापस ap->port_no * PORT_REGS_SIZE;
-पूर्ण
+static unsigned long sil24_port_offset(struct ata_port *ap)
+{
+	return ap->port_no * PORT_REGS_SIZE;
+}
 
-अटल व्योम __iomem *sil24_port_base(काष्ठा ata_port *ap)
-अणु
-	वापस ap->host->iomap[SIL24_PORT_BAR] + sil24_port_offset(ap);
-पूर्ण
+static void __iomem *sil24_port_base(struct ata_port *ap)
+{
+	return ap->host->iomap[SIL24_PORT_BAR] + sil24_port_offset(ap);
+}
 
-अटल व्योम sil24_dev_config(काष्ठा ata_device *dev)
-अणु
-	व्योम __iomem *port = sil24_port_base(dev->link->ap);
+static void sil24_dev_config(struct ata_device *dev)
+{
+	void __iomem *port = sil24_port_base(dev->link->ap);
 
-	अगर (dev->cdb_len == 16)
-		ग_लिखोl(PORT_CS_CDB16, port + PORT_CTRL_STAT);
-	अन्यथा
-		ग_लिखोl(PORT_CS_CDB16, port + PORT_CTRL_CLR);
-पूर्ण
+	if (dev->cdb_len == 16)
+		writel(PORT_CS_CDB16, port + PORT_CTRL_STAT);
+	else
+		writel(PORT_CS_CDB16, port + PORT_CTRL_CLR);
+}
 
-अटल व्योम sil24_पढ़ो_tf(काष्ठा ata_port *ap, पूर्णांक tag, काष्ठा ata_taskfile *tf)
-अणु
-	व्योम __iomem *port = sil24_port_base(ap);
-	काष्ठा sil24_prb __iomem *prb;
+static void sil24_read_tf(struct ata_port *ap, int tag, struct ata_taskfile *tf)
+{
+	void __iomem *port = sil24_port_base(ap);
+	struct sil24_prb __iomem *prb;
 	u8 fis[6 * 4];
 
 	prb = port + PORT_LRAM + sil24_tag(tag) * PORT_LRAM_SLOT_SZ;
-	स_नकल_fromio(fis, prb->fis, माप(fis));
+	memcpy_fromio(fis, prb->fis, sizeof(fis));
 	ata_tf_from_fis(fis, tf);
-पूर्ण
+}
 
-अटल पूर्णांक sil24_scr_map[] = अणु
+static int sil24_scr_map[] = {
 	[SCR_CONTROL]	= 0,
 	[SCR_STATUS]	= 1,
 	[SCR_ERROR]	= 2,
 	[SCR_ACTIVE]	= 3,
-पूर्ण;
+};
 
-अटल पूर्णांक sil24_scr_पढ़ो(काष्ठा ata_link *link, अचिन्हित sc_reg, u32 *val)
-अणु
-	व्योम __iomem *scr_addr = sil24_port_base(link->ap) + PORT_SCONTROL;
+static int sil24_scr_read(struct ata_link *link, unsigned sc_reg, u32 *val)
+{
+	void __iomem *scr_addr = sil24_port_base(link->ap) + PORT_SCONTROL;
 
-	अगर (sc_reg < ARRAY_SIZE(sil24_scr_map)) अणु
-		*val = पढ़ोl(scr_addr + sil24_scr_map[sc_reg] * 4);
-		वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	if (sc_reg < ARRAY_SIZE(sil24_scr_map)) {
+		*val = readl(scr_addr + sil24_scr_map[sc_reg] * 4);
+		return 0;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक sil24_scr_ग_लिखो(काष्ठा ata_link *link, अचिन्हित sc_reg, u32 val)
-अणु
-	व्योम __iomem *scr_addr = sil24_port_base(link->ap) + PORT_SCONTROL;
+static int sil24_scr_write(struct ata_link *link, unsigned sc_reg, u32 val)
+{
+	void __iomem *scr_addr = sil24_port_base(link->ap) + PORT_SCONTROL;
 
-	अगर (sc_reg < ARRAY_SIZE(sil24_scr_map)) अणु
-		ग_लिखोl(val, scr_addr + sil24_scr_map[sc_reg] * 4);
-		वापस 0;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+	if (sc_reg < ARRAY_SIZE(sil24_scr_map)) {
+		writel(val, scr_addr + sil24_scr_map[sc_reg] * 4);
+		return 0;
+	}
+	return -EINVAL;
+}
 
-अटल व्योम sil24_config_port(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port = sil24_port_base(ap);
+static void sil24_config_port(struct ata_port *ap)
+{
+	void __iomem *port = sil24_port_base(ap);
 
 	/* configure IRQ WoC */
-	अगर (ap->flags & SIL24_FLAG_PCIX_IRQ_WOC)
-		ग_लिखोl(PORT_CS_IRQ_WOC, port + PORT_CTRL_STAT);
-	अन्यथा
-		ग_लिखोl(PORT_CS_IRQ_WOC, port + PORT_CTRL_CLR);
+	if (ap->flags & SIL24_FLAG_PCIX_IRQ_WOC)
+		writel(PORT_CS_IRQ_WOC, port + PORT_CTRL_STAT);
+	else
+		writel(PORT_CS_IRQ_WOC, port + PORT_CTRL_CLR);
 
 	/* zero error counters. */
-	ग_लिखोw(0x8000, port + PORT_DECODE_ERR_THRESH);
-	ग_लिखोw(0x8000, port + PORT_CRC_ERR_THRESH);
-	ग_लिखोw(0x8000, port + PORT_HSHK_ERR_THRESH);
-	ग_लिखोw(0x0000, port + PORT_DECODE_ERR_CNT);
-	ग_लिखोw(0x0000, port + PORT_CRC_ERR_CNT);
-	ग_लिखोw(0x0000, port + PORT_HSHK_ERR_CNT);
+	writew(0x8000, port + PORT_DECODE_ERR_THRESH);
+	writew(0x8000, port + PORT_CRC_ERR_THRESH);
+	writew(0x8000, port + PORT_HSHK_ERR_THRESH);
+	writew(0x0000, port + PORT_DECODE_ERR_CNT);
+	writew(0x0000, port + PORT_CRC_ERR_CNT);
+	writew(0x0000, port + PORT_HSHK_ERR_CNT);
 
 	/* always use 64bit activation */
-	ग_लिखोl(PORT_CS_32BIT_ACTV, port + PORT_CTRL_CLR);
+	writel(PORT_CS_32BIT_ACTV, port + PORT_CTRL_CLR);
 
 	/* clear port multiplier enable and resume bits */
-	ग_लिखोl(PORT_CS_PMP_EN | PORT_CS_PMP_RESUME, port + PORT_CTRL_CLR);
-पूर्ण
+	writel(PORT_CS_PMP_EN | PORT_CS_PMP_RESUME, port + PORT_CTRL_CLR);
+}
 
-अटल व्योम sil24_config_pmp(काष्ठा ata_port *ap, पूर्णांक attached)
-अणु
-	व्योम __iomem *port = sil24_port_base(ap);
+static void sil24_config_pmp(struct ata_port *ap, int attached)
+{
+	void __iomem *port = sil24_port_base(ap);
 
-	अगर (attached)
-		ग_लिखोl(PORT_CS_PMP_EN, port + PORT_CTRL_STAT);
-	अन्यथा
-		ग_लिखोl(PORT_CS_PMP_EN, port + PORT_CTRL_CLR);
-पूर्ण
+	if (attached)
+		writel(PORT_CS_PMP_EN, port + PORT_CTRL_STAT);
+	else
+		writel(PORT_CS_PMP_EN, port + PORT_CTRL_CLR);
+}
 
-अटल व्योम sil24_clear_pmp(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port = sil24_port_base(ap);
-	पूर्णांक i;
+static void sil24_clear_pmp(struct ata_port *ap)
+{
+	void __iomem *port = sil24_port_base(ap);
+	int i;
 
-	ग_लिखोl(PORT_CS_PMP_RESUME, port + PORT_CTRL_CLR);
+	writel(PORT_CS_PMP_RESUME, port + PORT_CTRL_CLR);
 
-	क्रम (i = 0; i < SATA_PMP_MAX_PORTS; i++) अणु
-		व्योम __iomem *pmp_base = port + PORT_PMP + i * PORT_PMP_SIZE;
+	for (i = 0; i < SATA_PMP_MAX_PORTS; i++) {
+		void __iomem *pmp_base = port + PORT_PMP + i * PORT_PMP_SIZE;
 
-		ग_लिखोl(0, pmp_base + PORT_PMP_STATUS);
-		ग_लिखोl(0, pmp_base + PORT_PMP_QACTIVE);
-	पूर्ण
-पूर्ण
+		writel(0, pmp_base + PORT_PMP_STATUS);
+		writel(0, pmp_base + PORT_PMP_QACTIVE);
+	}
+}
 
-अटल पूर्णांक sil24_init_port(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port = sil24_port_base(ap);
-	काष्ठा sil24_port_priv *pp = ap->निजी_data;
-	u32 पंचांगp;
+static int sil24_init_port(struct ata_port *ap)
+{
+	void __iomem *port = sil24_port_base(ap);
+	struct sil24_port_priv *pp = ap->private_data;
+	u32 tmp;
 
 	/* clear PMP error status */
-	अगर (sata_pmp_attached(ap))
+	if (sata_pmp_attached(ap))
 		sil24_clear_pmp(ap);
 
-	ग_लिखोl(PORT_CS_INIT, port + PORT_CTRL_STAT);
-	ata_रुको_रेजिस्टर(ap, port + PORT_CTRL_STAT,
+	writel(PORT_CS_INIT, port + PORT_CTRL_STAT);
+	ata_wait_register(ap, port + PORT_CTRL_STAT,
 			  PORT_CS_INIT, PORT_CS_INIT, 10, 100);
-	पंचांगp = ata_रुको_रेजिस्टर(ap, port + PORT_CTRL_STAT,
+	tmp = ata_wait_register(ap, port + PORT_CTRL_STAT,
 				PORT_CS_RDY, 0, 10, 100);
 
-	अगर ((पंचांगp & (PORT_CS_INIT | PORT_CS_RDY)) != PORT_CS_RDY) अणु
-		pp->करो_port_rst = 1;
+	if ((tmp & (PORT_CS_INIT | PORT_CS_RDY)) != PORT_CS_RDY) {
+		pp->do_port_rst = 1;
 		ap->link.eh_context.i.action |= ATA_EH_RESET;
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sil24_exec_polled_cmd(काष्ठा ata_port *ap, पूर्णांक pmp,
-				 स्थिर काष्ठा ata_taskfile *tf,
-				 पूर्णांक is_cmd, u32 ctrl,
-				 अचिन्हित दीर्घ समयout_msec)
-अणु
-	व्योम __iomem *port = sil24_port_base(ap);
-	काष्ठा sil24_port_priv *pp = ap->निजी_data;
-	काष्ठा sil24_prb *prb = &pp->cmd_block[0].ata.prb;
+static int sil24_exec_polled_cmd(struct ata_port *ap, int pmp,
+				 const struct ata_taskfile *tf,
+				 int is_cmd, u32 ctrl,
+				 unsigned long timeout_msec)
+{
+	void __iomem *port = sil24_port_base(ap);
+	struct sil24_port_priv *pp = ap->private_data;
+	struct sil24_prb *prb = &pp->cmd_block[0].ata.prb;
 	dma_addr_t paddr = pp->cmd_block_dma;
 	u32 irq_enabled, irq_mask, irq_stat;
-	पूर्णांक rc;
+	int rc;
 
 	prb->ctrl = cpu_to_le16(ctrl);
 	ata_tf_to_fis(tf, pmp, is_cmd, prb->fis);
 
-	/* temporarily plug completion and error पूर्णांकerrupts */
-	irq_enabled = पढ़ोl(port + PORT_IRQ_ENABLE_SET);
-	ग_लिखोl(PORT_IRQ_COMPLETE | PORT_IRQ_ERROR, port + PORT_IRQ_ENABLE_CLR);
+	/* temporarily plug completion and error interrupts */
+	irq_enabled = readl(port + PORT_IRQ_ENABLE_SET);
+	writel(PORT_IRQ_COMPLETE | PORT_IRQ_ERROR, port + PORT_IRQ_ENABLE_CLR);
 
 	/*
-	 * The barrier is required to ensure that ग_लिखोs to cmd_block reach
-	 * the memory beक्रमe the ग_लिखो to PORT_CMD_ACTIVATE.
+	 * The barrier is required to ensure that writes to cmd_block reach
+	 * the memory before the write to PORT_CMD_ACTIVATE.
 	 */
 	wmb();
-	ग_लिखोl((u32)paddr, port + PORT_CMD_ACTIVATE);
-	ग_लिखोl((u64)paddr >> 32, port + PORT_CMD_ACTIVATE + 4);
+	writel((u32)paddr, port + PORT_CMD_ACTIVATE);
+	writel((u64)paddr >> 32, port + PORT_CMD_ACTIVATE + 4);
 
 	irq_mask = (PORT_IRQ_COMPLETE | PORT_IRQ_ERROR) << PORT_IRQ_RAW_SHIFT;
-	irq_stat = ata_रुको_रेजिस्टर(ap, port + PORT_IRQ_STAT, irq_mask, 0x0,
-				     10, समयout_msec);
+	irq_stat = ata_wait_register(ap, port + PORT_IRQ_STAT, irq_mask, 0x0,
+				     10, timeout_msec);
 
-	ग_लिखोl(irq_mask, port + PORT_IRQ_STAT); /* clear IRQs */
+	writel(irq_mask, port + PORT_IRQ_STAT); /* clear IRQs */
 	irq_stat >>= PORT_IRQ_RAW_SHIFT;
 
-	अगर (irq_stat & PORT_IRQ_COMPLETE)
+	if (irq_stat & PORT_IRQ_COMPLETE)
 		rc = 0;
-	अन्यथा अणु
-		/* क्रमce port पूर्णांकo known state */
+	else {
+		/* force port into known state */
 		sil24_init_port(ap);
 
-		अगर (irq_stat & PORT_IRQ_ERROR)
+		if (irq_stat & PORT_IRQ_ERROR)
 			rc = -EIO;
-		अन्यथा
+		else
 			rc = -EBUSY;
-	पूर्ण
+	}
 
 	/* restore IRQ enabled */
-	ग_लिखोl(irq_enabled, port + PORT_IRQ_ENABLE_SET);
+	writel(irq_enabled, port + PORT_IRQ_ENABLE_SET);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक sil24_softreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
-			   अचिन्हित दीर्घ deadline)
-अणु
-	काष्ठा ata_port *ap = link->ap;
-	पूर्णांक pmp = sata_srst_pmp(link);
-	अचिन्हित दीर्घ समयout_msec = 0;
-	काष्ठा ata_taskfile tf;
-	स्थिर अक्षर *reason;
-	पूर्णांक rc;
+static int sil24_softreset(struct ata_link *link, unsigned int *class,
+			   unsigned long deadline)
+{
+	struct ata_port *ap = link->ap;
+	int pmp = sata_srst_pmp(link);
+	unsigned long timeout_msec = 0;
+	struct ata_taskfile tf;
+	const char *reason;
+	int rc;
 
 	DPRINTK("ENTER\n");
 
-	/* put the port पूर्णांकo known state */
-	अगर (sil24_init_port(ap)) अणु
+	/* put the port into known state */
+	if (sil24_init_port(ap)) {
 		reason = "port not ready";
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	/* करो SRST */
-	अगर (समय_after(deadline, jअगरfies))
-		समयout_msec = jअगरfies_to_msecs(deadline - jअगरfies);
+	/* do SRST */
+	if (time_after(deadline, jiffies))
+		timeout_msec = jiffies_to_msecs(deadline - jiffies);
 
-	ata_tf_init(link->device, &tf);	/* करोesn't really matter */
+	ata_tf_init(link->device, &tf);	/* doesn't really matter */
 	rc = sil24_exec_polled_cmd(ap, pmp, &tf, 0, PRB_CTRL_SRST,
-				   समयout_msec);
-	अगर (rc == -EBUSY) अणु
+				   timeout_msec);
+	if (rc == -EBUSY) {
 		reason = "timeout";
-		जाओ err;
-	पूर्ण अन्यथा अगर (rc) अणु
+		goto err;
+	} else if (rc) {
 		reason = "SRST command error";
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	sil24_पढ़ो_tf(ap, 0, &tf);
-	*class = ata_dev_classअगरy(&tf);
+	sil24_read_tf(ap, 0, &tf);
+	*class = ata_dev_classify(&tf);
 
 	DPRINTK("EXIT, class=%u\n", *class);
-	वापस 0;
+	return 0;
 
  err:
 	ata_link_err(link, "softreset failed (%s)\n", reason);
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल पूर्णांक sil24_hardreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
-			   अचिन्हित दीर्घ deadline)
-अणु
-	काष्ठा ata_port *ap = link->ap;
-	व्योम __iomem *port = sil24_port_base(ap);
-	काष्ठा sil24_port_priv *pp = ap->निजी_data;
-	पूर्णांक did_port_rst = 0;
-	स्थिर अक्षर *reason;
-	पूर्णांक tout_msec, rc;
-	u32 पंचांगp;
+static int sil24_hardreset(struct ata_link *link, unsigned int *class,
+			   unsigned long deadline)
+{
+	struct ata_port *ap = link->ap;
+	void __iomem *port = sil24_port_base(ap);
+	struct sil24_port_priv *pp = ap->private_data;
+	int did_port_rst = 0;
+	const char *reason;
+	int tout_msec, rc;
+	u32 tmp;
 
  retry:
-	/* Someबार, DEV_RST is not enough to recover the controller.
+	/* Sometimes, DEV_RST is not enough to recover the controller.
 	 * This happens often after PM DMA CS errata.
 	 */
-	अगर (pp->करो_port_rst) अणु
+	if (pp->do_port_rst) {
 		ata_port_warn(ap,
 			      "controller in dubious state, performing PORT_RST\n");
 
-		ग_लिखोl(PORT_CS_PORT_RST, port + PORT_CTRL_STAT);
+		writel(PORT_CS_PORT_RST, port + PORT_CTRL_STAT);
 		ata_msleep(ap, 10);
-		ग_लिखोl(PORT_CS_PORT_RST, port + PORT_CTRL_CLR);
-		ata_रुको_रेजिस्टर(ap, port + PORT_CTRL_STAT, PORT_CS_RDY, 0,
+		writel(PORT_CS_PORT_RST, port + PORT_CTRL_CLR);
+		ata_wait_register(ap, port + PORT_CTRL_STAT, PORT_CS_RDY, 0,
 				  10, 5000);
 
 		/* restore port configuration */
 		sil24_config_port(ap);
 		sil24_config_pmp(ap, ap->nr_pmp_links);
 
-		pp->करो_port_rst = 0;
+		pp->do_port_rst = 0;
 		did_port_rst = 1;
-	पूर्ण
+	}
 
-	/* sil24 करोes the right thing(पंचांग) without any protection */
+	/* sil24 does the right thing(tm) without any protection */
 	sata_set_spd(link);
 
 	tout_msec = 100;
-	अगर (ata_link_online(link))
+	if (ata_link_online(link))
 		tout_msec = 5000;
 
-	ग_लिखोl(PORT_CS_DEV_RST, port + PORT_CTRL_STAT);
-	पंचांगp = ata_रुको_रेजिस्टर(ap, port + PORT_CTRL_STAT,
+	writel(PORT_CS_DEV_RST, port + PORT_CTRL_STAT);
+	tmp = ata_wait_register(ap, port + PORT_CTRL_STAT,
 				PORT_CS_DEV_RST, PORT_CS_DEV_RST, 10,
 				tout_msec);
 
 	/* SStatus oscillates between zero and valid status after
 	 * DEV_RST, debounce it.
 	 */
-	rc = sata_link_debounce(link, sata_deb_timing_दीर्घ, deadline);
-	अगर (rc) अणु
+	rc = sata_link_debounce(link, sata_deb_timing_long, deadline);
+	if (rc) {
 		reason = "PHY debouncing failed";
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (पंचांगp & PORT_CS_DEV_RST) अणु
-		अगर (ata_link_offline(link))
-			वापस 0;
+	if (tmp & PORT_CS_DEV_RST) {
+		if (ata_link_offline(link))
+			return 0;
 		reason = "link not ready";
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	/* Sil24 करोesn't store signature FIS after hardreset, so we
-	 * can't रुको क्रम BSY to clear.  Some devices take a दीर्घ समय
-	 * to get पढ़ोy and those devices will choke अगर we करोn't रुको
-	 * क्रम BSY clearance here.  Tell libata to perक्रमm follow-up
+	/* Sil24 doesn't store signature FIS after hardreset, so we
+	 * can't wait for BSY to clear.  Some devices take a long time
+	 * to get ready and those devices will choke if we don't wait
+	 * for BSY clearance here.  Tell libata to perform follow-up
 	 * softreset.
 	 */
-	वापस -EAGAIN;
+	return -EAGAIN;
 
  err:
-	अगर (!did_port_rst) अणु
-		pp->करो_port_rst = 1;
-		जाओ retry;
-	पूर्ण
+	if (!did_port_rst) {
+		pp->do_port_rst = 1;
+		goto retry;
+	}
 
 	ata_link_err(link, "hardreset failed (%s)\n", reason);
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-अटल अंतरभूत व्योम sil24_fill_sg(काष्ठा ata_queued_cmd *qc,
-				 काष्ठा sil24_sge *sge)
-अणु
-	काष्ठा scatterlist *sg;
-	काष्ठा sil24_sge *last_sge = शून्य;
-	अचिन्हित पूर्णांक si;
+static inline void sil24_fill_sg(struct ata_queued_cmd *qc,
+				 struct sil24_sge *sge)
+{
+	struct scatterlist *sg;
+	struct sil24_sge *last_sge = NULL;
+	unsigned int si;
 
-	क्रम_each_sg(qc->sg, sg, qc->n_elem, si) अणु
+	for_each_sg(qc->sg, sg, qc->n_elem, si) {
 		sge->addr = cpu_to_le64(sg_dma_address(sg));
 		sge->cnt = cpu_to_le32(sg_dma_len(sg));
 		sge->flags = 0;
 
 		last_sge = sge;
 		sge++;
-	पूर्ण
+	}
 
 	last_sge->flags = cpu_to_le32(SGE_TRM);
-पूर्ण
+}
 
-अटल पूर्णांक sil24_qc_defer(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा ata_link *link = qc->dev->link;
-	काष्ठा ata_port *ap = link->ap;
+static int sil24_qc_defer(struct ata_queued_cmd *qc)
+{
+	struct ata_link *link = qc->dev->link;
+	struct ata_port *ap = link->ap;
 	u8 prot = qc->tf.protocol;
 
 	/*
 	 * There is a bug in the chip:
 	 * Port LRAM Causes the PRB/SGT Data to be Corrupted
-	 * If the host issues a पढ़ो request क्रम LRAM and SActive रेजिस्टरs
-	 * जबतक active commands are available in the port, PRB/SGT data in
+	 * If the host issues a read request for LRAM and SActive registers
+	 * while active commands are available in the port, PRB/SGT data in
 	 * the LRAM can become corrupted. This issue applies only when
-	 * पढ़ोing from, but not writing to, the LRAM.
+	 * reading from, but not writing to, the LRAM.
 	 *
-	 * Thereक्रमe, पढ़ोing LRAM when there is no particular error [and
+	 * Therefore, reading LRAM when there is no particular error [and
 	 * other commands may be outstanding] is prohibited.
 	 *
-	 * To aव्योम this bug there are two situations where a command must run
+	 * To avoid this bug there are two situations where a command must run
 	 * exclusive of any other commands on the port:
 	 *
 	 * - ATAPI commands which check the sense data
@@ -811,176 +810,176 @@ MODULE_PARM_DESC(msi, "Enable MSI (Default: false)");
 	 *   set.
 	 *
  	 */
-	पूर्णांक is_excl = (ata_is_atapi(prot) ||
+	int is_excl = (ata_is_atapi(prot) ||
 		       (qc->flags & ATA_QCFLAG_RESULT_TF));
 
-	अगर (unlikely(ap->excl_link)) अणु
-		अगर (link == ap->excl_link) अणु
-			अगर (ap->nr_active_links)
-				वापस ATA_DEFER_PORT;
+	if (unlikely(ap->excl_link)) {
+		if (link == ap->excl_link) {
+			if (ap->nr_active_links)
+				return ATA_DEFER_PORT;
 			qc->flags |= ATA_QCFLAG_CLEAR_EXCL;
-		पूर्ण अन्यथा
-			वापस ATA_DEFER_PORT;
-	पूर्ण अन्यथा अगर (unlikely(is_excl)) अणु
+		} else
+			return ATA_DEFER_PORT;
+	} else if (unlikely(is_excl)) {
 		ap->excl_link = link;
-		अगर (ap->nr_active_links)
-			वापस ATA_DEFER_PORT;
+		if (ap->nr_active_links)
+			return ATA_DEFER_PORT;
 		qc->flags |= ATA_QCFLAG_CLEAR_EXCL;
-	पूर्ण
+	}
 
-	वापस ata_std_qc_defer(qc);
-पूर्ण
+	return ata_std_qc_defer(qc);
+}
 
-अटल क्रमागत ata_completion_errors sil24_qc_prep(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा ata_port *ap = qc->ap;
-	काष्ठा sil24_port_priv *pp = ap->निजी_data;
-	जोड़ sil24_cmd_block *cb;
-	काष्ठा sil24_prb *prb;
-	काष्ठा sil24_sge *sge;
+static enum ata_completion_errors sil24_qc_prep(struct ata_queued_cmd *qc)
+{
+	struct ata_port *ap = qc->ap;
+	struct sil24_port_priv *pp = ap->private_data;
+	union sil24_cmd_block *cb;
+	struct sil24_prb *prb;
+	struct sil24_sge *sge;
 	u16 ctrl = 0;
 
 	cb = &pp->cmd_block[sil24_tag(qc->hw_tag)];
 
-	अगर (!ata_is_atapi(qc->tf.protocol)) अणु
+	if (!ata_is_atapi(qc->tf.protocol)) {
 		prb = &cb->ata.prb;
 		sge = cb->ata.sge;
-		अगर (ata_is_data(qc->tf.protocol)) अणु
+		if (ata_is_data(qc->tf.protocol)) {
 			u16 prot = 0;
 			ctrl = PRB_CTRL_PROTOCOL;
-			अगर (ata_is_ncq(qc->tf.protocol))
+			if (ata_is_ncq(qc->tf.protocol))
 				prot |= PRB_PROT_NCQ;
-			अगर (qc->tf.flags & ATA_TFLAG_WRITE)
+			if (qc->tf.flags & ATA_TFLAG_WRITE)
 				prot |= PRB_PROT_WRITE;
-			अन्यथा
+			else
 				prot |= PRB_PROT_READ;
 			prb->prot = cpu_to_le16(prot);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		prb = &cb->atapi.prb;
 		sge = cb->atapi.sge;
-		स_रखो(cb->atapi.cdb, 0, माप(cb->atapi.cdb));
-		स_नकल(cb->atapi.cdb, qc->cdb, qc->dev->cdb_len);
+		memset(cb->atapi.cdb, 0, sizeof(cb->atapi.cdb));
+		memcpy(cb->atapi.cdb, qc->cdb, qc->dev->cdb_len);
 
-		अगर (ata_is_data(qc->tf.protocol)) अणु
-			अगर (qc->tf.flags & ATA_TFLAG_WRITE)
+		if (ata_is_data(qc->tf.protocol)) {
+			if (qc->tf.flags & ATA_TFLAG_WRITE)
 				ctrl = PRB_CTRL_PACKET_WRITE;
-			अन्यथा
+			else
 				ctrl = PRB_CTRL_PACKET_READ;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	prb->ctrl = cpu_to_le16(ctrl);
 	ata_tf_to_fis(&qc->tf, qc->dev->link->pmp, 1, prb->fis);
 
-	अगर (qc->flags & ATA_QCFLAG_DMAMAP)
+	if (qc->flags & ATA_QCFLAG_DMAMAP)
 		sil24_fill_sg(qc, sge);
 
-	वापस AC_ERR_OK;
-पूर्ण
+	return AC_ERR_OK;
+}
 
-अटल अचिन्हित पूर्णांक sil24_qc_issue(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा ata_port *ap = qc->ap;
-	काष्ठा sil24_port_priv *pp = ap->निजी_data;
-	व्योम __iomem *port = sil24_port_base(ap);
-	अचिन्हित पूर्णांक tag = sil24_tag(qc->hw_tag);
+static unsigned int sil24_qc_issue(struct ata_queued_cmd *qc)
+{
+	struct ata_port *ap = qc->ap;
+	struct sil24_port_priv *pp = ap->private_data;
+	void __iomem *port = sil24_port_base(ap);
+	unsigned int tag = sil24_tag(qc->hw_tag);
 	dma_addr_t paddr;
-	व्योम __iomem *activate;
+	void __iomem *activate;
 
-	paddr = pp->cmd_block_dma + tag * माप(*pp->cmd_block);
+	paddr = pp->cmd_block_dma + tag * sizeof(*pp->cmd_block);
 	activate = port + PORT_CMD_ACTIVATE + tag * 8;
 
 	/*
-	 * The barrier is required to ensure that ग_लिखोs to cmd_block reach
-	 * the memory beक्रमe the ग_लिखो to PORT_CMD_ACTIVATE.
+	 * The barrier is required to ensure that writes to cmd_block reach
+	 * the memory before the write to PORT_CMD_ACTIVATE.
 	 */
 	wmb();
-	ग_लिखोl((u32)paddr, activate);
-	ग_लिखोl((u64)paddr >> 32, activate + 4);
+	writel((u32)paddr, activate);
+	writel((u64)paddr >> 32, activate + 4);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool sil24_qc_fill_rtf(काष्ठा ata_queued_cmd *qc)
-अणु
-	sil24_पढ़ो_tf(qc->ap, qc->hw_tag, &qc->result_tf);
-	वापस true;
-पूर्ण
+static bool sil24_qc_fill_rtf(struct ata_queued_cmd *qc)
+{
+	sil24_read_tf(qc->ap, qc->hw_tag, &qc->result_tf);
+	return true;
+}
 
-अटल व्योम sil24_pmp_attach(काष्ठा ata_port *ap)
-अणु
+static void sil24_pmp_attach(struct ata_port *ap)
+{
 	u32 *gscr = ap->link.device->gscr;
 
 	sil24_config_pmp(ap, 1);
 	sil24_init_port(ap);
 
-	अगर (sata_pmp_gscr_venकरोr(gscr) == 0x11ab &&
-	    sata_pmp_gscr_devid(gscr) == 0x4140) अणु
+	if (sata_pmp_gscr_vendor(gscr) == 0x11ab &&
+	    sata_pmp_gscr_devid(gscr) == 0x4140) {
 		ata_port_info(ap,
 			"disabling NCQ support due to sil24-mv4140 quirk\n");
 		ap->flags &= ~ATA_FLAG_NCQ;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम sil24_pmp_detach(काष्ठा ata_port *ap)
-अणु
+static void sil24_pmp_detach(struct ata_port *ap)
+{
 	sil24_init_port(ap);
 	sil24_config_pmp(ap, 0);
 
 	ap->flags |= ATA_FLAG_NCQ;
-पूर्ण
+}
 
-अटल पूर्णांक sil24_pmp_hardreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
-			       अचिन्हित दीर्घ deadline)
-अणु
-	पूर्णांक rc;
+static int sil24_pmp_hardreset(struct ata_link *link, unsigned int *class,
+			       unsigned long deadline)
+{
+	int rc;
 
 	rc = sil24_init_port(link->ap);
-	अगर (rc) अणु
+	if (rc) {
 		ata_link_err(link, "hardreset failed (port not ready)\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	वापस sata_std_hardreset(link, class, deadline);
-पूर्ण
+	return sata_std_hardreset(link, class, deadline);
+}
 
-अटल व्योम sil24_मुक्तze(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port = sil24_port_base(ap);
+static void sil24_freeze(struct ata_port *ap)
+{
+	void __iomem *port = sil24_port_base(ap);
 
-	/* Port-wide IRQ mask in HOST_CTRL करोesn't really work, clear
+	/* Port-wide IRQ mask in HOST_CTRL doesn't really work, clear
 	 * PORT_IRQ_ENABLE instead.
 	 */
-	ग_लिखोl(0xffff, port + PORT_IRQ_ENABLE_CLR);
-पूर्ण
+	writel(0xffff, port + PORT_IRQ_ENABLE_CLR);
+}
 
-अटल व्योम sil24_thaw(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port = sil24_port_base(ap);
-	u32 पंचांगp;
+static void sil24_thaw(struct ata_port *ap)
+{
+	void __iomem *port = sil24_port_base(ap);
+	u32 tmp;
 
 	/* clear IRQ */
-	पंचांगp = पढ़ोl(port + PORT_IRQ_STAT);
-	ग_लिखोl(पंचांगp, port + PORT_IRQ_STAT);
+	tmp = readl(port + PORT_IRQ_STAT);
+	writel(tmp, port + PORT_IRQ_STAT);
 
 	/* turn IRQ back on */
-	ग_लिखोl(DEF_PORT_IRQ, port + PORT_IRQ_ENABLE_SET);
-पूर्ण
+	writel(DEF_PORT_IRQ, port + PORT_IRQ_ENABLE_SET);
+}
 
-अटल व्योम sil24_error_पूर्णांकr(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port = sil24_port_base(ap);
-	काष्ठा sil24_port_priv *pp = ap->निजी_data;
-	काष्ठा ata_queued_cmd *qc = शून्य;
-	काष्ठा ata_link *link;
-	काष्ठा ata_eh_info *ehi;
-	पूर्णांक पात = 0, मुक्तze = 0;
+static void sil24_error_intr(struct ata_port *ap)
+{
+	void __iomem *port = sil24_port_base(ap);
+	struct sil24_port_priv *pp = ap->private_data;
+	struct ata_queued_cmd *qc = NULL;
+	struct ata_link *link;
+	struct ata_eh_info *ehi;
+	int abort = 0, freeze = 0;
 	u32 irq_stat;
 
 	/* on error, we need to clear IRQ explicitly */
-	irq_stat = पढ़ोl(port + PORT_IRQ_STAT);
-	ग_लिखोl(irq_stat, port + PORT_IRQ_STAT);
+	irq_stat = readl(port + PORT_IRQ_STAT);
+	writel(irq_stat, port + PORT_IRQ_STAT);
 
 	/* first, analyze and record host port events */
 	link = &ap->link;
@@ -989,54 +988,54 @@ MODULE_PARM_DESC(msi, "Enable MSI (Default: false)");
 
 	ata_ehi_push_desc(ehi, "irq_stat 0x%08x", irq_stat);
 
-	अगर (irq_stat & PORT_IRQ_SDB_NOTIFY) अणु
+	if (irq_stat & PORT_IRQ_SDB_NOTIFY) {
 		ata_ehi_push_desc(ehi, "SDB notify");
-		sata_async_notअगरication(ap);
-	पूर्ण
+		sata_async_notification(ap);
+	}
 
-	अगर (irq_stat & (PORT_IRQ_PHYRDY_CHG | PORT_IRQ_DEV_XCHG)) अणु
+	if (irq_stat & (PORT_IRQ_PHYRDY_CHG | PORT_IRQ_DEV_XCHG)) {
 		ata_ehi_hotplugged(ehi);
 		ata_ehi_push_desc(ehi, "%s",
 				  irq_stat & PORT_IRQ_PHYRDY_CHG ?
 				  "PHY RDY changed" : "device exchanged");
-		मुक्तze = 1;
-	पूर्ण
+		freeze = 1;
+	}
 
-	अगर (irq_stat & PORT_IRQ_UNK_FIS) अणु
+	if (irq_stat & PORT_IRQ_UNK_FIS) {
 		ehi->err_mask |= AC_ERR_HSM;
 		ehi->action |= ATA_EH_RESET;
 		ata_ehi_push_desc(ehi, "unknown FIS");
-		मुक्तze = 1;
-	पूर्ण
+		freeze = 1;
+	}
 
 	/* deal with command error */
-	अगर (irq_stat & PORT_IRQ_ERROR) अणु
-		स्थिर काष्ठा sil24_cerr_info *ci = शून्य;
-		अचिन्हित पूर्णांक err_mask = 0, action = 0;
+	if (irq_stat & PORT_IRQ_ERROR) {
+		const struct sil24_cerr_info *ci = NULL;
+		unsigned int err_mask = 0, action = 0;
 		u32 context, cerr;
-		पूर्णांक pmp;
+		int pmp;
 
-		पात = 1;
+		abort = 1;
 
 		/* DMA Context Switch Failure in Port Multiplier Mode
 		 * errata.  If we have active commands to 3 or more
 		 * devices, any error condition on active devices can
-		 * corrupt DMA context चयनing.
+		 * corrupt DMA context switching.
 		 */
-		अगर (ap->nr_active_links >= 3) अणु
+		if (ap->nr_active_links >= 3) {
 			ehi->err_mask |= AC_ERR_OTHER;
 			ehi->action |= ATA_EH_RESET;
 			ata_ehi_push_desc(ehi, "PMP DMA CS errata");
-			pp->करो_port_rst = 1;
-			मुक्तze = 1;
-		पूर्ण
+			pp->do_port_rst = 1;
+			freeze = 1;
+		}
 
 		/* find out the offending link and qc */
-		अगर (sata_pmp_attached(ap)) अणु
-			context = पढ़ोl(port + PORT_CONTEXT);
+		if (sata_pmp_attached(ap)) {
+			context = readl(port + PORT_CONTEXT);
 			pmp = (context >> 5) & 0xf;
 
-			अगर (pmp < ap->nr_pmp_links) अणु
+			if (pmp < ap->nr_pmp_links) {
 				link = &ap->pmp_link[pmp];
 				ehi = &link->eh_info;
 				qc = ata_qc_from_tag(ap, link->active_tag);
@@ -1044,318 +1043,318 @@ MODULE_PARM_DESC(msi, "Enable MSI (Default: false)");
 				ata_ehi_clear_desc(ehi);
 				ata_ehi_push_desc(ehi, "irq_stat 0x%08x",
 						  irq_stat);
-			पूर्ण अन्यथा अणु
+			} else {
 				err_mask |= AC_ERR_HSM;
 				action |= ATA_EH_RESET;
-				मुक्तze = 1;
-			पूर्ण
-		पूर्ण अन्यथा
+				freeze = 1;
+			}
+		} else
 			qc = ata_qc_from_tag(ap, link->active_tag);
 
 		/* analyze CMD_ERR */
-		cerr = पढ़ोl(port + PORT_CMD_ERR);
-		अगर (cerr < ARRAY_SIZE(sil24_cerr_db))
+		cerr = readl(port + PORT_CMD_ERR);
+		if (cerr < ARRAY_SIZE(sil24_cerr_db))
 			ci = &sil24_cerr_db[cerr];
 
-		अगर (ci && ci->desc) अणु
+		if (ci && ci->desc) {
 			err_mask |= ci->err_mask;
 			action |= ci->action;
-			अगर (action & ATA_EH_RESET)
-				मुक्तze = 1;
+			if (action & ATA_EH_RESET)
+				freeze = 1;
 			ata_ehi_push_desc(ehi, "%s", ci->desc);
-		पूर्ण अन्यथा अणु
+		} else {
 			err_mask |= AC_ERR_OTHER;
 			action |= ATA_EH_RESET;
-			मुक्तze = 1;
+			freeze = 1;
 			ata_ehi_push_desc(ehi, "unknown command error %d",
 					  cerr);
-		पूर्ण
+		}
 
 		/* record error info */
-		अगर (qc)
+		if (qc)
 			qc->err_mask |= err_mask;
-		अन्यथा
+		else
 			ehi->err_mask |= err_mask;
 
 		ehi->action |= action;
 
-		/* अगर PMP, resume */
-		अगर (sata_pmp_attached(ap))
-			ग_लिखोl(PORT_CS_PMP_RESUME, port + PORT_CTRL_STAT);
-	पूर्ण
+		/* if PMP, resume */
+		if (sata_pmp_attached(ap))
+			writel(PORT_CS_PMP_RESUME, port + PORT_CTRL_STAT);
+	}
 
-	/* मुक्तze or पात */
-	अगर (मुक्तze)
-		ata_port_मुक्तze(ap);
-	अन्यथा अगर (पात) अणु
-		अगर (qc)
-			ata_link_पात(qc->dev->link);
-		अन्यथा
-			ata_port_पात(ap);
-	पूर्ण
-पूर्ण
+	/* freeze or abort */
+	if (freeze)
+		ata_port_freeze(ap);
+	else if (abort) {
+		if (qc)
+			ata_link_abort(qc->dev->link);
+		else
+			ata_port_abort(ap);
+	}
+}
 
-अटल अंतरभूत व्योम sil24_host_पूर्णांकr(काष्ठा ata_port *ap)
-अणु
-	व्योम __iomem *port = sil24_port_base(ap);
+static inline void sil24_host_intr(struct ata_port *ap)
+{
+	void __iomem *port = sil24_port_base(ap);
 	u32 slot_stat, qc_active;
-	पूर्णांक rc;
+	int rc;
 
-	/* If PCIX_IRQ_WOC, there's an inherent race winकरोw between
-	 * clearing IRQ pending status and पढ़ोing PORT_SLOT_STAT
-	 * which may cause spurious पूर्णांकerrupts afterwards.  This is
-	 * unaव्योमable and much better than losing पूर्णांकerrupts which
-	 * happens अगर IRQ pending is cleared after पढ़ोing
+	/* If PCIX_IRQ_WOC, there's an inherent race window between
+	 * clearing IRQ pending status and reading PORT_SLOT_STAT
+	 * which may cause spurious interrupts afterwards.  This is
+	 * unavoidable and much better than losing interrupts which
+	 * happens if IRQ pending is cleared after reading
 	 * PORT_SLOT_STAT.
 	 */
-	अगर (ap->flags & SIL24_FLAG_PCIX_IRQ_WOC)
-		ग_लिखोl(PORT_IRQ_COMPLETE, port + PORT_IRQ_STAT);
+	if (ap->flags & SIL24_FLAG_PCIX_IRQ_WOC)
+		writel(PORT_IRQ_COMPLETE, port + PORT_IRQ_STAT);
 
-	slot_stat = पढ़ोl(port + PORT_SLOT_STAT);
+	slot_stat = readl(port + PORT_SLOT_STAT);
 
-	अगर (unlikely(slot_stat & HOST_SSTAT_ATTN)) अणु
-		sil24_error_पूर्णांकr(ap);
-		वापस;
-	पूर्ण
+	if (unlikely(slot_stat & HOST_SSTAT_ATTN)) {
+		sil24_error_intr(ap);
+		return;
+	}
 
 	qc_active = slot_stat & ~HOST_SSTAT_ATTN;
 	rc = ata_qc_complete_multiple(ap, qc_active);
-	अगर (rc > 0)
-		वापस;
-	अगर (rc < 0) अणु
-		काष्ठा ata_eh_info *ehi = &ap->link.eh_info;
+	if (rc > 0)
+		return;
+	if (rc < 0) {
+		struct ata_eh_info *ehi = &ap->link.eh_info;
 		ehi->err_mask |= AC_ERR_HSM;
 		ehi->action |= ATA_EH_RESET;
-		ata_port_मुक्तze(ap);
-		वापस;
-	पूर्ण
+		ata_port_freeze(ap);
+		return;
+	}
 
-	/* spurious पूर्णांकerrupts are expected अगर PCIX_IRQ_WOC */
-	अगर (!(ap->flags & SIL24_FLAG_PCIX_IRQ_WOC) && ata_ratelimit())
+	/* spurious interrupts are expected if PCIX_IRQ_WOC */
+	if (!(ap->flags & SIL24_FLAG_PCIX_IRQ_WOC) && ata_ratelimit())
 		ata_port_info(ap,
 			"spurious interrupt (slot_stat 0x%x active_tag %d sactive 0x%x)\n",
 			slot_stat, ap->link.active_tag, ap->link.sactive);
-पूर्ण
+}
 
-अटल irqवापस_t sil24_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_instance)
-अणु
-	काष्ठा ata_host *host = dev_instance;
-	व्योम __iomem *host_base = host->iomap[SIL24_HOST_BAR];
-	अचिन्हित handled = 0;
+static irqreturn_t sil24_interrupt(int irq, void *dev_instance)
+{
+	struct ata_host *host = dev_instance;
+	void __iomem *host_base = host->iomap[SIL24_HOST_BAR];
+	unsigned handled = 0;
 	u32 status;
-	पूर्णांक i;
+	int i;
 
-	status = पढ़ोl(host_base + HOST_IRQ_STAT);
+	status = readl(host_base + HOST_IRQ_STAT);
 
-	अगर (status == 0xffffffff) अणु
+	if (status == 0xffffffff) {
 		dev_err(host->dev, "IRQ status == 0xffffffff, "
 			"PCI fault or device removal?\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!(status & IRQ_STAT_4PORTS))
-		जाओ out;
+	if (!(status & IRQ_STAT_4PORTS))
+		goto out;
 
 	spin_lock(&host->lock);
 
-	क्रम (i = 0; i < host->n_ports; i++)
-		अगर (status & (1 << i)) अणु
-			sil24_host_पूर्णांकr(host->ports[i]);
+	for (i = 0; i < host->n_ports; i++)
+		if (status & (1 << i)) {
+			sil24_host_intr(host->ports[i]);
 			handled++;
-		पूर्ण
+		}
 
 	spin_unlock(&host->lock);
  out:
-	वापस IRQ_RETVAL(handled);
-पूर्ण
+	return IRQ_RETVAL(handled);
+}
 
-अटल व्योम sil24_error_handler(काष्ठा ata_port *ap)
-अणु
-	काष्ठा sil24_port_priv *pp = ap->निजी_data;
+static void sil24_error_handler(struct ata_port *ap)
+{
+	struct sil24_port_priv *pp = ap->private_data;
 
-	अगर (sil24_init_port(ap))
-		ata_eh_मुक्तze_port(ap);
+	if (sil24_init_port(ap))
+		ata_eh_freeze_port(ap);
 
 	sata_pmp_error_handler(ap);
 
-	pp->करो_port_rst = 0;
-पूर्ण
+	pp->do_port_rst = 0;
+}
 
-अटल व्योम sil24_post_पूर्णांकernal_cmd(काष्ठा ata_queued_cmd *qc)
-अणु
-	काष्ठा ata_port *ap = qc->ap;
+static void sil24_post_internal_cmd(struct ata_queued_cmd *qc)
+{
+	struct ata_port *ap = qc->ap;
 
-	/* make DMA engine क्रमget about the failed command */
-	अगर ((qc->flags & ATA_QCFLAG_FAILED) && sil24_init_port(ap))
-		ata_eh_मुक्तze_port(ap);
-पूर्ण
+	/* make DMA engine forget about the failed command */
+	if ((qc->flags & ATA_QCFLAG_FAILED) && sil24_init_port(ap))
+		ata_eh_freeze_port(ap);
+}
 
-अटल पूर्णांक sil24_port_start(काष्ठा ata_port *ap)
-अणु
-	काष्ठा device *dev = ap->host->dev;
-	काष्ठा sil24_port_priv *pp;
-	जोड़ sil24_cmd_block *cb;
-	माप_प्रकार cb_size = माप(*cb) * SIL24_MAX_CMDS;
+static int sil24_port_start(struct ata_port *ap)
+{
+	struct device *dev = ap->host->dev;
+	struct sil24_port_priv *pp;
+	union sil24_cmd_block *cb;
+	size_t cb_size = sizeof(*cb) * SIL24_MAX_CMDS;
 	dma_addr_t cb_dma;
 
-	pp = devm_kzalloc(dev, माप(*pp), GFP_KERNEL);
-	अगर (!pp)
-		वापस -ENOMEM;
+	pp = devm_kzalloc(dev, sizeof(*pp), GFP_KERNEL);
+	if (!pp)
+		return -ENOMEM;
 
 	cb = dmam_alloc_coherent(dev, cb_size, &cb_dma, GFP_KERNEL);
-	अगर (!cb)
-		वापस -ENOMEM;
+	if (!cb)
+		return -ENOMEM;
 
 	pp->cmd_block = cb;
 	pp->cmd_block_dma = cb_dma;
 
-	ap->निजी_data = pp;
+	ap->private_data = pp;
 
 	ata_port_pbar_desc(ap, SIL24_HOST_BAR, -1, "host");
 	ata_port_pbar_desc(ap, SIL24_PORT_BAR, sil24_port_offset(ap), "port");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sil24_init_controller(काष्ठा ata_host *host)
-अणु
-	व्योम __iomem *host_base = host->iomap[SIL24_HOST_BAR];
-	u32 पंचांगp;
-	पूर्णांक i;
+static void sil24_init_controller(struct ata_host *host)
+{
+	void __iomem *host_base = host->iomap[SIL24_HOST_BAR];
+	u32 tmp;
+	int i;
 
 	/* GPIO off */
-	ग_लिखोl(0, host_base + HOST_FLASH_CMD);
+	writel(0, host_base + HOST_FLASH_CMD);
 
-	/* clear global reset & mask पूर्णांकerrupts during initialization */
-	ग_लिखोl(0, host_base + HOST_CTRL);
+	/* clear global reset & mask interrupts during initialization */
+	writel(0, host_base + HOST_CTRL);
 
 	/* init ports */
-	क्रम (i = 0; i < host->n_ports; i++) अणु
-		काष्ठा ata_port *ap = host->ports[i];
-		व्योम __iomem *port = sil24_port_base(ap);
+	for (i = 0; i < host->n_ports; i++) {
+		struct ata_port *ap = host->ports[i];
+		void __iomem *port = sil24_port_base(ap);
 
 
 		/* Initial PHY setting */
-		ग_लिखोl(0x20c, port + PORT_PHY_CFG);
+		writel(0x20c, port + PORT_PHY_CFG);
 
 		/* Clear port RST */
-		पंचांगp = पढ़ोl(port + PORT_CTRL_STAT);
-		अगर (पंचांगp & PORT_CS_PORT_RST) अणु
-			ग_लिखोl(PORT_CS_PORT_RST, port + PORT_CTRL_CLR);
-			पंचांगp = ata_रुको_रेजिस्टर(शून्य, port + PORT_CTRL_STAT,
+		tmp = readl(port + PORT_CTRL_STAT);
+		if (tmp & PORT_CS_PORT_RST) {
+			writel(PORT_CS_PORT_RST, port + PORT_CTRL_CLR);
+			tmp = ata_wait_register(NULL, port + PORT_CTRL_STAT,
 						PORT_CS_PORT_RST,
 						PORT_CS_PORT_RST, 10, 100);
-			अगर (पंचांगp & PORT_CS_PORT_RST)
+			if (tmp & PORT_CS_PORT_RST)
 				dev_err(host->dev,
 					"failed to clear port RST\n");
-		पूर्ण
+		}
 
 		/* configure port */
 		sil24_config_port(ap);
-	पूर्ण
+	}
 
-	/* Turn on पूर्णांकerrupts */
-	ग_लिखोl(IRQ_STAT_4PORTS, host_base + HOST_CTRL);
-पूर्ण
+	/* Turn on interrupts */
+	writel(IRQ_STAT_4PORTS, host_base + HOST_CTRL);
+}
 
-अटल पूर्णांक sil24_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
-अणु
-	बाह्य पूर्णांक __MARKER__sil24_cmd_block_is_sized_wrongly;
-	काष्ठा ata_port_info pi = sil24_port_info[ent->driver_data];
-	स्थिर काष्ठा ata_port_info *ppi[] = अणु &pi, शून्य पूर्ण;
-	व्योम __iomem * स्थिर *iomap;
-	काष्ठा ata_host *host;
-	पूर्णांक rc;
-	u32 पंचांगp;
+static int sil24_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
+{
+	extern int __MARKER__sil24_cmd_block_is_sized_wrongly;
+	struct ata_port_info pi = sil24_port_info[ent->driver_data];
+	const struct ata_port_info *ppi[] = { &pi, NULL };
+	void __iomem * const *iomap;
+	struct ata_host *host;
+	int rc;
+	u32 tmp;
 
-	/* cause link error अगर sil24_cmd_block is sized wrongly */
-	अगर (माप(जोड़ sil24_cmd_block) != PAGE_SIZE)
+	/* cause link error if sil24_cmd_block is sized wrongly */
+	if (sizeof(union sil24_cmd_block) != PAGE_SIZE)
 		__MARKER__sil24_cmd_block_is_sized_wrongly = 1;
 
-	ata_prपूर्णांक_version_once(&pdev->dev, DRV_VERSION);
+	ata_print_version_once(&pdev->dev, DRV_VERSION);
 
 	/* acquire resources */
 	rc = pcim_enable_device(pdev);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	rc = pcim_iomap_regions(pdev,
 				(1 << SIL24_HOST_BAR) | (1 << SIL24_PORT_BAR),
 				DRV_NAME);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 	iomap = pcim_iomap_table(pdev);
 
-	/* apply workaround क्रम completion IRQ loss on PCI-X errata */
-	अगर (pi.flags & SIL24_FLAG_PCIX_IRQ_WOC) अणु
-		पंचांगp = पढ़ोl(iomap[SIL24_HOST_BAR] + HOST_CTRL);
-		अगर (पंचांगp & (HOST_CTRL_TRDY | HOST_CTRL_STOP | HOST_CTRL_DEVSEL))
+	/* apply workaround for completion IRQ loss on PCI-X errata */
+	if (pi.flags & SIL24_FLAG_PCIX_IRQ_WOC) {
+		tmp = readl(iomap[SIL24_HOST_BAR] + HOST_CTRL);
+		if (tmp & (HOST_CTRL_TRDY | HOST_CTRL_STOP | HOST_CTRL_DEVSEL))
 			dev_info(&pdev->dev,
 				 "Applying completion IRQ loss on PCI-X errata fix\n");
-		अन्यथा
+		else
 			pi.flags &= ~SIL24_FLAG_PCIX_IRQ_WOC;
-	पूर्ण
+	}
 
 	/* allocate and fill host */
 	host = ata_host_alloc_pinfo(&pdev->dev, ppi,
 				    SIL24_FLAG2NPORTS(ppi[0]->flags));
-	अगर (!host)
-		वापस -ENOMEM;
+	if (!host)
+		return -ENOMEM;
 	host->iomap = iomap;
 
 	/* configure and activate the device */
 	rc = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
-	अगर (rc) अणु
+	if (rc) {
 		dev_err(&pdev->dev, "DMA enable failed\n");
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
-	/* Set max पढ़ो request size to 4096.  This slightly increases
-	 * ग_लिखो throughput क्रम pci-e variants.
+	/* Set max read request size to 4096.  This slightly increases
+	 * write throughput for pci-e variants.
 	 */
-	pcie_set_पढ़ोrq(pdev, 4096);
+	pcie_set_readrq(pdev, 4096);
 
 	sil24_init_controller(host);
 
-	अगर (sata_sil24_msi && !pci_enable_msi(pdev)) अणु
+	if (sata_sil24_msi && !pci_enable_msi(pdev)) {
 		dev_info(&pdev->dev, "Using MSI\n");
-		pci_पूर्णांकx(pdev, 0);
-	पूर्ण
+		pci_intx(pdev, 0);
+	}
 
 	pci_set_master(pdev);
-	वापस ata_host_activate(host, pdev->irq, sil24_पूर्णांकerrupt, IRQF_SHARED,
+	return ata_host_activate(host, pdev->irq, sil24_interrupt, IRQF_SHARED,
 				 &sil24_sht);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक sil24_pci_device_resume(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा ata_host *host = pci_get_drvdata(pdev);
-	व्योम __iomem *host_base = host->iomap[SIL24_HOST_BAR];
-	पूर्णांक rc;
+#ifdef CONFIG_PM_SLEEP
+static int sil24_pci_device_resume(struct pci_dev *pdev)
+{
+	struct ata_host *host = pci_get_drvdata(pdev);
+	void __iomem *host_base = host->iomap[SIL24_HOST_BAR];
+	int rc;
 
-	rc = ata_pci_device_करो_resume(pdev);
-	अगर (rc)
-		वापस rc;
+	rc = ata_pci_device_do_resume(pdev);
+	if (rc)
+		return rc;
 
-	अगर (pdev->dev.घातer.घातer_state.event == PM_EVENT_SUSPEND)
-		ग_लिखोl(HOST_CTRL_GLOBAL_RST, host_base + HOST_CTRL);
+	if (pdev->dev.power.power_state.event == PM_EVENT_SUSPEND)
+		writel(HOST_CTRL_GLOBAL_RST, host_base + HOST_CTRL);
 
 	sil24_init_controller(host);
 
 	ata_host_resume(host);
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक sil24_port_resume(काष्ठा ata_port *ap)
-अणु
+#ifdef CONFIG_PM
+static int sil24_port_resume(struct ata_port *ap)
+{
 	sil24_config_pmp(ap, ap->nr_pmp_links);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
 module_pci_driver(sil24_pci_driver);
 

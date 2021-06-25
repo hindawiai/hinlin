@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश "hfa384x_usb.c"
-#समावेश "prism2mgmt.c"
-#समावेश "prism2mib.c"
-#समावेश "prism2sta.c"
-#समावेश "prism2fw.c"
+// SPDX-License-Identifier: GPL-2.0
+#include "hfa384x_usb.c"
+#include "prism2mgmt.c"
+#include "prism2mib.c"
+#include "prism2sta.c"
+#include "prism2fw.c"
 
-#घोषणा PRISM_DEV(vid, pid, name)		\
-	अणु USB_DEVICE(vid, pid),			\
-	.driver_info = (अचिन्हित दीर्घ)name पूर्ण
+#define PRISM_DEV(vid, pid, name)		\
+	{ USB_DEVICE(vid, pid),			\
+	.driver_info = (unsigned long)name }
 
-अटल स्थिर काष्ठा usb_device_id usb_prism_tbl[] = अणु
+static const struct usb_device_id usb_prism_tbl[] = {
 	PRISM_DEV(0x04bb, 0x0922, "IOData AirPort WN-B11/USBS"),
 	PRISM_DEV(0x07aa, 0x0012, "Corega Wireless LAN USB Stick-11"),
 	PRISM_DEV(0x09aa, 0x3642, "Prism2.x 11Mbps WLAN USB Adapter"),
@@ -54,111 +53,111 @@
 		  "Siemens SpeedStream 1022 11Mbps WLAN USB Adapter"),
 	PRISM_DEV(0x049f, 0x0033,
 		  "Compaq/Intel W100 PRO/Wireless 11Mbps multiport WLAN Adapter"),
-	अणु पूर्ण /* terminator */
-पूर्ण;
+	{ } /* terminator */
+};
 MODULE_DEVICE_TABLE(usb, usb_prism_tbl);
 
-अटल पूर्णांक prism2sta_probe_usb(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
-			       स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_device *dev;
-	काष्ठा usb_endpoपूर्णांक_descriptor *bulk_in, *bulk_out;
-	काष्ठा usb_host_पूर्णांकerface *अगरace_desc = पूर्णांकerface->cur_altsetting;
-	काष्ठा wlandevice *wlandev = शून्य;
-	काष्ठा hfa384x *hw = शून्य;
-	पूर्णांक result = 0;
+static int prism2sta_probe_usb(struct usb_interface *interface,
+			       const struct usb_device_id *id)
+{
+	struct usb_device *dev;
+	struct usb_endpoint_descriptor *bulk_in, *bulk_out;
+	struct usb_host_interface *iface_desc = interface->cur_altsetting;
+	struct wlandevice *wlandev = NULL;
+	struct hfa384x *hw = NULL;
+	int result = 0;
 
-	result = usb_find_common_endpoपूर्णांकs(अगरace_desc, &bulk_in, &bulk_out, शून्य, शून्य);
-	अगर (result)
-		जाओ failed;
+	result = usb_find_common_endpoints(iface_desc, &bulk_in, &bulk_out, NULL, NULL);
+	if (result)
+		goto failed;
 
-	dev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
+	dev = interface_to_usbdev(interface);
 	wlandev = create_wlan();
-	अगर (!wlandev) अणु
-		dev_err(&पूर्णांकerface->dev, "Memory allocation failure.\n");
+	if (!wlandev) {
+		dev_err(&interface->dev, "Memory allocation failure.\n");
 		result = -EIO;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 	hw = wlandev->priv;
 
-	अगर (wlan_setup(wlandev, &पूर्णांकerface->dev) != 0) अणु
-		dev_err(&पूर्णांकerface->dev, "wlan_setup() failed.\n");
+	if (wlan_setup(wlandev, &interface->dev) != 0) {
+		dev_err(&interface->dev, "wlan_setup() failed.\n");
 		result = -EIO;
-		जाओ failed;
-	पूर्ण
+		goto failed;
+	}
 
 	/* Initialize the hw data */
-	hw->endp_in = usb_rcvbulkpipe(dev, bulk_in->bEndpoपूर्णांकAddress);
-	hw->endp_out = usb_sndbulkpipe(dev, bulk_out->bEndpoपूर्णांकAddress);
+	hw->endp_in = usb_rcvbulkpipe(dev, bulk_in->bEndpointAddress);
+	hw->endp_out = usb_sndbulkpipe(dev, bulk_out->bEndpointAddress);
 	hfa384x_create(hw, dev);
 	hw->wlandev = wlandev;
 
-	/* Register the wlandev, this माला_लो us a name and रेजिस्टरs the
+	/* Register the wlandev, this gets us a name and registers the
 	 * linux netdevice.
 	 */
-	SET_NETDEV_DEV(wlandev->netdev, &पूर्णांकerface->dev);
+	SET_NETDEV_DEV(wlandev->netdev, &interface->dev);
 
 	/* Do a chip-level reset on the MAC */
-	अगर (prism2_करोreset) अणु
+	if (prism2_doreset) {
 		result = hfa384x_corereset(hw,
-					   prism2_reset_holdसमय,
-					   prism2_reset_settleसमय, 0);
-		अगर (result != 0) अणु
+					   prism2_reset_holdtime,
+					   prism2_reset_settletime, 0);
+		if (result != 0) {
 			result = -EIO;
-			dev_err(&पूर्णांकerface->dev,
+			dev_err(&interface->dev,
 				"hfa384x_corereset() failed.\n");
-			जाओ failed_reset;
-		पूर्ण
-	पूर्ण
+			goto failed_reset;
+		}
+	}
 
 	usb_get_dev(dev);
 
 	wlandev->msdstate = WLAN_MSD_HWPRESENT;
 
-	/* Try and load firmware, then enable card beक्रमe we रेजिस्टर */
+	/* Try and load firmware, then enable card before we register */
 	prism2_fwtry(dev, wlandev);
-	prism2sta_अगरstate(wlandev, P80211ENUM_अगरstate_enable);
+	prism2sta_ifstate(wlandev, P80211ENUM_ifstate_enable);
 
-	अगर (रेजिस्टर_wlandev(wlandev) != 0) अणु
-		dev_err(&पूर्णांकerface->dev, "register_wlandev() failed.\n");
+	if (register_wlandev(wlandev) != 0) {
+		dev_err(&interface->dev, "register_wlandev() failed.\n");
 		result = -EIO;
-		जाओ failed_रेजिस्टर;
-	पूर्ण
+		goto failed_register;
+	}
 
-	जाओ करोne;
+	goto done;
 
-failed_रेजिस्टर:
+failed_register:
 	usb_put_dev(dev);
 failed_reset:
 	wlan_unsetup(wlandev);
 failed:
-	kमुक्त(wlandev);
-	kमुक्त(hw);
-	wlandev = शून्य;
+	kfree(wlandev);
+	kfree(hw);
+	wlandev = NULL;
 
-करोne:
-	usb_set_पूर्णांकfdata(पूर्णांकerface, wlandev);
-	वापस result;
-पूर्ण
+done:
+	usb_set_intfdata(interface, wlandev);
+	return result;
+}
 
-अटल व्योम prism2sta_disconnect_usb(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा wlandevice *wlandev;
+static void prism2sta_disconnect_usb(struct usb_interface *interface)
+{
+	struct wlandevice *wlandev;
 
-	wlandev = usb_get_पूर्णांकfdata(पूर्णांकerface);
-	अगर (wlandev) अणु
+	wlandev = usb_get_intfdata(interface);
+	if (wlandev) {
 		LIST_HEAD(cleanlist);
-		काष्ठा hfa384x_usbctlx *ctlx, *temp;
-		अचिन्हित दीर्घ flags;
+		struct hfa384x_usbctlx *ctlx, *temp;
+		unsigned long flags;
 
-		काष्ठा hfa384x *hw = wlandev->priv;
+		struct hfa384x *hw = wlandev->priv;
 
-		अगर (!hw)
-			जाओ निकास;
+		if (!hw)
+			goto exit;
 
 		spin_lock_irqsave(&hw->ctlxq.lock, flags);
 
-		p80211netdev_hwहटाओd(wlandev);
+		p80211netdev_hwremoved(wlandev);
 		list_splice_init(&hw->ctlxq.reapable, &cleanlist);
 		list_splice_init(&hw->ctlxq.completing, &cleanlist);
 		list_splice_init(&hw->ctlxq.pending, &cleanlist);
@@ -166,128 +165,128 @@ failed:
 
 		spin_unlock_irqrestore(&hw->ctlxq.lock, flags);
 
-		/* There's no hardware to shutकरोwn, but the driver
+		/* There's no hardware to shutdown, but the driver
 		 * might have some tasks or tasklets that must be
-		 * stopped beक्रमe we can tear everything करोwn.
+		 * stopped before we can tear everything down.
 		 */
-		prism2sta_अगरstate(wlandev, P80211ENUM_अगरstate_disable);
+		prism2sta_ifstate(wlandev, P80211ENUM_ifstate_disable);
 
-		del_singleshot_समयr_sync(&hw->throttle);
-		del_singleshot_समयr_sync(&hw->reqसमयr);
-		del_singleshot_समयr_sync(&hw->respसमयr);
+		del_singleshot_timer_sync(&hw->throttle);
+		del_singleshot_timer_sync(&hw->reqtimer);
+		del_singleshot_timer_sync(&hw->resptimer);
 
 		/* Unlink all the URBs. This "removes the wheels"
 		 * from the entire CTLX handling mechanism.
 		 */
-		usb_समाप्त_urb(&hw->rx_urb);
-		usb_समाप्त_urb(&hw->tx_urb);
-		usb_समाप्त_urb(&hw->ctlx_urb);
+		usb_kill_urb(&hw->rx_urb);
+		usb_kill_urb(&hw->tx_urb);
+		usb_kill_urb(&hw->ctlx_urb);
 
-		tasklet_समाप्त(&hw->completion_bh);
-		tasklet_समाप्त(&hw->reaper_bh);
+		tasklet_kill(&hw->completion_bh);
+		tasklet_kill(&hw->reaper_bh);
 
 		cancel_work_sync(&hw->link_bh);
 		cancel_work_sync(&hw->commsqual_bh);
 		cancel_work_sync(&hw->usb_work);
 
 		/* Now we complete any outstanding commands
-		 * and tell everyone who is रुकोing क्रम their
-		 * responses that we have shut करोwn.
+		 * and tell everyone who is waiting for their
+		 * responses that we have shut down.
 		 */
-		list_क्रम_each_entry(ctlx, &cleanlist, list)
-			complete(&ctlx->करोne);
+		list_for_each_entry(ctlx, &cleanlist, list)
+			complete(&ctlx->done);
 
 		/* Give any outstanding synchronous commands
-		 * a chance to complete. All they need to करो
+		 * a chance to complete. All they need to do
 		 * is "wake up", so that's easy.
-		 * (I'd like a better way to करो this, really.)
+		 * (I'd like a better way to do this, really.)
 		 */
 		msleep(100);
 
-		/* Now delete the CTLXs, because no-one अन्यथा can now. */
-		list_क्रम_each_entry_safe(ctlx, temp, &cleanlist, list)
-			kमुक्त(ctlx);
+		/* Now delete the CTLXs, because no-one else can now. */
+		list_for_each_entry_safe(ctlx, temp, &cleanlist, list)
+			kfree(ctlx);
 
 		/* Unhook the wlandev */
-		unरेजिस्टर_wlandev(wlandev);
+		unregister_wlandev(wlandev);
 		wlan_unsetup(wlandev);
 
 		usb_put_dev(hw->usb);
 
 		hfa384x_destroy(hw);
-		kमुक्त(hw);
+		kfree(hw);
 
-		kमुक्त(wlandev);
-	पूर्ण
+		kfree(wlandev);
+	}
 
-निकास:
-	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
-पूर्ण
+exit:
+	usb_set_intfdata(interface, NULL);
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक prism2sta_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
+#ifdef CONFIG_PM
+static int prism2sta_suspend(struct usb_interface *interface,
 			     pm_message_t message)
-अणु
-	काष्ठा hfa384x *hw = शून्य;
-	काष्ठा wlandevice *wlandev;
+{
+	struct hfa384x *hw = NULL;
+	struct wlandevice *wlandev;
 
-	wlandev = usb_get_पूर्णांकfdata(पूर्णांकerface);
-	अगर (!wlandev)
-		वापस -ENODEV;
-
-	hw = wlandev->priv;
-	अगर (!hw)
-		वापस -ENODEV;
-
-	prism2sta_अगरstate(wlandev, P80211ENUM_अगरstate_disable);
-
-	usb_समाप्त_urb(&hw->rx_urb);
-	usb_समाप्त_urb(&hw->tx_urb);
-	usb_समाप्त_urb(&hw->ctlx_urb);
-
-	वापस 0;
-पूर्ण
-
-अटल पूर्णांक prism2sta_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	पूर्णांक result = 0;
-	काष्ठा hfa384x *hw = शून्य;
-	काष्ठा wlandevice *wlandev;
-
-	wlandev = usb_get_पूर्णांकfdata(पूर्णांकerface);
-	अगर (!wlandev)
-		वापस -ENODEV;
+	wlandev = usb_get_intfdata(interface);
+	if (!wlandev)
+		return -ENODEV;
 
 	hw = wlandev->priv;
-	अगर (!hw)
-		वापस -ENODEV;
+	if (!hw)
+		return -ENODEV;
+
+	prism2sta_ifstate(wlandev, P80211ENUM_ifstate_disable);
+
+	usb_kill_urb(&hw->rx_urb);
+	usb_kill_urb(&hw->tx_urb);
+	usb_kill_urb(&hw->ctlx_urb);
+
+	return 0;
+}
+
+static int prism2sta_resume(struct usb_interface *interface)
+{
+	int result = 0;
+	struct hfa384x *hw = NULL;
+	struct wlandevice *wlandev;
+
+	wlandev = usb_get_intfdata(interface);
+	if (!wlandev)
+		return -ENODEV;
+
+	hw = wlandev->priv;
+	if (!hw)
+		return -ENODEV;
 
 	/* Do a chip-level reset on the MAC */
-	अगर (prism2_करोreset) अणु
+	if (prism2_doreset) {
 		result = hfa384x_corereset(hw,
-					   prism2_reset_holdसमय,
-					   prism2_reset_settleसमय, 0);
-		अगर (result != 0) अणु
-			unरेजिस्टर_wlandev(wlandev);
+					   prism2_reset_holdtime,
+					   prism2_reset_settletime, 0);
+		if (result != 0) {
+			unregister_wlandev(wlandev);
 			hfa384x_destroy(hw);
-			dev_err(&पूर्णांकerface->dev, "hfa384x_corereset() failed.\n");
-			kमुक्त(wlandev);
-			kमुक्त(hw);
-			wlandev = शून्य;
-			वापस -ENODEV;
-		पूर्ण
-	पूर्ण
+			dev_err(&interface->dev, "hfa384x_corereset() failed.\n");
+			kfree(wlandev);
+			kfree(hw);
+			wlandev = NULL;
+			return -ENODEV;
+		}
+	}
 
-	prism2sta_अगरstate(wlandev, P80211ENUM_अगरstate_enable);
+	prism2sta_ifstate(wlandev, P80211ENUM_ifstate_enable);
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा prism2sta_suspend शून्य
-#घोषणा prism2sta_resume शून्य
-#पूर्ण_अगर /* CONFIG_PM */
+	return 0;
+}
+#else
+#define prism2sta_suspend NULL
+#define prism2sta_resume NULL
+#endif /* CONFIG_PM */
 
-अटल काष्ठा usb_driver prism2_usb_driver = अणु
+static struct usb_driver prism2_usb_driver = {
 	.name = "prism2_usb",
 	.probe = prism2sta_probe_usb,
 	.disconnect = prism2sta_disconnect_usb,
@@ -296,6 +295,6 @@ failed:
 	.resume = prism2sta_resume,
 	.reset_resume = prism2sta_resume,
 	/* fops, minor? */
-पूर्ण;
+};
 
 module_usb_driver(prism2_usb_driver);

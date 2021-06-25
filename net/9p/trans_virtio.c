@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * The Virtio 9p transport driver
  *
@@ -12,239 +11,239 @@
  *  Copyright (C) 2006, 2007 Rusty Russell, IBM Corporation
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/in.h>
-#समावेश <linux/module.h>
-#समावेश <linux/net.h>
-#समावेश <linux/ipv6.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/un.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/inet.h>
-#समावेश <linux/idr.h>
-#समावेश <linux/file.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/slab.h>
-#समावेश <net/9p/9p.h>
-#समावेश <linux/parser.h>
-#समावेश <net/9p/client.h>
-#समावेश <net/9p/transport.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/swap.h>
-#समावेश <linux/virtपन.स>
-#समावेश <linux/virtio_9p.h>
-#समावेश "trans_common.h"
+#include <linux/in.h>
+#include <linux/module.h>
+#include <linux/net.h>
+#include <linux/ipv6.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/un.h>
+#include <linux/uaccess.h>
+#include <linux/inet.h>
+#include <linux/idr.h>
+#include <linux/file.h>
+#include <linux/highmem.h>
+#include <linux/slab.h>
+#include <net/9p/9p.h>
+#include <linux/parser.h>
+#include <net/9p/client.h>
+#include <net/9p/transport.h>
+#include <linux/scatterlist.h>
+#include <linux/swap.h>
+#include <linux/virtio.h>
+#include <linux/virtio_9p.h>
+#include "trans_common.h"
 
-#घोषणा VIRTQUEUE_NUM	128
+#define VIRTQUEUE_NUM	128
 
 /* a single mutex to manage channel initialization and attachment */
-अटल DEFINE_MUTEX(virtio_9p_lock);
-अटल DECLARE_WAIT_QUEUE_HEAD(vp_wq);
-अटल atomic_t vp_pinned = ATOMIC_INIT(0);
+static DEFINE_MUTEX(virtio_9p_lock);
+static DECLARE_WAIT_QUEUE_HEAD(vp_wq);
+static atomic_t vp_pinned = ATOMIC_INIT(0);
 
 /**
- * काष्ठा virtio_chan - per-instance transport inक्रमmation
+ * struct virtio_chan - per-instance transport information
  * @inuse: whether the channel is in use
- * @lock: protects multiple elements within this काष्ठाure
+ * @lock: protects multiple elements within this structure
  * @client: client instance
  * @vdev: virtio dev associated with this channel
  * @vq: virtio queue associated with this channel
  * @ring_bufs_avail: flag to indicate there is some available in the ring buf
- * @vc_wq: रुको queue क्रम रुकोing क्रम thing to be added to ring buf
+ * @vc_wq: wait queue for waiting for thing to be added to ring buf
  * @p9_max_pages: maximum number of pinned pages
- * @sg: scatter gather list which is used to pack a request (रक्षित?)
+ * @sg: scatter gather list which is used to pack a request (protected?)
  * @chan_list: linked list of channels
  *
- * We keep all per-channel inक्रमmation in a काष्ठाure.
- * This काष्ठाure is allocated within the devices dev->mem space.
- * A poपूर्णांकer to the काष्ठाure will get put in the transport निजी.
+ * We keep all per-channel information in a structure.
+ * This structure is allocated within the devices dev->mem space.
+ * A pointer to the structure will get put in the transport private.
  *
  */
 
-काष्ठा virtio_chan अणु
+struct virtio_chan {
 	bool inuse;
 
 	spinlock_t lock;
 
-	काष्ठा p9_client *client;
-	काष्ठा virtio_device *vdev;
-	काष्ठा virtqueue *vq;
-	पूर्णांक ring_bufs_avail;
-	रुको_queue_head_t *vc_wq;
-	/* This is global limit. Since we करोn't have a global काष्ठाure,
+	struct p9_client *client;
+	struct virtio_device *vdev;
+	struct virtqueue *vq;
+	int ring_bufs_avail;
+	wait_queue_head_t *vc_wq;
+	/* This is global limit. Since we don't have a global structure,
 	 * will be placing it in each channel.
 	 */
-	अचिन्हित दीर्घ p9_max_pages;
-	/* Scatterlist: can be too big क्रम stack. */
-	काष्ठा scatterlist sg[VIRTQUEUE_NUM];
+	unsigned long p9_max_pages;
+	/* Scatterlist: can be too big for stack. */
+	struct scatterlist sg[VIRTQUEUE_NUM];
 	/**
-	 * @tag: name to identअगरy a mount null terminated
+	 * @tag: name to identify a mount null terminated
 	 */
-	अक्षर *tag;
+	char *tag;
 
-	काष्ठा list_head chan_list;
-पूर्ण;
+	struct list_head chan_list;
+};
 
-अटल काष्ठा list_head virtio_chan_list;
+static struct list_head virtio_chan_list;
 
 /* How many bytes left in this page. */
-अटल अचिन्हित पूर्णांक rest_of_page(व्योम *data)
-अणु
-	वापस PAGE_SIZE - offset_in_page(data);
-पूर्ण
+static unsigned int rest_of_page(void *data)
+{
+	return PAGE_SIZE - offset_in_page(data);
+}
 
 /**
- * p9_virtio_बंद - reclaim resources of a channel
+ * p9_virtio_close - reclaim resources of a channel
  * @client: client instance
  *
- * This reclaims a channel by मुक्तing its resources and
+ * This reclaims a channel by freeing its resources and
  * reseting its inuse flag.
  *
  */
 
-अटल व्योम p9_virtio_बंद(काष्ठा p9_client *client)
-अणु
-	काष्ठा virtio_chan *chan = client->trans;
+static void p9_virtio_close(struct p9_client *client)
+{
+	struct virtio_chan *chan = client->trans;
 
 	mutex_lock(&virtio_9p_lock);
-	अगर (chan)
+	if (chan)
 		chan->inuse = false;
 	mutex_unlock(&virtio_9p_lock);
-पूर्ण
+}
 
 /**
- * req_करोne - callback which संकेतs activity from the server
+ * req_done - callback which signals activity from the server
  * @vq: virtio queue activity was received on
  *
- * This notअगरies us that the server has triggered some activity
+ * This notifies us that the server has triggered some activity
  * on the virtio channel - most likely a response to request we
  * sent.  Figure out which requests now have responses and wake up
- * those thपढ़ोs.
+ * those threads.
  *
- * Bugs: could करो with some additional sanity checking, but appears to work.
+ * Bugs: could do with some additional sanity checking, but appears to work.
  *
  */
 
-अटल व्योम req_करोne(काष्ठा virtqueue *vq)
-अणु
-	काष्ठा virtio_chan *chan = vq->vdev->priv;
-	अचिन्हित पूर्णांक len;
-	काष्ठा p9_req_t *req;
+static void req_done(struct virtqueue *vq)
+{
+	struct virtio_chan *chan = vq->vdev->priv;
+	unsigned int len;
+	struct p9_req_t *req;
 	bool need_wakeup = false;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	p9_debug(P9_DEBUG_TRANS, ": request done\n");
 
 	spin_lock_irqsave(&chan->lock, flags);
-	जबतक ((req = virtqueue_get_buf(chan->vq, &len)) != शून्य) अणु
-		अगर (!chan->ring_bufs_avail) अणु
+	while ((req = virtqueue_get_buf(chan->vq, &len)) != NULL) {
+		if (!chan->ring_bufs_avail) {
 			chan->ring_bufs_avail = 1;
 			need_wakeup = true;
-		पूर्ण
+		}
 
-		अगर (len) अणु
+		if (len) {
 			req->rc.size = len;
 			p9_client_cb(chan->client, req, REQ_STATUS_RCVD);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock_irqrestore(&chan->lock, flags);
-	/* Wakeup अगर anyone रुकोing क्रम VirtIO ring space. */
-	अगर (need_wakeup)
+	/* Wakeup if anyone waiting for VirtIO ring space. */
+	if (need_wakeup)
 		wake_up(chan->vc_wq);
-पूर्ण
+}
 
 /**
  * pack_sg_list - pack a scatter gather list from a linear buffer
- * @sg: scatter/gather list to pack पूर्णांकo
+ * @sg: scatter/gather list to pack into
  * @start: which segment of the sg_list to start at
  * @limit: maximum segment to pack data to
- * @data: data to pack पूर्णांकo scatter/gather list
- * @count: amount of data to pack पूर्णांकo the scatter/gather list
+ * @data: data to pack into scatter/gather list
+ * @count: amount of data to pack into the scatter/gather list
  *
  * sg_lists have multiple segments of various sizes.  This will pack
- * arbitrary data पूर्णांकo an existing scatter gather list, segmenting the
- * data as necessary within स्थिरraपूर्णांकs.
+ * arbitrary data into an existing scatter gather list, segmenting the
+ * data as necessary within constraints.
  *
  */
 
-अटल पूर्णांक pack_sg_list(काष्ठा scatterlist *sg, पूर्णांक start,
-			पूर्णांक limit, अक्षर *data, पूर्णांक count)
-अणु
-	पूर्णांक s;
-	पूर्णांक index = start;
+static int pack_sg_list(struct scatterlist *sg, int start,
+			int limit, char *data, int count)
+{
+	int s;
+	int index = start;
 
-	जबतक (count) अणु
+	while (count) {
 		s = rest_of_page(data);
-		अगर (s > count)
+		if (s > count)
 			s = count;
 		BUG_ON(index >= limit);
-		/* Make sure we करोn't terminate early. */
+		/* Make sure we don't terminate early. */
 		sg_unmark_end(&sg[index]);
 		sg_set_buf(&sg[index++], data, s);
 		count -= s;
 		data += s;
-	पूर्ण
-	अगर (index-start)
+	}
+	if (index-start)
 		sg_mark_end(&sg[index - 1]);
-	वापस index-start;
-पूर्ण
+	return index-start;
+}
 
-/* We करोn't currently allow canceling of virtio requests */
-अटल पूर्णांक p9_virtio_cancel(काष्ठा p9_client *client, काष्ठा p9_req_t *req)
-अणु
-	वापस 1;
-पूर्ण
+/* We don't currently allow canceling of virtio requests */
+static int p9_virtio_cancel(struct p9_client *client, struct p9_req_t *req)
+{
+	return 1;
+}
 
 /* Reply won't come, so drop req ref */
-अटल पूर्णांक p9_virtio_cancelled(काष्ठा p9_client *client, काष्ठा p9_req_t *req)
-अणु
+static int p9_virtio_cancelled(struct p9_client *client, struct p9_req_t *req)
+{
 	p9_req_put(req);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * pack_sg_list_p - Just like pack_sg_list. Instead of taking a buffer,
  * this takes a list of pages.
- * @sg: scatter/gather list to pack पूर्णांकo
+ * @sg: scatter/gather list to pack into
  * @start: which segment of the sg_list to start at
  * @limit: maximum number of pages in sg list.
- * @pdata: a list of pages to add पूर्णांकo sg.
- * @nr_pages: number of pages to pack पूर्णांकo the scatter/gather list
+ * @pdata: a list of pages to add into sg.
+ * @nr_pages: number of pages to pack into the scatter/gather list
  * @offs: amount of data in the beginning of first page _not_ to pack
- * @count: amount of data to pack पूर्णांकo the scatter/gather list
+ * @count: amount of data to pack into the scatter/gather list
  */
-अटल पूर्णांक
-pack_sg_list_p(काष्ठा scatterlist *sg, पूर्णांक start, पूर्णांक limit,
-	       काष्ठा page **pdata, पूर्णांक nr_pages, माप_प्रकार offs, पूर्णांक count)
-अणु
-	पूर्णांक i = 0, s;
-	पूर्णांक data_off = offs;
-	पूर्णांक index = start;
+static int
+pack_sg_list_p(struct scatterlist *sg, int start, int limit,
+	       struct page **pdata, int nr_pages, size_t offs, int count)
+{
+	int i = 0, s;
+	int data_off = offs;
+	int index = start;
 
 	BUG_ON(nr_pages > (limit - start));
 	/*
-	 * अगर the first page करोesn't start at
+	 * if the first page doesn't start at
 	 * page boundary find the offset
 	 */
-	जबतक (nr_pages) अणु
+	while (nr_pages) {
 		s = PAGE_SIZE - data_off;
-		अगर (s > count)
+		if (s > count)
 			s = count;
 		BUG_ON(index >= limit);
-		/* Make sure we करोn't terminate early. */
+		/* Make sure we don't terminate early. */
 		sg_unmark_end(&sg[index]);
 		sg_set_page(&sg[index++], pdata[i++], s, data_off);
 		data_off = 0;
 		count -= s;
 		nr_pages--;
-	पूर्ण
+	}
 
-	अगर (index-start)
+	if (index-start)
 		sg_mark_end(&sg[index - 1]);
-	वापस index - start;
-पूर्ण
+	return index - start;
+}
 
 /**
  * p9_virtio_request - issue a request
@@ -253,14 +252,14 @@ pack_sg_list_p(काष्ठा scatterlist *sg, पूर्णांक star
  *
  */
 
-अटल पूर्णांक
-p9_virtio_request(काष्ठा p9_client *client, काष्ठा p9_req_t *req)
-अणु
-	पूर्णांक err;
-	पूर्णांक in, out, out_sgs, in_sgs;
-	अचिन्हित दीर्घ flags;
-	काष्ठा virtio_chan *chan = client->trans;
-	काष्ठा scatterlist *sgs[2];
+static int
+p9_virtio_request(struct p9_client *client, struct p9_req_t *req)
+{
+	int err;
+	int in, out, out_sgs, in_sgs;
+	unsigned long flags;
+	struct virtio_chan *chan = client->trans;
+	struct scatterlist *sgs[2];
 
 	p9_debug(P9_DEBUG_TRANS, "9p debug: virtio request\n");
 
@@ -272,174 +271,174 @@ req_retry:
 	/* Handle out VirtIO ring buffers */
 	out = pack_sg_list(chan->sg, 0,
 			   VIRTQUEUE_NUM, req->tc.sdata, req->tc.size);
-	अगर (out)
+	if (out)
 		sgs[out_sgs++] = chan->sg;
 
 	in = pack_sg_list(chan->sg, out,
 			  VIRTQUEUE_NUM, req->rc.sdata, req->rc.capacity);
-	अगर (in)
+	if (in)
 		sgs[out_sgs + in_sgs++] = chan->sg + out;
 
 	err = virtqueue_add_sgs(chan->vq, sgs, out_sgs, in_sgs, req,
 				GFP_ATOMIC);
-	अगर (err < 0) अणु
-		अगर (err == -ENOSPC) अणु
+	if (err < 0) {
+		if (err == -ENOSPC) {
 			chan->ring_bufs_avail = 0;
 			spin_unlock_irqrestore(&chan->lock, flags);
-			err = रुको_event_समाप्तable(*chan->vc_wq,
+			err = wait_event_killable(*chan->vc_wq,
 						  chan->ring_bufs_avail);
-			अगर (err  == -ERESTARTSYS)
-				वापस err;
+			if (err  == -ERESTARTSYS)
+				return err;
 
 			p9_debug(P9_DEBUG_TRANS, "Retry virtio request\n");
-			जाओ req_retry;
-		पूर्ण अन्यथा अणु
+			goto req_retry;
+		} else {
 			spin_unlock_irqrestore(&chan->lock, flags);
 			p9_debug(P9_DEBUG_TRANS,
 				 "virtio rpc add_sgs returned failure\n");
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
+			return -EIO;
+		}
+	}
 	virtqueue_kick(chan->vq);
 	spin_unlock_irqrestore(&chan->lock, flags);
 
 	p9_debug(P9_DEBUG_TRANS, "virtio request kicked\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक p9_get_mapped_pages(काष्ठा virtio_chan *chan,
-			       काष्ठा page ***pages,
-			       काष्ठा iov_iter *data,
-			       पूर्णांक count,
-			       माप_प्रकार *offs,
-			       पूर्णांक *need_drop)
-अणु
-	पूर्णांक nr_pages;
-	पूर्णांक err;
+static int p9_get_mapped_pages(struct virtio_chan *chan,
+			       struct page ***pages,
+			       struct iov_iter *data,
+			       int count,
+			       size_t *offs,
+			       int *need_drop)
+{
+	int nr_pages;
+	int err;
 
-	अगर (!iov_iter_count(data))
-		वापस 0;
+	if (!iov_iter_count(data))
+		return 0;
 
-	अगर (!iov_iter_is_kvec(data)) अणु
-		पूर्णांक n;
+	if (!iov_iter_is_kvec(data)) {
+		int n;
 		/*
-		 * We allow only p9_max_pages pinned. We रुको क्रम the
+		 * We allow only p9_max_pages pinned. We wait for the
 		 * Other zc request to finish here
 		 */
-		अगर (atomic_पढ़ो(&vp_pinned) >= chan->p9_max_pages) अणु
-			err = रुको_event_समाप्तable(vp_wq,
-			      (atomic_पढ़ो(&vp_pinned) < chan->p9_max_pages));
-			अगर (err == -ERESTARTSYS)
-				वापस err;
-		पूर्ण
+		if (atomic_read(&vp_pinned) >= chan->p9_max_pages) {
+			err = wait_event_killable(vp_wq,
+			      (atomic_read(&vp_pinned) < chan->p9_max_pages));
+			if (err == -ERESTARTSYS)
+				return err;
+		}
 		n = iov_iter_get_pages_alloc(data, pages, count, offs);
-		अगर (n < 0)
-			वापस n;
+		if (n < 0)
+			return n;
 		*need_drop = 1;
 		nr_pages = DIV_ROUND_UP(n + *offs, PAGE_SIZE);
 		atomic_add(nr_pages, &vp_pinned);
-		वापस n;
-	पूर्ण अन्यथा अणु
+		return n;
+	} else {
 		/* kernel buffer, no need to pin pages */
-		पूर्णांक index;
-		माप_प्रकार len;
-		व्योम *p;
+		int index;
+		size_t len;
+		void *p;
 
 		/* we'd already checked that it's non-empty */
-		जबतक (1) अणु
+		while (1) {
 			len = iov_iter_single_seg_count(data);
-			अगर (likely(len)) अणु
+			if (likely(len)) {
 				p = data->kvec->iov_base + data->iov_offset;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			iov_iter_advance(data, 0);
-		पूर्ण
-		अगर (len > count)
+		}
+		if (len > count)
 			len = count;
 
-		nr_pages = DIV_ROUND_UP((अचिन्हित दीर्घ)p + len, PAGE_SIZE) -
-			   (अचिन्हित दीर्घ)p / PAGE_SIZE;
+		nr_pages = DIV_ROUND_UP((unsigned long)p + len, PAGE_SIZE) -
+			   (unsigned long)p / PAGE_SIZE;
 
-		*pages = kदो_स्मृति_array(nr_pages, माप(काष्ठा page *),
+		*pages = kmalloc_array(nr_pages, sizeof(struct page *),
 				       GFP_NOFS);
-		अगर (!*pages)
-			वापस -ENOMEM;
+		if (!*pages)
+			return -ENOMEM;
 
 		*need_drop = 0;
 		p -= (*offs = offset_in_page(p));
-		क्रम (index = 0; index < nr_pages; index++) अणु
-			अगर (is_vदो_स्मृति_addr(p))
-				(*pages)[index] = vदो_स्मृति_to_page(p);
-			अन्यथा
+		for (index = 0; index < nr_pages; index++) {
+			if (is_vmalloc_addr(p))
+				(*pages)[index] = vmalloc_to_page(p);
+			else
 				(*pages)[index] = kmap_to_page(p);
 			p += PAGE_SIZE;
-		पूर्ण
-		वापस len;
-	पूर्ण
-पूर्ण
+		}
+		return len;
+	}
+}
 
 /**
  * p9_virtio_zc_request - issue a zero copy request
  * @client: client instance issuing the request
  * @req: request to be issued
- * @uidata: user buffer that should be used क्रम zero copy पढ़ो
- * @uodata: user buffer that should be used क्रम zero copy ग_लिखो
- * @inlen: पढ़ो buffer size
- * @outlen: ग_लिखो buffer size
- * @in_hdr_len: पढ़ोer header size, This is the size of response protocol data
+ * @uidata: user buffer that should be used for zero copy read
+ * @uodata: user buffer that should be used for zero copy write
+ * @inlen: read buffer size
+ * @outlen: write buffer size
+ * @in_hdr_len: reader header size, This is the size of response protocol data
  *
  */
-अटल पूर्णांक
-p9_virtio_zc_request(काष्ठा p9_client *client, काष्ठा p9_req_t *req,
-		     काष्ठा iov_iter *uidata, काष्ठा iov_iter *uodata,
-		     पूर्णांक inlen, पूर्णांक outlen, पूर्णांक in_hdr_len)
-अणु
-	पूर्णांक in, out, err, out_sgs, in_sgs;
-	अचिन्हित दीर्घ flags;
-	पूर्णांक in_nr_pages = 0, out_nr_pages = 0;
-	काष्ठा page **in_pages = शून्य, **out_pages = शून्य;
-	काष्ठा virtio_chan *chan = client->trans;
-	काष्ठा scatterlist *sgs[4];
-	माप_प्रकार offs;
-	पूर्णांक need_drop = 0;
-	पूर्णांक kicked = 0;
+static int
+p9_virtio_zc_request(struct p9_client *client, struct p9_req_t *req,
+		     struct iov_iter *uidata, struct iov_iter *uodata,
+		     int inlen, int outlen, int in_hdr_len)
+{
+	int in, out, err, out_sgs, in_sgs;
+	unsigned long flags;
+	int in_nr_pages = 0, out_nr_pages = 0;
+	struct page **in_pages = NULL, **out_pages = NULL;
+	struct virtio_chan *chan = client->trans;
+	struct scatterlist *sgs[4];
+	size_t offs;
+	int need_drop = 0;
+	int kicked = 0;
 
 	p9_debug(P9_DEBUG_TRANS, "virtio request\n");
 
-	अगर (uodata) अणु
+	if (uodata) {
 		__le32 sz;
-		पूर्णांक n = p9_get_mapped_pages(chan, &out_pages, uodata,
+		int n = p9_get_mapped_pages(chan, &out_pages, uodata,
 					    outlen, &offs, &need_drop);
-		अगर (n < 0) अणु
+		if (n < 0) {
 			err = n;
-			जाओ err_out;
-		पूर्ण
+			goto err_out;
+		}
 		out_nr_pages = DIV_ROUND_UP(n + offs, PAGE_SIZE);
-		अगर (n != outlen) अणु
+		if (n != outlen) {
 			__le32 v = cpu_to_le32(n);
-			स_नकल(&req->tc.sdata[req->tc.size - 4], &v, 4);
+			memcpy(&req->tc.sdata[req->tc.size - 4], &v, 4);
 			outlen = n;
-		पूर्ण
+		}
 		/* The size field of the message must include the length of the
 		 * header and the length of the data.  We didn't actually know
-		 * the length of the data until this poपूर्णांक so add it in now.
+		 * the length of the data until this point so add it in now.
 		 */
 		sz = cpu_to_le32(req->tc.size + outlen);
-		स_नकल(&req->tc.sdata[0], &sz, माप(sz));
-	पूर्ण अन्यथा अगर (uidata) अणु
-		पूर्णांक n = p9_get_mapped_pages(chan, &in_pages, uidata,
+		memcpy(&req->tc.sdata[0], &sz, sizeof(sz));
+	} else if (uidata) {
+		int n = p9_get_mapped_pages(chan, &in_pages, uidata,
 					    inlen, &offs, &need_drop);
-		अगर (n < 0) अणु
+		if (n < 0) {
 			err = n;
-			जाओ err_out;
-		पूर्ण
+			goto err_out;
+		}
 		in_nr_pages = DIV_ROUND_UP(n + offs, PAGE_SIZE);
-		अगर (n != inlen) अणु
+		if (n != inlen) {
 			__le32 v = cpu_to_le32(n);
-			स_नकल(&req->tc.sdata[req->tc.size - 4], &v, 4);
+			memcpy(&req->tc.sdata[req->tc.size - 4], &v, 4);
 			inlen = n;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	req->status = REQ_STATUS_SENT;
 req_retry_pinned:
 	spin_lock_irqsave(&chan->lock, flags);
@@ -450,175 +449,175 @@ req_retry_pinned:
 	out = pack_sg_list(chan->sg, 0,
 			   VIRTQUEUE_NUM, req->tc.sdata, req->tc.size);
 
-	अगर (out)
+	if (out)
 		sgs[out_sgs++] = chan->sg;
 
-	अगर (out_pages) अणु
+	if (out_pages) {
 		sgs[out_sgs++] = chan->sg + out;
 		out += pack_sg_list_p(chan->sg, out, VIRTQUEUE_NUM,
 				      out_pages, out_nr_pages, offs, outlen);
-	पूर्ण
+	}
 
 	/*
 	 * Take care of in data
 	 * For example TREAD have 11.
-	 * 11 is the पढ़ो/ग_लिखो header = PDU Header(7) + IO Size (4).
+	 * 11 is the read/write header = PDU Header(7) + IO Size (4).
 	 * Arrange in such a way that server places header in the
 	 * alloced memory and payload onto the user buffer.
 	 */
 	in = pack_sg_list(chan->sg, out,
 			  VIRTQUEUE_NUM, req->rc.sdata, in_hdr_len);
-	अगर (in)
+	if (in)
 		sgs[out_sgs + in_sgs++] = chan->sg + out;
 
-	अगर (in_pages) अणु
+	if (in_pages) {
 		sgs[out_sgs + in_sgs++] = chan->sg + out + in;
 		in += pack_sg_list_p(chan->sg, out + in, VIRTQUEUE_NUM,
 				     in_pages, in_nr_pages, offs, inlen);
-	पूर्ण
+	}
 
 	BUG_ON(out_sgs + in_sgs > ARRAY_SIZE(sgs));
 	err = virtqueue_add_sgs(chan->vq, sgs, out_sgs, in_sgs, req,
 				GFP_ATOMIC);
-	अगर (err < 0) अणु
-		अगर (err == -ENOSPC) अणु
+	if (err < 0) {
+		if (err == -ENOSPC) {
 			chan->ring_bufs_avail = 0;
 			spin_unlock_irqrestore(&chan->lock, flags);
-			err = रुको_event_समाप्तable(*chan->vc_wq,
+			err = wait_event_killable(*chan->vc_wq,
 						  chan->ring_bufs_avail);
-			अगर (err  == -ERESTARTSYS)
-				जाओ err_out;
+			if (err  == -ERESTARTSYS)
+				goto err_out;
 
 			p9_debug(P9_DEBUG_TRANS, "Retry virtio request\n");
-			जाओ req_retry_pinned;
-		पूर्ण अन्यथा अणु
+			goto req_retry_pinned;
+		} else {
 			spin_unlock_irqrestore(&chan->lock, flags);
 			p9_debug(P9_DEBUG_TRANS,
 				 "virtio rpc add_sgs returned failure\n");
 			err = -EIO;
-			जाओ err_out;
-		पूर्ण
-	पूर्ण
+			goto err_out;
+		}
+	}
 	virtqueue_kick(chan->vq);
 	spin_unlock_irqrestore(&chan->lock, flags);
 	kicked = 1;
 	p9_debug(P9_DEBUG_TRANS, "virtio request kicked\n");
-	err = रुको_event_समाप्तable(req->wq, req->status >= REQ_STATUS_RCVD);
+	err = wait_event_killable(req->wq, req->status >= REQ_STATUS_RCVD);
 	/*
 	 * Non kernel buffers are pinned, unpin them
 	 */
 err_out:
-	अगर (need_drop) अणु
-		अगर (in_pages) अणु
+	if (need_drop) {
+		if (in_pages) {
 			p9_release_pages(in_pages, in_nr_pages);
 			atomic_sub(in_nr_pages, &vp_pinned);
-		पूर्ण
-		अगर (out_pages) अणु
+		}
+		if (out_pages) {
 			p9_release_pages(out_pages, out_nr_pages);
 			atomic_sub(out_nr_pages, &vp_pinned);
-		पूर्ण
-		/* wakeup anybody रुकोing क्रम slots to pin pages */
+		}
+		/* wakeup anybody waiting for slots to pin pages */
 		wake_up(&vp_wq);
-	पूर्ण
-	kvमुक्त(in_pages);
-	kvमुक्त(out_pages);
-	अगर (!kicked) अणु
+	}
+	kvfree(in_pages);
+	kvfree(out_pages);
+	if (!kicked) {
 		/* reply won't come */
 		p9_req_put(req);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
-अटल sमाप_प्रकार p9_mount_tag_show(काष्ठा device *dev,
-				काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा virtio_chan *chan;
-	काष्ठा virtio_device *vdev;
-	पूर्णांक tag_len;
+static ssize_t p9_mount_tag_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct virtio_chan *chan;
+	struct virtio_device *vdev;
+	int tag_len;
 
 	vdev = dev_to_virtio(dev);
 	chan = vdev->priv;
-	tag_len = म_माप(chan->tag);
+	tag_len = strlen(chan->tag);
 
-	स_नकल(buf, chan->tag, tag_len + 1);
+	memcpy(buf, chan->tag, tag_len + 1);
 
-	वापस tag_len + 1;
-पूर्ण
+	return tag_len + 1;
+}
 
-अटल DEVICE_ATTR(mount_tag, 0444, p9_mount_tag_show, शून्य);
+static DEVICE_ATTR(mount_tag, 0444, p9_mount_tag_show, NULL);
 
 /**
- * p9_virtio_probe - probe क्रम existence of 9P virtio channels
+ * p9_virtio_probe - probe for existence of 9P virtio channels
  * @vdev: virtio device to probe
  *
- * This probes क्रम existing virtio channels.
+ * This probes for existing virtio channels.
  *
  */
 
-अटल पूर्णांक p9_virtio_probe(काष्ठा virtio_device *vdev)
-अणु
+static int p9_virtio_probe(struct virtio_device *vdev)
+{
 	__u16 tag_len;
-	अक्षर *tag;
-	पूर्णांक err;
-	काष्ठा virtio_chan *chan;
+	char *tag;
+	int err;
+	struct virtio_chan *chan;
 
-	अगर (!vdev->config->get) अणु
+	if (!vdev->config->get) {
 		dev_err(&vdev->dev, "%s failure: config access disabled\n",
 			__func__);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	chan = kदो_स्मृति(माप(काष्ठा virtio_chan), GFP_KERNEL);
-	अगर (!chan) अणु
+	chan = kmalloc(sizeof(struct virtio_chan), GFP_KERNEL);
+	if (!chan) {
 		pr_err("Failed to allocate virtio 9P channel\n");
 		err = -ENOMEM;
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 
 	chan->vdev = vdev;
 
-	/* We expect one virtqueue, क्रम requests. */
-	chan->vq = virtio_find_single_vq(vdev, req_करोne, "requests");
-	अगर (IS_ERR(chan->vq)) अणु
+	/* We expect one virtqueue, for requests. */
+	chan->vq = virtio_find_single_vq(vdev, req_done, "requests");
+	if (IS_ERR(chan->vq)) {
 		err = PTR_ERR(chan->vq);
-		जाओ out_मुक्त_chan;
-	पूर्ण
+		goto out_free_chan;
+	}
 	chan->vq->vdev->priv = chan;
 	spin_lock_init(&chan->lock);
 
 	sg_init_table(chan->sg, VIRTQUEUE_NUM);
 
 	chan->inuse = false;
-	अगर (virtio_has_feature(vdev, VIRTIO_9P_MOUNT_TAG)) अणु
-		virtio_cपढ़ो(vdev, काष्ठा virtio_9p_config, tag_len, &tag_len);
-	पूर्ण अन्यथा अणु
+	if (virtio_has_feature(vdev, VIRTIO_9P_MOUNT_TAG)) {
+		virtio_cread(vdev, struct virtio_9p_config, tag_len, &tag_len);
+	} else {
 		err = -EINVAL;
-		जाओ out_मुक्त_vq;
-	पूर्ण
+		goto out_free_vq;
+	}
 	tag = kzalloc(tag_len + 1, GFP_KERNEL);
-	अगर (!tag) अणु
+	if (!tag) {
 		err = -ENOMEM;
-		जाओ out_मुक्त_vq;
-	पूर्ण
+		goto out_free_vq;
+	}
 
-	virtio_cपढ़ो_bytes(vdev, दुरत्व(काष्ठा virtio_9p_config, tag),
+	virtio_cread_bytes(vdev, offsetof(struct virtio_9p_config, tag),
 			   tag, tag_len);
 	chan->tag = tag;
 	err = sysfs_create_file(&(vdev->dev.kobj), &dev_attr_mount_tag.attr);
-	अगर (err) अणु
-		जाओ out_मुक्त_tag;
-	पूर्ण
-	chan->vc_wq = kदो_स्मृति(माप(रुको_queue_head_t), GFP_KERNEL);
-	अगर (!chan->vc_wq) अणु
+	if (err) {
+		goto out_free_tag;
+	}
+	chan->vc_wq = kmalloc(sizeof(wait_queue_head_t), GFP_KERNEL);
+	if (!chan->vc_wq) {
 		err = -ENOMEM;
-		जाओ out_मुक्त_tag;
-	पूर्ण
-	init_रुकोqueue_head(chan->vc_wq);
+		goto out_free_tag;
+	}
+	init_waitqueue_head(chan->vc_wq);
 	chan->ring_bufs_avail = 1;
-	/* Ceiling limit to aव्योम denial of service attacks */
-	chan->p9_max_pages = nr_मुक्त_buffer_pages()/4;
+	/* Ceiling limit to avoid denial of service attacks */
+	chan->p9_max_pages = nr_free_buffer_pages()/4;
 
-	virtio_device_पढ़ोy(vdev);
+	virtio_device_ready(vdev);
 
 	mutex_lock(&virtio_9p_lock);
 	list_add_tail(&chan->chan_list, &virtio_chan_list);
@@ -627,140 +626,140 @@ err_out:
 	/* Let udev rules use the new mount_tag attribute. */
 	kobject_uevent(&(vdev->dev.kobj), KOBJ_CHANGE);
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_tag:
-	kमुक्त(tag);
-out_मुक्त_vq:
+out_free_tag:
+	kfree(tag);
+out_free_vq:
 	vdev->config->del_vqs(vdev);
-out_मुक्त_chan:
-	kमुक्त(chan);
+out_free_chan:
+	kfree(chan);
 fail:
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
 /**
  * p9_virtio_create - allocate a new virtio channel
  * @client: client instance invoking this transport
- * @devname: string identअगरying the channel to connect to (unused)
- * @args: args passed from sys_mount() क्रम per-transport options (unused)
+ * @devname: string identifying the channel to connect to (unused)
+ * @args: args passed from sys_mount() for per-transport options (unused)
  *
- * This sets up a transport channel क्रम 9p communication.  Right now
+ * This sets up a transport channel for 9p communication.  Right now
  * we only match the first available channel, but eventually we couldlook up
  * alternate channels by matching devname versus a virtio_config entry.
  * We use a simple reference count mechanism to ensure that only a single
- * mount has a channel खोलो at a समय.
+ * mount has a channel open at a time.
  *
  */
 
-अटल पूर्णांक
-p9_virtio_create(काष्ठा p9_client *client, स्थिर अक्षर *devname, अक्षर *args)
-अणु
-	काष्ठा virtio_chan *chan;
-	पूर्णांक ret = -ENOENT;
-	पूर्णांक found = 0;
+static int
+p9_virtio_create(struct p9_client *client, const char *devname, char *args)
+{
+	struct virtio_chan *chan;
+	int ret = -ENOENT;
+	int found = 0;
 
-	अगर (devname == शून्य)
-		वापस -EINVAL;
+	if (devname == NULL)
+		return -EINVAL;
 
 	mutex_lock(&virtio_9p_lock);
-	list_क्रम_each_entry(chan, &virtio_chan_list, chan_list) अणु
-		अगर (!म_भेद(devname, chan->tag)) अणु
-			अगर (!chan->inuse) अणु
+	list_for_each_entry(chan, &virtio_chan_list, chan_list) {
+		if (!strcmp(devname, chan->tag)) {
+			if (!chan->inuse) {
 				chan->inuse = true;
 				found = 1;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			ret = -EBUSY;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	mutex_unlock(&virtio_9p_lock);
 
-	अगर (!found) अणु
+	if (!found) {
 		pr_err("no channels available for device %s\n", devname);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	client->trans = (व्योम *)chan;
+	client->trans = (void *)chan;
 	client->status = Connected;
 	chan->client = client;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * p9_virtio_हटाओ - clean up resources associated with a virtio device
- * @vdev: virtio device to हटाओ
+ * p9_virtio_remove - clean up resources associated with a virtio device
+ * @vdev: virtio device to remove
  *
  */
 
-अटल व्योम p9_virtio_हटाओ(काष्ठा virtio_device *vdev)
-अणु
-	काष्ठा virtio_chan *chan = vdev->priv;
-	अचिन्हित दीर्घ warning_समय;
+static void p9_virtio_remove(struct virtio_device *vdev)
+{
+	struct virtio_chan *chan = vdev->priv;
+	unsigned long warning_time;
 
 	mutex_lock(&virtio_9p_lock);
 
-	/* Remove self from list so we करोn't get new users. */
+	/* Remove self from list so we don't get new users. */
 	list_del(&chan->chan_list);
-	warning_समय = jअगरfies;
+	warning_time = jiffies;
 
-	/* Wait क्रम existing users to बंद. */
-	जबतक (chan->inuse) अणु
+	/* Wait for existing users to close. */
+	while (chan->inuse) {
 		mutex_unlock(&virtio_9p_lock);
 		msleep(250);
-		अगर (समय_after(jअगरfies, warning_समय + 10 * HZ)) अणु
+		if (time_after(jiffies, warning_time + 10 * HZ)) {
 			dev_emerg(&vdev->dev,
 				  "p9_virtio_remove: waiting for device in use.\n");
-			warning_समय = jअगरfies;
-		पूर्ण
+			warning_time = jiffies;
+		}
 		mutex_lock(&virtio_9p_lock);
-	पूर्ण
+	}
 
 	mutex_unlock(&virtio_9p_lock);
 
 	vdev->config->reset(vdev);
 	vdev->config->del_vqs(vdev);
 
-	sysfs_हटाओ_file(&(vdev->dev.kobj), &dev_attr_mount_tag.attr);
+	sysfs_remove_file(&(vdev->dev.kobj), &dev_attr_mount_tag.attr);
 	kobject_uevent(&(vdev->dev.kobj), KOBJ_CHANGE);
-	kमुक्त(chan->tag);
-	kमुक्त(chan->vc_wq);
-	kमुक्त(chan);
+	kfree(chan->tag);
+	kfree(chan->vc_wq);
+	kfree(chan);
 
-पूर्ण
+}
 
-अटल काष्ठा virtio_device_id id_table[] = अणु
-	अणु VIRTIO_ID_9P, VIRTIO_DEV_ANY_ID पूर्ण,
-	अणु 0 पूर्ण,
-पूर्ण;
+static struct virtio_device_id id_table[] = {
+	{ VIRTIO_ID_9P, VIRTIO_DEV_ANY_ID },
+	{ 0 },
+};
 
-अटल अचिन्हित पूर्णांक features[] = अणु
+static unsigned int features[] = {
 	VIRTIO_9P_MOUNT_TAG,
-पूर्ण;
+};
 
 /* The standard "struct lguest_driver": */
-अटल काष्ठा virtio_driver p9_virtio_drv = अणु
+static struct virtio_driver p9_virtio_drv = {
 	.feature_table  = features,
 	.feature_table_size = ARRAY_SIZE(features),
 	.driver.name    = KBUILD_MODNAME,
 	.driver.owner	= THIS_MODULE,
 	.id_table	= id_table,
 	.probe		= p9_virtio_probe,
-	.हटाओ		= p9_virtio_हटाओ,
-पूर्ण;
+	.remove		= p9_virtio_remove,
+};
 
-अटल काष्ठा p9_trans_module p9_virtio_trans = अणु
+static struct p9_trans_module p9_virtio_trans = {
 	.name = "virtio",
 	.create = p9_virtio_create,
-	.बंद = p9_virtio_बंद,
+	.close = p9_virtio_close,
 	.request = p9_virtio_request,
 	.zc_request = p9_virtio_zc_request,
 	.cancel = p9_virtio_cancel,
 	.cancelled = p9_virtio_cancelled,
 	/*
-	 * We leave one entry क्रम input and one entry क्रम response
+	 * We leave one entry for input and one entry for response
 	 * headers. We also skip one more entry to accomodate, address
 	 * that are not at page boundary, that can result in an extra
 	 * page in zero copy.
@@ -768,31 +767,31 @@ p9_virtio_create(काष्ठा p9_client *client, स्थिर अक्
 	.maxsize = PAGE_SIZE * (VIRTQUEUE_NUM - 3),
 	.def = 1,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
 /* The standard init function */
-अटल पूर्णांक __init p9_virtio_init(व्योम)
-अणु
-	पूर्णांक rc;
+static int __init p9_virtio_init(void)
+{
+	int rc;
 
 	INIT_LIST_HEAD(&virtio_chan_list);
 
-	v9fs_रेजिस्टर_trans(&p9_virtio_trans);
-	rc = रेजिस्टर_virtio_driver(&p9_virtio_drv);
-	अगर (rc)
-		v9fs_unरेजिस्टर_trans(&p9_virtio_trans);
+	v9fs_register_trans(&p9_virtio_trans);
+	rc = register_virtio_driver(&p9_virtio_drv);
+	if (rc)
+		v9fs_unregister_trans(&p9_virtio_trans);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम __निकास p9_virtio_cleanup(व्योम)
-अणु
-	unरेजिस्टर_virtio_driver(&p9_virtio_drv);
-	v9fs_unरेजिस्टर_trans(&p9_virtio_trans);
-पूर्ण
+static void __exit p9_virtio_cleanup(void)
+{
+	unregister_virtio_driver(&p9_virtio_drv);
+	v9fs_unregister_trans(&p9_virtio_trans);
+}
 
 module_init(p9_virtio_init);
-module_निकास(p9_virtio_cleanup);
+module_exit(p9_virtio_cleanup);
 
 MODULE_DEVICE_TABLE(virtio, id_table);
 MODULE_AUTHOR("Eric Van Hensbergen <ericvh@gmail.com>");

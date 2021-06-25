@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * usbdux.c
  * Copyright (C) 2003-2014 Bernd Porr, mail@berndporr.me.uk
@@ -13,7 +12,7 @@
  * Updated: 10 Oct 2014
  * Status: Stable
  *
- * Connection scheme क्रम the counter at the digital port:
+ * Connection scheme for the counter at the digital port:
  * 0=/CLK0, 1=UP/DOWN0, 2=RESET0, 4=/CLK1, 5=UP/DOWN1, 6=RESET1.
  * The sampling rate of the counter is approximately 500Hz.
  *
@@ -24,7 +23,7 @@
 
 /*
  * I must give credit here to Chris Baugher who
- * wrote the driver क्रम AT-MIO-16d. I used some parts of this
+ * wrote the driver for AT-MIO-16d. I used some parts of this
  * driver. I also must give credits to David Brownell
  * who supported me with the USB development.
  *
@@ -33,485 +32,485 @@
  *
  * Revision history:
  * 0.94: D/A output should work now with any channel list combinations
- * 0.95: .owner commented out क्रम kernel vers below 2.4.19
+ * 0.95: .owner commented out for kernel vers below 2.4.19
  *       sanity checks in ai/ao_cmd
  * 0.96: trying to get it working with 2.6, moved all memory alloc to comedi's
  *       attach final USB IDs
  *       moved memory allocation completely to the corresponding comedi
- *       functions firmware upload is by fxload and no दीर्घer by comedi (due to
- *       क्रमागतeration)
+ *       functions firmware upload is by fxload and no longer by comedi (due to
+ *       enumeration)
  * 0.97: USB IDs received, adjusted table
  * 0.98: SMP, locking, memory alloc: moved all usb memory alloc
- *       to the usb subप्रणाली and moved all comedi related memory
+ *       to the usb subsystem and moved all comedi related memory
  *       alloc to comedi.
  *       | kernel | registration | usbdux-usb | usbdux-comedi | comedi |
  * 0.99: USB 2.0: changed protocol to isochronous transfer
  *                IRQ transfer is too buggy and too risky in 2.0
- *                क्रम the high speed ISO transfer is now a working version
+ *                for the high speed ISO transfer is now a working version
  *                available
- * 0.99b: Increased the iso transfer buffer क्रम high sp.to 10 buffers. Some VIA
+ * 0.99b: Increased the iso transfer buffer for high sp.to 10 buffers. Some VIA
  *        chipsets miss out IRQs. Deeper buffering is needed.
- * 1.00: full USB 2.0 support क्रम the A/D converter. Now: max 8kHz sampling
+ * 1.00: full USB 2.0 support for the A/D converter. Now: max 8kHz sampling
  *       rate.
- *       Firmware vers 1.00 is needed क्रम this.
- *       Two 16 bit up/करोwn/reset counter with a sampling rate of 1kHz
+ *       Firmware vers 1.00 is needed for this.
+ *       Two 16 bit up/down/reset counter with a sampling rate of 1kHz
  *       And loads of cleaning up, in particular streamlining the
  *       bulk transfers.
- * 1.1:  moved EP4 transfers to EP1 to make space क्रम a PWM output on EP4
+ * 1.1:  moved EP4 transfers to EP1 to make space for a PWM output on EP4
  * 1.2:  added PWM support via EP4
- * 2.0:  PWM seems to be stable and is not पूर्णांकerfering with the other functions
+ * 2.0:  PWM seems to be stable and is not interfering with the other functions
  * 2.1:  changed PWM API
  * 2.2:  added firmware kernel request to fix an udev problem
- * 2.3:  corrected a bug in bulk समयouts which were far too लघु
+ * 2.3:  corrected a bug in bulk timeouts which were far too short
  * 2.4:  fixed a bug which causes the driver to hang when it ran out of data.
  *       Thanks to Jan-Matthias Braun and Ian to spot the bug and fix it.
  *
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/input.h>
-#समावेश <linux/fcntl.h>
-#समावेश <linux/compiler.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/input.h>
+#include <linux/fcntl.h>
+#include <linux/compiler.h>
 
-#समावेश "../comedi_usb.h"
+#include "../comedi_usb.h"
 
-/* स्थिरants क्रम firmware upload and करोwnload */
-#घोषणा USBDUX_FIRMWARE		"usbdux_firmware.bin"
-#घोषणा USBDUX_FIRMWARE_MAX_LEN	0x2000
-#घोषणा USBDUX_FIRMWARE_CMD	0xa0
-#घोषणा VENDOR_सूची_IN		0xc0
-#घोषणा VENDOR_सूची_OUT		0x40
-#घोषणा USBDUX_CPU_CS		0xe600
+/* constants for firmware upload and download */
+#define USBDUX_FIRMWARE		"usbdux_firmware.bin"
+#define USBDUX_FIRMWARE_MAX_LEN	0x2000
+#define USBDUX_FIRMWARE_CMD	0xa0
+#define VENDOR_DIR_IN		0xc0
+#define VENDOR_DIR_OUT		0x40
+#define USBDUX_CPU_CS		0xe600
 
 /* usbdux bulk transfer commands */
-#घोषणा USBDUX_CMD_MULT_AI	0
-#घोषणा USBDUX_CMD_AO		1
-#घोषणा USBDUX_CMD_DIO_CFG	2
-#घोषणा USBDUX_CMD_DIO_BITS	3
-#घोषणा USBDUX_CMD_SINGLE_AI	4
-#घोषणा USBDUX_CMD_TIMER_RD	5
-#घोषणा USBDUX_CMD_TIMER_WR	6
-#घोषणा USBDUX_CMD_PWM_ON	7
-#घोषणा USBDUX_CMD_PWM_OFF	8
+#define USBDUX_CMD_MULT_AI	0
+#define USBDUX_CMD_AO		1
+#define USBDUX_CMD_DIO_CFG	2
+#define USBDUX_CMD_DIO_BITS	3
+#define USBDUX_CMD_SINGLE_AI	4
+#define USBDUX_CMD_TIMER_RD	5
+#define USBDUX_CMD_TIMER_WR	6
+#define USBDUX_CMD_PWM_ON	7
+#define USBDUX_CMD_PWM_OFF	8
 
-/* समयout क्रम the USB-transfer in ms */
-#घोषणा BULK_TIMEOUT		1000
+/* timeout for the USB-transfer in ms */
+#define BULK_TIMEOUT		1000
 
 /* 300Hz max frequ under PWM */
-#घोषणा MIN_PWM_PERIOD		((दीर्घ)(1E9 / 300))
+#define MIN_PWM_PERIOD		((long)(1E9 / 300))
 
 /* Default PWM frequency */
-#घोषणा PWM_DEFAULT_PERIOD	((दीर्घ)(1E9 / 100))
+#define PWM_DEFAULT_PERIOD	((long)(1E9 / 100))
 
 /* Size of one A/D value */
-#घोषणा SIZEADIN		((माप(u16)))
+#define SIZEADIN		((sizeof(u16)))
 
 /*
  * Size of the input-buffer IN BYTES
- * Always multiple of 8 क्रम 8 microframes which is needed in the highspeed mode
+ * Always multiple of 8 for 8 microframes which is needed in the highspeed mode
  */
-#घोषणा SIZEINBUF		(8 * SIZEADIN)
+#define SIZEINBUF		(8 * SIZEADIN)
 
 /* 16 bytes. */
-#घोषणा SIZEINSNBUF		16
+#define SIZEINSNBUF		16
 
-/* size of one value क्रम the D/A converter: channel and value */
-#घोषणा SIZEDAOUT		((माप(u8) + माप(u16)))
+/* size of one value for the D/A converter: channel and value */
+#define SIZEDAOUT		((sizeof(u8) + sizeof(u16)))
 
 /*
  * Size of the output-buffer in bytes
- * Actually only the first 4 triplets are used but क्रम the
+ * Actually only the first 4 triplets are used but for the
  * high speed mode we need to pad it to 8 (microframes).
  */
-#घोषणा SIZEOUTBUF		(8 * SIZEDAOUT)
+#define SIZEOUTBUF		(8 * SIZEDAOUT)
 
 /*
- * Size of the buffer क्रम the dux commands: just now max size is determined
+ * Size of the buffer for the dux commands: just now max size is determined
  * by the analogue out + command byte + panic bytes...
  */
-#घोषणा SIZखातापूर्णDUXBUFFER		(8 * SIZEDAOUT + 2)
+#define SIZEOFDUXBUFFER		(8 * SIZEDAOUT + 2)
 
 /* Number of in-URBs which receive the data: min=2 */
-#घोषणा NUMOFINBUFFERSFULL	5
+#define NUMOFINBUFFERSFULL	5
 
 /* Number of out-URBs which send the data: min=2 */
-#घोषणा NUMOFOUTBUFFERSFULL	5
+#define NUMOFOUTBUFFERSFULL	5
 
 /* Number of in-URBs which receive the data: min=5 */
 /* must have more buffers due to buggy USB ctr */
-#घोषणा NUMOFINBUFFERSHIGH	10
+#define NUMOFINBUFFERSHIGH	10
 
 /* Number of out-URBs which send the data: min=5 */
 /* must have more buffers due to buggy USB ctr */
-#घोषणा NUMOFOUTBUFFERSHIGH	10
+#define NUMOFOUTBUFFERSHIGH	10
 
 /* number of retries to get the right dux command */
-#घोषणा RETRIES			10
+#define RETRIES			10
 
-अटल स्थिर काष्ठा comedi_lrange range_usbdux_ai_range = अणु
-	4, अणु
+static const struct comedi_lrange range_usbdux_ai_range = {
+	4, {
 		BIP_RANGE(4.096),
 		BIP_RANGE(4.096 / 2),
 		UNI_RANGE(4.096),
 		UNI_RANGE(4.096 / 2)
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा comedi_lrange range_usbdux_ao_range = अणु
-	2, अणु
+static const struct comedi_lrange range_usbdux_ao_range = {
+	2, {
 		BIP_RANGE(4.096),
 		UNI_RANGE(4.096)
-	पूर्ण
-पूर्ण;
+	}
+};
 
-काष्ठा usbdux_निजी अणु
+struct usbdux_private {
 	/* actual number of in-buffers */
-	पूर्णांक n_ai_urbs;
+	int n_ai_urbs;
 	/* actual number of out-buffers */
-	पूर्णांक n_ao_urbs;
+	int n_ao_urbs;
 	/* ISO-transfer handling: buffers */
-	काष्ठा urb **ai_urbs;
-	काष्ठा urb **ao_urbs;
+	struct urb **ai_urbs;
+	struct urb **ao_urbs;
 	/* pwm-transfer handling */
-	काष्ठा urb *pwm_urb;
+	struct urb *pwm_urb;
 	/* PWM period */
-	अचिन्हित पूर्णांक pwm_period;
-	/* PWM पूर्णांकernal delay क्रम the GPIF in the FX2 */
+	unsigned int pwm_period;
+	/* PWM internal delay for the GPIF in the FX2 */
 	u8 pwm_delay;
 	/* size of the PWM buffer which holds the bit pattern */
-	पूर्णांक pwm_buf_sz;
-	/* input buffer क्रम the ISO-transfer */
+	int pwm_buf_sz;
+	/* input buffer for the ISO-transfer */
 	__le16 *in_buf;
-	/* input buffer क्रम single insn */
+	/* input buffer for single insn */
 	__le16 *insn_buf;
 
-	अचिन्हित पूर्णांक high_speed:1;
-	अचिन्हित पूर्णांक ai_cmd_running:1;
-	अचिन्हित पूर्णांक ao_cmd_running:1;
-	अचिन्हित पूर्णांक pwm_cmd_running:1;
+	unsigned int high_speed:1;
+	unsigned int ai_cmd_running:1;
+	unsigned int ao_cmd_running:1;
+	unsigned int pwm_cmd_running:1;
 
-	/* समय between samples in units of the समयr */
-	अचिन्हित पूर्णांक ai_समयr;
-	अचिन्हित पूर्णांक ao_समयr;
+	/* time between samples in units of the timer */
+	unsigned int ai_timer;
+	unsigned int ao_timer;
 	/* counter between aquisitions */
-	अचिन्हित पूर्णांक ai_counter;
-	अचिन्हित पूर्णांक ao_counter;
-	/* पूर्णांकerval in frames/uframes */
-	अचिन्हित पूर्णांक ai_पूर्णांकerval;
+	unsigned int ai_counter;
+	unsigned int ao_counter;
+	/* interval in frames/uframes */
+	unsigned int ai_interval;
 	/* commands */
 	u8 *dux_commands;
-	काष्ठा mutex mut;
-पूर्ण;
+	struct mutex mut;
+};
 
-अटल व्योम usbdux_unlink_urbs(काष्ठा urb **urbs, पूर्णांक num_urbs)
-अणु
-	पूर्णांक i;
+static void usbdux_unlink_urbs(struct urb **urbs, int num_urbs)
+{
+	int i;
 
-	क्रम (i = 0; i < num_urbs; i++)
-		usb_समाप्त_urb(urbs[i]);
-पूर्ण
+	for (i = 0; i < num_urbs; i++)
+		usb_kill_urb(urbs[i]);
+}
 
-अटल व्योम usbdux_ai_stop(काष्ठा comedi_device *dev, पूर्णांक करो_unlink)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
+static void usbdux_ai_stop(struct comedi_device *dev, int do_unlink)
+{
+	struct usbdux_private *devpriv = dev->private;
 
-	अगर (करो_unlink && devpriv->ai_urbs)
+	if (do_unlink && devpriv->ai_urbs)
 		usbdux_unlink_urbs(devpriv->ai_urbs, devpriv->n_ai_urbs);
 
 	devpriv->ai_cmd_running = 0;
-पूर्ण
+}
 
-अटल पूर्णांक usbdux_ai_cancel(काष्ठा comedi_device *dev,
-			    काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
+static int usbdux_ai_cancel(struct comedi_device *dev,
+			    struct comedi_subdevice *s)
+{
+	struct usbdux_private *devpriv = dev->private;
 
 	/* prevent other CPUs from submitting new commands just now */
 	mutex_lock(&devpriv->mut);
-	/* unlink only अगर the urb really has been submitted */
+	/* unlink only if the urb really has been submitted */
 	usbdux_ai_stop(dev, devpriv->ai_cmd_running);
 	mutex_unlock(&devpriv->mut);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम usbduxsub_ai_handle_urb(काष्ठा comedi_device *dev,
-				    काष्ठा comedi_subdevice *s,
-				    काष्ठा urb *urb)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	काष्ठा comedi_async *async = s->async;
-	काष्ठा comedi_cmd *cmd = &async->cmd;
-	पूर्णांक ret;
-	पूर्णांक i;
+static void usbduxsub_ai_handle_urb(struct comedi_device *dev,
+				    struct comedi_subdevice *s,
+				    struct urb *urb)
+{
+	struct usbdux_private *devpriv = dev->private;
+	struct comedi_async *async = s->async;
+	struct comedi_cmd *cmd = &async->cmd;
+	int ret;
+	int i;
 
 	devpriv->ai_counter--;
-	अगर (devpriv->ai_counter == 0) अणु
-		devpriv->ai_counter = devpriv->ai_समयr;
+	if (devpriv->ai_counter == 0) {
+		devpriv->ai_counter = devpriv->ai_timer;
 
 		/* get the data from the USB bus and hand it over to comedi */
-		क्रम (i = 0; i < cmd->chanlist_len; i++) अणु
-			अचिन्हित पूर्णांक range = CR_RANGE(cmd->chanlist[i]);
+		for (i = 0; i < cmd->chanlist_len; i++) {
+			unsigned int range = CR_RANGE(cmd->chanlist[i]);
 			u16 val = le16_to_cpu(devpriv->in_buf[i]);
 
 			/* bipolar data is two's-complement */
-			अगर (comedi_range_is_bipolar(s, range))
+			if (comedi_range_is_bipolar(s, range))
 				val = comedi_offset_munge(s, val);
 
 			/* transfer data */
-			अगर (!comedi_buf_ग_लिखो_samples(s, &val, 1))
-				वापस;
-		पूर्ण
+			if (!comedi_buf_write_samples(s, &val, 1))
+				return;
+		}
 
-		अगर (cmd->stop_src == TRIG_COUNT &&
-		    async->scans_करोne >= cmd->stop_arg)
+		if (cmd->stop_src == TRIG_COUNT &&
+		    async->scans_done >= cmd->stop_arg)
 			async->events |= COMEDI_CB_EOA;
-	पूर्ण
+	}
 
-	/* अगर command is still running, resubmit urb */
-	अगर (!(async->events & COMEDI_CB_CANCEL_MASK)) अणु
+	/* if command is still running, resubmit urb */
+	if (!(async->events & COMEDI_CB_CANCEL_MASK)) {
 		urb->dev = comedi_to_usb_dev(dev);
 		ret = usb_submit_urb(urb, GFP_ATOMIC);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev->class_dev,
 				"urb resubmit failed in int-context! err=%d\n",
 				ret);
-			अगर (ret == -EL2NSYNC)
+			if (ret == -EL2NSYNC)
 				dev_err(dev->class_dev,
 					"buggy USB host controller or bug in IRQ handler!\n");
 			async->events |= COMEDI_CB_ERROR;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम usbduxsub_ai_isoc_irq(काष्ठा urb *urb)
-अणु
-	काष्ठा comedi_device *dev = urb->context;
-	काष्ठा comedi_subdevice *s = dev->पढ़ो_subdev;
-	काष्ठा comedi_async *async = s->async;
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
+static void usbduxsub_ai_isoc_irq(struct urb *urb)
+{
+	struct comedi_device *dev = urb->context;
+	struct comedi_subdevice *s = dev->read_subdev;
+	struct comedi_async *async = s->async;
+	struct usbdux_private *devpriv = dev->private;
 
-	/* निकास अगर not running a command, करो not resubmit urb */
-	अगर (!devpriv->ai_cmd_running)
-		वापस;
+	/* exit if not running a command, do not resubmit urb */
+	if (!devpriv->ai_cmd_running)
+		return;
 
-	चयन (urb->status) अणु
-	हाल 0:
+	switch (urb->status) {
+	case 0:
 		/* copy the result in the transfer buffer */
-		स_नकल(devpriv->in_buf, urb->transfer_buffer, SIZEINBUF);
+		memcpy(devpriv->in_buf, urb->transfer_buffer, SIZEINBUF);
 		usbduxsub_ai_handle_urb(dev, s, urb);
-		अवरोध;
+		break;
 
-	हाल -EILSEQ:
+	case -EILSEQ:
 		/*
 		 * error in the ISOchronous data
-		 * we करोn't copy the data पूर्णांकo the transfer buffer
+		 * we don't copy the data into the transfer buffer
 		 * and recycle the last data byte
 		 */
 		dev_dbg(dev->class_dev, "CRC error in ISO IN stream\n");
 		usbduxsub_ai_handle_urb(dev, s, urb);
-		अवरोध;
+		break;
 
-	हाल -ECONNRESET:
-	हाल -ENOENT:
-	हाल -ESHUTDOWN:
-	हाल -ECONNABORTED:
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
+	case -ECONNABORTED:
 		/* after an unlink command, unplug, ... etc */
 		async->events |= COMEDI_CB_ERROR;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		/* a real error */
 		dev_err(dev->class_dev,
 			"Non-zero urb status received in ai intr context: %d\n",
 			urb->status);
 		async->events |= COMEDI_CB_ERROR;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/*
 	 * comedi_handle_events() cannot be used in this driver. The (*cancel)
 	 * operation would unlink the urb.
 	 */
-	अगर (async->events & COMEDI_CB_CANCEL_MASK)
+	if (async->events & COMEDI_CB_CANCEL_MASK)
 		usbdux_ai_stop(dev, 0);
 
 	comedi_event(dev, s);
-पूर्ण
+}
 
-अटल व्योम usbdux_ao_stop(काष्ठा comedi_device *dev, पूर्णांक करो_unlink)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
+static void usbdux_ao_stop(struct comedi_device *dev, int do_unlink)
+{
+	struct usbdux_private *devpriv = dev->private;
 
-	अगर (करो_unlink && devpriv->ao_urbs)
+	if (do_unlink && devpriv->ao_urbs)
 		usbdux_unlink_urbs(devpriv->ao_urbs, devpriv->n_ao_urbs);
 
 	devpriv->ao_cmd_running = 0;
-पूर्ण
+}
 
-अटल पूर्णांक usbdux_ao_cancel(काष्ठा comedi_device *dev,
-			    काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
+static int usbdux_ao_cancel(struct comedi_device *dev,
+			    struct comedi_subdevice *s)
+{
+	struct usbdux_private *devpriv = dev->private;
 
 	/* prevent other CPUs from submitting a command just now */
 	mutex_lock(&devpriv->mut);
-	/* unlink only अगर it is really running */
+	/* unlink only if it is really running */
 	usbdux_ao_stop(dev, devpriv->ao_cmd_running);
 	mutex_unlock(&devpriv->mut);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम usbduxsub_ao_handle_urb(काष्ठा comedi_device *dev,
-				    काष्ठा comedi_subdevice *s,
-				    काष्ठा urb *urb)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	काष्ठा comedi_async *async = s->async;
-	काष्ठा comedi_cmd *cmd = &async->cmd;
+static void usbduxsub_ao_handle_urb(struct comedi_device *dev,
+				    struct comedi_subdevice *s,
+				    struct urb *urb)
+{
+	struct usbdux_private *devpriv = dev->private;
+	struct comedi_async *async = s->async;
+	struct comedi_cmd *cmd = &async->cmd;
 	u8 *datap;
-	पूर्णांक ret;
-	पूर्णांक i;
+	int ret;
+	int i;
 
 	devpriv->ao_counter--;
-	अगर (devpriv->ao_counter == 0) अणु
-		devpriv->ao_counter = devpriv->ao_समयr;
+	if (devpriv->ao_counter == 0) {
+		devpriv->ao_counter = devpriv->ao_timer;
 
-		अगर (cmd->stop_src == TRIG_COUNT &&
-		    async->scans_करोne >= cmd->stop_arg) अणु
+		if (cmd->stop_src == TRIG_COUNT &&
+		    async->scans_done >= cmd->stop_arg) {
 			async->events |= COMEDI_CB_EOA;
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		/* transmit data to the USB bus */
 		datap = urb->transfer_buffer;
 		*datap++ = cmd->chanlist_len;
-		क्रम (i = 0; i < cmd->chanlist_len; i++) अणु
-			अचिन्हित पूर्णांक chan = CR_CHAN(cmd->chanlist[i]);
-			अचिन्हित लघु val;
+		for (i = 0; i < cmd->chanlist_len; i++) {
+			unsigned int chan = CR_CHAN(cmd->chanlist[i]);
+			unsigned short val;
 
-			अगर (!comedi_buf_पढ़ो_samples(s, &val, 1)) अणु
+			if (!comedi_buf_read_samples(s, &val, 1)) {
 				dev_err(dev->class_dev, "buffer underflow\n");
 				async->events |= COMEDI_CB_OVERFLOW;
-				वापस;
-			पूर्ण
+				return;
+			}
 
-			/* poपूर्णांकer to the DA */
+			/* pointer to the DA */
 			*datap++ = val & 0xff;
 			*datap++ = (val >> 8) & 0xff;
 			*datap++ = chan << 6;
-			s->पढ़ोback[chan] = val;
-		पूर्ण
-	पूर्ण
+			s->readback[chan] = val;
+		}
+	}
 
-	/* अगर command is still running, resubmit urb क्रम BULK transfer */
-	अगर (!(async->events & COMEDI_CB_CANCEL_MASK)) अणु
+	/* if command is still running, resubmit urb for BULK transfer */
+	if (!(async->events & COMEDI_CB_CANCEL_MASK)) {
 		urb->transfer_buffer_length = SIZEOUTBUF;
 		urb->dev = comedi_to_usb_dev(dev);
 		urb->status = 0;
-		अगर (devpriv->high_speed)
-			urb->पूर्णांकerval = 8;	/* uframes */
-		अन्यथा
-			urb->पूर्णांकerval = 1;	/* frames */
+		if (devpriv->high_speed)
+			urb->interval = 8;	/* uframes */
+		else
+			urb->interval = 1;	/* frames */
 		urb->number_of_packets = 1;
 		urb->iso_frame_desc[0].offset = 0;
 		urb->iso_frame_desc[0].length = SIZEOUTBUF;
 		urb->iso_frame_desc[0].status = 0;
 		ret = usb_submit_urb(urb, GFP_ATOMIC);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev->class_dev,
 				"ao urb resubm failed in int-cont. ret=%d",
 				ret);
-			अगर (ret == -EL2NSYNC)
+			if (ret == -EL2NSYNC)
 				dev_err(dev->class_dev,
 					"buggy USB host controller or bug in IRQ handling!\n");
 			async->events |= COMEDI_CB_ERROR;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम usbduxsub_ao_isoc_irq(काष्ठा urb *urb)
-अणु
-	काष्ठा comedi_device *dev = urb->context;
-	काष्ठा comedi_subdevice *s = dev->ग_लिखो_subdev;
-	काष्ठा comedi_async *async = s->async;
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
+static void usbduxsub_ao_isoc_irq(struct urb *urb)
+{
+	struct comedi_device *dev = urb->context;
+	struct comedi_subdevice *s = dev->write_subdev;
+	struct comedi_async *async = s->async;
+	struct usbdux_private *devpriv = dev->private;
 
-	/* निकास अगर not running a command, करो not resubmit urb */
-	अगर (!devpriv->ao_cmd_running)
-		वापस;
+	/* exit if not running a command, do not resubmit urb */
+	if (!devpriv->ao_cmd_running)
+		return;
 
-	चयन (urb->status) अणु
-	हाल 0:
+	switch (urb->status) {
+	case 0:
 		usbduxsub_ao_handle_urb(dev, s, urb);
-		अवरोध;
+		break;
 
-	हाल -ECONNRESET:
-	हाल -ENOENT:
-	हाल -ESHUTDOWN:
-	हाल -ECONNABORTED:
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
+	case -ECONNABORTED:
 		/* after an unlink command, unplug, ... etc */
 		async->events |= COMEDI_CB_ERROR;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		/* a real error */
 		dev_err(dev->class_dev,
 			"Non-zero urb status received in ao intr context: %d\n",
 			urb->status);
 		async->events |= COMEDI_CB_ERROR;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/*
 	 * comedi_handle_events() cannot be used in this driver. The (*cancel)
 	 * operation would unlink the urb.
 	 */
-	अगर (async->events & COMEDI_CB_CANCEL_MASK)
+	if (async->events & COMEDI_CB_CANCEL_MASK)
 		usbdux_ao_stop(dev, 0);
 
 	comedi_event(dev, s);
-पूर्ण
+}
 
-अटल पूर्णांक usbdux_submit_urbs(काष्ठा comedi_device *dev,
-			      काष्ठा urb **urbs, पूर्णांक num_urbs,
-			      पूर्णांक input_urb)
-अणु
-	काष्ठा usb_device *usb = comedi_to_usb_dev(dev);
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	काष्ठा urb *urb;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int usbdux_submit_urbs(struct comedi_device *dev,
+			      struct urb **urbs, int num_urbs,
+			      int input_urb)
+{
+	struct usb_device *usb = comedi_to_usb_dev(dev);
+	struct usbdux_private *devpriv = dev->private;
+	struct urb *urb;
+	int ret;
+	int i;
 
 	/* Submit all URBs and start the transfer on the bus */
-	क्रम (i = 0; i < num_urbs; i++) अणु
+	for (i = 0; i < num_urbs; i++) {
 		urb = urbs[i];
 
-		/* in हाल of a resubmission after an unlink... */
-		अगर (input_urb)
-			urb->पूर्णांकerval = devpriv->ai_पूर्णांकerval;
+		/* in case of a resubmission after an unlink... */
+		if (input_urb)
+			urb->interval = devpriv->ai_interval;
 		urb->context = dev;
 		urb->dev = usb;
 		urb->status = 0;
 		urb->transfer_flags = URB_ISO_ASAP;
 
 		ret = usb_submit_urb(urb, GFP_ATOMIC);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक usbdux_ai_cmdtest(काष्ठा comedi_device *dev,
-			     काष्ठा comedi_subdevice *s, काष्ठा comedi_cmd *cmd)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	पूर्णांक err = 0;
+static int usbdux_ai_cmdtest(struct comedi_device *dev,
+			     struct comedi_subdevice *s, struct comedi_cmd *cmd)
+{
+	struct usbdux_private *devpriv = dev->private;
+	int err = 0;
 
-	/* Step 1 : check अगर triggers are trivially valid */
+	/* Step 1 : check if triggers are trivially valid */
 
 	err |= comedi_check_trigger_src(&cmd->start_src, TRIG_NOW | TRIG_INT);
 	err |= comedi_check_trigger_src(&cmd->scan_begin_src, TRIG_TIMER);
@@ -519,8 +518,8 @@
 	err |= comedi_check_trigger_src(&cmd->scan_end_src, TRIG_COUNT);
 	err |= comedi_check_trigger_src(&cmd->stop_src, TRIG_COUNT | TRIG_NONE);
 
-	अगर (err)
-		वापस 1;
+	if (err)
+		return 1;
 
 	/* Step 2a : make sure trigger sources are unique */
 
@@ -529,381 +528,381 @@
 
 	/* Step 2b : and mutually compatible */
 
-	अगर (err)
-		वापस 2;
+	if (err)
+		return 2;
 
-	/* Step 3: check अगर arguments are trivially valid */
+	/* Step 3: check if arguments are trivially valid */
 
 	err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
 
-	अगर (cmd->scan_begin_src == TRIG_FOLLOW)	/* पूर्णांकernal trigger */
+	if (cmd->scan_begin_src == TRIG_FOLLOW)	/* internal trigger */
 		err |= comedi_check_trigger_arg_is(&cmd->scan_begin_arg, 0);
 
-	अगर (cmd->scan_begin_src == TRIG_TIMER) अणु
-		/* full speed करोes 1kHz scans every USB frame */
-		अचिन्हित पूर्णांक arg = 1000000;
-		अचिन्हित पूर्णांक min_arg = arg;
+	if (cmd->scan_begin_src == TRIG_TIMER) {
+		/* full speed does 1kHz scans every USB frame */
+		unsigned int arg = 1000000;
+		unsigned int min_arg = arg;
 
-		अगर (devpriv->high_speed) अणु
+		if (devpriv->high_speed) {
 			/*
 			 * In high speed mode microframes are possible.
 			 * However, during one microframe we can roughly
 			 * sample one channel. Thus, the more channels
-			 * are in the channel list the more समय we need.
+			 * are in the channel list the more time we need.
 			 */
-			पूर्णांक i = 1;
+			int i = 1;
 
-			/* find a घातer of 2 क्रम the number of channels */
-			जबतक (i < cmd->chanlist_len)
+			/* find a power of 2 for the number of channels */
+			while (i < cmd->chanlist_len)
 				i = i * 2;
 
 			arg /= 8;
 			min_arg = arg * i;
-		पूर्ण
+		}
 		err |= comedi_check_trigger_arg_min(&cmd->scan_begin_arg,
 						    min_arg);
 		/* calc the real sampling rate with the rounding errors */
 		arg = (cmd->scan_begin_arg / arg) * arg;
 		err |= comedi_check_trigger_arg_is(&cmd->scan_begin_arg, arg);
-	पूर्ण
+	}
 
 	err |= comedi_check_trigger_arg_is(&cmd->scan_end_arg,
 					   cmd->chanlist_len);
 
-	अगर (cmd->stop_src == TRIG_COUNT)
+	if (cmd->stop_src == TRIG_COUNT)
 		err |= comedi_check_trigger_arg_min(&cmd->stop_arg, 1);
-	अन्यथा	/* TRIG_NONE */
+	else	/* TRIG_NONE */
 		err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
 
-	अगर (err)
-		वापस 3;
+	if (err)
+		return 3;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * creates the ADC command क्रम the MAX1271
+ * creates the ADC command for the MAX1271
  * range is the range value from comedi
  */
-अटल u8 create_adc_command(अचिन्हित पूर्णांक chan, अचिन्हित पूर्णांक range)
-अणु
+static u8 create_adc_command(unsigned int chan, unsigned int range)
+{
 	u8 p = (range <= 1);
 	u8 r = ((range % 2) == 0);
 
-	वापस (chan << 4) | ((p == 1) << 2) | ((r == 1) << 3);
-पूर्ण
+	return (chan << 4) | ((p == 1) << 2) | ((r == 1) << 3);
+}
 
-अटल पूर्णांक send_dux_commands(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक cmd_type)
-अणु
-	काष्ठा usb_device *usb = comedi_to_usb_dev(dev);
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	पूर्णांक nsent;
+static int send_dux_commands(struct comedi_device *dev, unsigned int cmd_type)
+{
+	struct usb_device *usb = comedi_to_usb_dev(dev);
+	struct usbdux_private *devpriv = dev->private;
+	int nsent;
 
 	devpriv->dux_commands[0] = cmd_type;
 
-	वापस usb_bulk_msg(usb, usb_sndbulkpipe(usb, 1),
-			    devpriv->dux_commands, SIZखातापूर्णDUXBUFFER,
+	return usb_bulk_msg(usb, usb_sndbulkpipe(usb, 1),
+			    devpriv->dux_commands, SIZEOFDUXBUFFER,
 			    &nsent, BULK_TIMEOUT);
-पूर्ण
+}
 
-अटल पूर्णांक receive_dux_commands(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक command)
-अणु
-	काष्ठा usb_device *usb = comedi_to_usb_dev(dev);
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	पूर्णांक ret;
-	पूर्णांक nrec;
-	पूर्णांक i;
+static int receive_dux_commands(struct comedi_device *dev, unsigned int command)
+{
+	struct usb_device *usb = comedi_to_usb_dev(dev);
+	struct usbdux_private *devpriv = dev->private;
+	int ret;
+	int nrec;
+	int i;
 
-	क्रम (i = 0; i < RETRIES; i++) अणु
+	for (i = 0; i < RETRIES; i++) {
 		ret = usb_bulk_msg(usb, usb_rcvbulkpipe(usb, 8),
 				   devpriv->insn_buf, SIZEINSNBUF,
 				   &nrec, BULK_TIMEOUT);
-		अगर (ret < 0)
-			वापस ret;
-		अगर (le16_to_cpu(devpriv->insn_buf[0]) == command)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+		if (le16_to_cpu(devpriv->insn_buf[0]) == command)
+			return ret;
+	}
 	/* command not received */
-	वापस -EFAULT;
-पूर्ण
+	return -EFAULT;
+}
 
-अटल पूर्णांक usbdux_ai_पूर्णांकtrig(काष्ठा comedi_device *dev,
-			     काष्ठा comedi_subdevice *s,
-			     अचिन्हित पूर्णांक trig_num)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	काष्ठा comedi_cmd *cmd = &s->async->cmd;
-	पूर्णांक ret;
+static int usbdux_ai_inttrig(struct comedi_device *dev,
+			     struct comedi_subdevice *s,
+			     unsigned int trig_num)
+{
+	struct usbdux_private *devpriv = dev->private;
+	struct comedi_cmd *cmd = &s->async->cmd;
+	int ret;
 
-	अगर (trig_num != cmd->start_arg)
-		वापस -EINVAL;
+	if (trig_num != cmd->start_arg)
+		return -EINVAL;
 
 	mutex_lock(&devpriv->mut);
 
-	अगर (!devpriv->ai_cmd_running) अणु
+	if (!devpriv->ai_cmd_running) {
 		devpriv->ai_cmd_running = 1;
 		ret = usbdux_submit_urbs(dev, devpriv->ai_urbs,
 					 devpriv->n_ai_urbs, 1);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			devpriv->ai_cmd_running = 0;
-			जाओ ai_trig_निकास;
-		पूर्ण
-		s->async->पूर्णांकtrig = शून्य;
-	पूर्ण अन्यथा अणु
+			goto ai_trig_exit;
+		}
+		s->async->inttrig = NULL;
+	} else {
 		ret = -EBUSY;
-	पूर्ण
+	}
 
-ai_trig_निकास:
+ai_trig_exit:
 	mutex_unlock(&devpriv->mut);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक usbdux_ai_cmd(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	काष्ठा comedi_cmd *cmd = &s->async->cmd;
-	पूर्णांक len = cmd->chanlist_len;
-	पूर्णांक ret = -EBUSY;
-	पूर्णांक i;
+static int usbdux_ai_cmd(struct comedi_device *dev, struct comedi_subdevice *s)
+{
+	struct usbdux_private *devpriv = dev->private;
+	struct comedi_cmd *cmd = &s->async->cmd;
+	int len = cmd->chanlist_len;
+	int ret = -EBUSY;
+	int i;
 
 	/* block other CPUs from starting an ai_cmd */
 	mutex_lock(&devpriv->mut);
 
-	अगर (devpriv->ai_cmd_running)
-		जाओ ai_cmd_निकास;
+	if (devpriv->ai_cmd_running)
+		goto ai_cmd_exit;
 
 	devpriv->dux_commands[1] = len;
-	क्रम (i = 0; i < len; ++i) अणु
-		अचिन्हित पूर्णांक chan = CR_CHAN(cmd->chanlist[i]);
-		अचिन्हित पूर्णांक range = CR_RANGE(cmd->chanlist[i]);
+	for (i = 0; i < len; ++i) {
+		unsigned int chan = CR_CHAN(cmd->chanlist[i]);
+		unsigned int range = CR_RANGE(cmd->chanlist[i]);
 
 		devpriv->dux_commands[i + 2] = create_adc_command(chan, range);
-	पूर्ण
+	}
 
 	ret = send_dux_commands(dev, USBDUX_CMD_MULT_AI);
-	अगर (ret < 0)
-		जाओ ai_cmd_निकास;
+	if (ret < 0)
+		goto ai_cmd_exit;
 
-	अगर (devpriv->high_speed) अणु
+	if (devpriv->high_speed) {
 		/*
-		 * every channel माला_लो a समय winकरोw of 125us. Thus, अगर we
+		 * every channel gets a time window of 125us. Thus, if we
 		 * sample all 8 channels we need 1ms. If we sample only one
 		 * channel we need only 125us
 		 */
-		devpriv->ai_पूर्णांकerval = 1;
-		/* find a घातer of 2 क्रम the पूर्णांकerval */
-		जबतक (devpriv->ai_पूर्णांकerval < len)
-			devpriv->ai_पूर्णांकerval *= 2;
+		devpriv->ai_interval = 1;
+		/* find a power of 2 for the interval */
+		while (devpriv->ai_interval < len)
+			devpriv->ai_interval *= 2;
 
-		devpriv->ai_समयr = cmd->scan_begin_arg /
-				    (125000 * devpriv->ai_पूर्णांकerval);
-	पूर्ण अन्यथा अणु
-		/* पूर्णांकerval always 1ms */
-		devpriv->ai_पूर्णांकerval = 1;
-		devpriv->ai_समयr = cmd->scan_begin_arg / 1000000;
-	पूर्ण
-	अगर (devpriv->ai_समयr < 1) अणु
+		devpriv->ai_timer = cmd->scan_begin_arg /
+				    (125000 * devpriv->ai_interval);
+	} else {
+		/* interval always 1ms */
+		devpriv->ai_interval = 1;
+		devpriv->ai_timer = cmd->scan_begin_arg / 1000000;
+	}
+	if (devpriv->ai_timer < 1) {
 		ret = -EINVAL;
-		जाओ ai_cmd_निकास;
-	पूर्ण
+		goto ai_cmd_exit;
+	}
 
-	devpriv->ai_counter = devpriv->ai_समयr;
+	devpriv->ai_counter = devpriv->ai_timer;
 
-	अगर (cmd->start_src == TRIG_NOW) अणु
+	if (cmd->start_src == TRIG_NOW) {
 		/* enable this acquisition operation */
 		devpriv->ai_cmd_running = 1;
 		ret = usbdux_submit_urbs(dev, devpriv->ai_urbs,
 					 devpriv->n_ai_urbs, 1);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			devpriv->ai_cmd_running = 0;
 			/* fixme: unlink here?? */
-			जाओ ai_cmd_निकास;
-		पूर्ण
-		s->async->पूर्णांकtrig = शून्य;
-	पूर्ण अन्यथा अणु
+			goto ai_cmd_exit;
+		}
+		s->async->inttrig = NULL;
+	} else {
 		/* TRIG_INT */
-		/* करोn't enable the acquision operation */
-		/* रुको क्रम an पूर्णांकernal संकेत */
-		s->async->पूर्णांकtrig = usbdux_ai_पूर्णांकtrig;
-	पूर्ण
+		/* don't enable the acquision operation */
+		/* wait for an internal signal */
+		s->async->inttrig = usbdux_ai_inttrig;
+	}
 
-ai_cmd_निकास:
+ai_cmd_exit:
 	mutex_unlock(&devpriv->mut);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Mode 0 is used to get a single conversion on demand */
-अटल पूर्णांक usbdux_ai_insn_पढ़ो(काष्ठा comedi_device *dev,
-			       काष्ठा comedi_subdevice *s,
-			       काष्ठा comedi_insn *insn,
-			       अचिन्हित पूर्णांक *data)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
-	अचिन्हित पूर्णांक range = CR_RANGE(insn->chanspec);
-	अचिन्हित पूर्णांक val;
-	पूर्णांक ret = -EBUSY;
-	पूर्णांक i;
+static int usbdux_ai_insn_read(struct comedi_device *dev,
+			       struct comedi_subdevice *s,
+			       struct comedi_insn *insn,
+			       unsigned int *data)
+{
+	struct usbdux_private *devpriv = dev->private;
+	unsigned int chan = CR_CHAN(insn->chanspec);
+	unsigned int range = CR_RANGE(insn->chanspec);
+	unsigned int val;
+	int ret = -EBUSY;
+	int i;
 
 	mutex_lock(&devpriv->mut);
 
-	अगर (devpriv->ai_cmd_running)
-		जाओ ai_पढ़ो_निकास;
+	if (devpriv->ai_cmd_running)
+		goto ai_read_exit;
 
-	/* set command क्रम the first channel */
+	/* set command for the first channel */
 	devpriv->dux_commands[1] = create_adc_command(chan, range);
 
 	/* adc commands */
 	ret = send_dux_commands(dev, USBDUX_CMD_SINGLE_AI);
-	अगर (ret < 0)
-		जाओ ai_पढ़ो_निकास;
+	if (ret < 0)
+		goto ai_read_exit;
 
-	क्रम (i = 0; i < insn->n; i++) अणु
+	for (i = 0; i < insn->n; i++) {
 		ret = receive_dux_commands(dev, USBDUX_CMD_SINGLE_AI);
-		अगर (ret < 0)
-			जाओ ai_पढ़ो_निकास;
+		if (ret < 0)
+			goto ai_read_exit;
 
 		val = le16_to_cpu(devpriv->insn_buf[1]);
 
 		/* bipolar data is two's-complement */
-		अगर (comedi_range_is_bipolar(s, range))
+		if (comedi_range_is_bipolar(s, range))
 			val = comedi_offset_munge(s, val);
 
 		data[i] = val;
-	पूर्ण
+	}
 
-ai_पढ़ो_निकास:
+ai_read_exit:
 	mutex_unlock(&devpriv->mut);
 
-	वापस ret ? ret : insn->n;
-पूर्ण
+	return ret ? ret : insn->n;
+}
 
-अटल पूर्णांक usbdux_ao_insn_पढ़ो(काष्ठा comedi_device *dev,
-			       काष्ठा comedi_subdevice *s,
-			       काष्ठा comedi_insn *insn,
-			       अचिन्हित पूर्णांक *data)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	पूर्णांक ret;
+static int usbdux_ao_insn_read(struct comedi_device *dev,
+			       struct comedi_subdevice *s,
+			       struct comedi_insn *insn,
+			       unsigned int *data)
+{
+	struct usbdux_private *devpriv = dev->private;
+	int ret;
 
 	mutex_lock(&devpriv->mut);
-	ret = comedi_पढ़ोback_insn_पढ़ो(dev, s, insn, data);
+	ret = comedi_readback_insn_read(dev, s, insn, data);
 	mutex_unlock(&devpriv->mut);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक usbdux_ao_insn_ग_लिखो(काष्ठा comedi_device *dev,
-				काष्ठा comedi_subdevice *s,
-				काष्ठा comedi_insn *insn,
-				अचिन्हित पूर्णांक *data)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+static int usbdux_ao_insn_write(struct comedi_device *dev,
+				struct comedi_subdevice *s,
+				struct comedi_insn *insn,
+				unsigned int *data)
+{
+	struct usbdux_private *devpriv = dev->private;
+	unsigned int chan = CR_CHAN(insn->chanspec);
 	__le16 *p = (__le16 *)&devpriv->dux_commands[2];
-	पूर्णांक ret = -EBUSY;
-	पूर्णांक i;
+	int ret = -EBUSY;
+	int i;
 
 	mutex_lock(&devpriv->mut);
 
-	अगर (devpriv->ao_cmd_running)
-		जाओ ao_ग_लिखो_निकास;
+	if (devpriv->ao_cmd_running)
+		goto ao_write_exit;
 
 	/* number of channels: 1 */
 	devpriv->dux_commands[1] = 1;
 	/* channel number */
 	devpriv->dux_commands[4] = chan << 6;
 
-	क्रम (i = 0; i < insn->n; i++) अणु
-		अचिन्हित पूर्णांक val = data[i];
+	for (i = 0; i < insn->n; i++) {
+		unsigned int val = data[i];
 
 		/* one 16 bit value */
 		*p = cpu_to_le16(val);
 
 		ret = send_dux_commands(dev, USBDUX_CMD_AO);
-		अगर (ret < 0)
-			जाओ ao_ग_लिखो_निकास;
+		if (ret < 0)
+			goto ao_write_exit;
 
-		s->पढ़ोback[chan] = val;
-	पूर्ण
+		s->readback[chan] = val;
+	}
 
-ao_ग_लिखो_निकास:
+ao_write_exit:
 	mutex_unlock(&devpriv->mut);
 
-	वापस ret ? ret : insn->n;
-पूर्ण
+	return ret ? ret : insn->n;
+}
 
-अटल पूर्णांक usbdux_ao_पूर्णांकtrig(काष्ठा comedi_device *dev,
-			     काष्ठा comedi_subdevice *s,
-			     अचिन्हित पूर्णांक trig_num)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	काष्ठा comedi_cmd *cmd = &s->async->cmd;
-	पूर्णांक ret;
+static int usbdux_ao_inttrig(struct comedi_device *dev,
+			     struct comedi_subdevice *s,
+			     unsigned int trig_num)
+{
+	struct usbdux_private *devpriv = dev->private;
+	struct comedi_cmd *cmd = &s->async->cmd;
+	int ret;
 
-	अगर (trig_num != cmd->start_arg)
-		वापस -EINVAL;
+	if (trig_num != cmd->start_arg)
+		return -EINVAL;
 
 	mutex_lock(&devpriv->mut);
 
-	अगर (!devpriv->ao_cmd_running) अणु
+	if (!devpriv->ao_cmd_running) {
 		devpriv->ao_cmd_running = 1;
 		ret = usbdux_submit_urbs(dev, devpriv->ao_urbs,
 					 devpriv->n_ao_urbs, 0);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			devpriv->ao_cmd_running = 0;
-			जाओ ao_trig_निकास;
-		पूर्ण
-		s->async->पूर्णांकtrig = शून्य;
-	पूर्ण अन्यथा अणु
+			goto ao_trig_exit;
+		}
+		s->async->inttrig = NULL;
+	} else {
 		ret = -EBUSY;
-	पूर्ण
+	}
 
-ao_trig_निकास:
+ao_trig_exit:
 	mutex_unlock(&devpriv->mut);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक usbdux_ao_cmdtest(काष्ठा comedi_device *dev,
-			     काष्ठा comedi_subdevice *s, काष्ठा comedi_cmd *cmd)
-अणु
-	पूर्णांक err = 0;
-	अचिन्हित पूर्णांक flags;
+static int usbdux_ao_cmdtest(struct comedi_device *dev,
+			     struct comedi_subdevice *s, struct comedi_cmd *cmd)
+{
+	int err = 0;
+	unsigned int flags;
 
-	/* Step 1 : check अगर triggers are trivially valid */
+	/* Step 1 : check if triggers are trivially valid */
 
 	err |= comedi_check_trigger_src(&cmd->start_src, TRIG_NOW | TRIG_INT);
 
-	अगर (0) अणु		/* (devpriv->high_speed) */
+	if (0) {		/* (devpriv->high_speed) */
 		/* the sampling rate is set by the coversion rate */
 		flags = TRIG_FOLLOW;
-	पूर्ण अन्यथा अणु
-		/* start a new scan (output at once) with a समयr */
+	} else {
+		/* start a new scan (output at once) with a timer */
 		flags = TRIG_TIMER;
-	पूर्ण
+	}
 	err |= comedi_check_trigger_src(&cmd->scan_begin_src, flags);
 
-	अगर (0) अणु		/* (devpriv->high_speed) */
+	if (0) {		/* (devpriv->high_speed) */
 		/*
 		 * in usb-2.0 only one conversion it transmitted
 		 * but with 8kHz/n
 		 */
 		flags = TRIG_TIMER;
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * all conversion events happen simultaneously with
 		 * a rate of 1kHz/n
 		 */
 		flags = TRIG_NOW;
-	पूर्ण
+	}
 	err |= comedi_check_trigger_src(&cmd->convert_src, flags);
 
 	err |= comedi_check_trigger_src(&cmd->scan_end_src, TRIG_COUNT);
 	err |= comedi_check_trigger_src(&cmd->stop_src, TRIG_COUNT | TRIG_NONE);
 
-	अगर (err)
-		वापस 1;
+	if (err)
+		return 1;
 
 	/* Step 2a : make sure trigger sources are unique */
 
@@ -912,117 +911,117 @@ ao_trig_निकास:
 
 	/* Step 2b : and mutually compatible */
 
-	अगर (err)
-		वापस 2;
+	if (err)
+		return 2;
 
-	/* Step 3: check अगर arguments are trivially valid */
+	/* Step 3: check if arguments are trivially valid */
 
 	err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
 
-	अगर (cmd->scan_begin_src == TRIG_FOLLOW)	/* पूर्णांकernal trigger */
+	if (cmd->scan_begin_src == TRIG_FOLLOW)	/* internal trigger */
 		err |= comedi_check_trigger_arg_is(&cmd->scan_begin_arg, 0);
 
-	अगर (cmd->scan_begin_src == TRIG_TIMER) अणु
+	if (cmd->scan_begin_src == TRIG_TIMER) {
 		err |= comedi_check_trigger_arg_min(&cmd->scan_begin_arg,
 						    1000000);
-	पूर्ण
+	}
 
-	/* not used now, is क्रम later use */
-	अगर (cmd->convert_src == TRIG_TIMER)
+	/* not used now, is for later use */
+	if (cmd->convert_src == TRIG_TIMER)
 		err |= comedi_check_trigger_arg_min(&cmd->convert_arg, 125000);
 
 	err |= comedi_check_trigger_arg_is(&cmd->scan_end_arg,
 					   cmd->chanlist_len);
 
-	अगर (cmd->stop_src == TRIG_COUNT)
+	if (cmd->stop_src == TRIG_COUNT)
 		err |= comedi_check_trigger_arg_min(&cmd->stop_arg, 1);
-	अन्यथा	/* TRIG_NONE */
+	else	/* TRIG_NONE */
 		err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
 
-	अगर (err)
-		वापस 3;
+	if (err)
+		return 3;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक usbdux_ao_cmd(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	काष्ठा comedi_cmd *cmd = &s->async->cmd;
-	पूर्णांक ret = -EBUSY;
+static int usbdux_ao_cmd(struct comedi_device *dev, struct comedi_subdevice *s)
+{
+	struct usbdux_private *devpriv = dev->private;
+	struct comedi_cmd *cmd = &s->async->cmd;
+	int ret = -EBUSY;
 
 	mutex_lock(&devpriv->mut);
 
-	अगर (devpriv->ao_cmd_running)
-		जाओ ao_cmd_निकास;
+	if (devpriv->ao_cmd_running)
+		goto ao_cmd_exit;
 
 	/* we count in steps of 1ms (125us) */
 	/* 125us mode not used yet */
-	अगर (0) अणु		/* (devpriv->high_speed) */
+	if (0) {		/* (devpriv->high_speed) */
 		/* 125us */
 		/* timing of the conversion itself: every 125 us */
-		devpriv->ao_समयr = cmd->convert_arg / 125000;
-	पूर्ण अन्यथा अणु
+		devpriv->ao_timer = cmd->convert_arg / 125000;
+	} else {
 		/* 1ms */
 		/* timing of the scan: we get all channels at once */
-		devpriv->ao_समयr = cmd->scan_begin_arg / 1000000;
-		अगर (devpriv->ao_समयr < 1) अणु
+		devpriv->ao_timer = cmd->scan_begin_arg / 1000000;
+		if (devpriv->ao_timer < 1) {
 			ret = -EINVAL;
-			जाओ ao_cmd_निकास;
-		पूर्ण
-	पूर्ण
+			goto ao_cmd_exit;
+		}
+	}
 
-	devpriv->ao_counter = devpriv->ao_समयr;
+	devpriv->ao_counter = devpriv->ao_timer;
 
-	अगर (cmd->start_src == TRIG_NOW) अणु
+	if (cmd->start_src == TRIG_NOW) {
 		/* enable this acquisition operation */
 		devpriv->ao_cmd_running = 1;
 		ret = usbdux_submit_urbs(dev, devpriv->ao_urbs,
 					 devpriv->n_ao_urbs, 0);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			devpriv->ao_cmd_running = 0;
 			/* fixme: unlink here?? */
-			जाओ ao_cmd_निकास;
-		पूर्ण
-		s->async->पूर्णांकtrig = शून्य;
-	पूर्ण अन्यथा अणु
+			goto ao_cmd_exit;
+		}
+		s->async->inttrig = NULL;
+	} else {
 		/* TRIG_INT */
 		/* submit the urbs later */
-		/* रुको क्रम an पूर्णांकernal संकेत */
-		s->async->पूर्णांकtrig = usbdux_ao_पूर्णांकtrig;
-	पूर्ण
+		/* wait for an internal signal */
+		s->async->inttrig = usbdux_ao_inttrig;
+	}
 
-ao_cmd_निकास:
+ao_cmd_exit:
 	mutex_unlock(&devpriv->mut);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक usbdux_dio_insn_config(काष्ठा comedi_device *dev,
-				  काष्ठा comedi_subdevice *s,
-				  काष्ठा comedi_insn *insn,
-				  अचिन्हित पूर्णांक *data)
-अणु
-	पूर्णांक ret;
+static int usbdux_dio_insn_config(struct comedi_device *dev,
+				  struct comedi_subdevice *s,
+				  struct comedi_insn *insn,
+				  unsigned int *data)
+{
+	int ret;
 
 	ret = comedi_dio_insn_config(dev, s, insn, data, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
-	 * We करोn't tell the firmware here as it would take 8 frames
-	 * to submit the inक्रमmation. We करो it in the insn_bits.
+	 * We don't tell the firmware here as it would take 8 frames
+	 * to submit the information. We do it in the insn_bits.
 	 */
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-अटल पूर्णांक usbdux_dio_insn_bits(काष्ठा comedi_device *dev,
-				काष्ठा comedi_subdevice *s,
-				काष्ठा comedi_insn *insn,
-				अचिन्हित पूर्णांक *data)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	पूर्णांक ret;
+static int usbdux_dio_insn_bits(struct comedi_device *dev,
+				struct comedi_subdevice *s,
+				struct comedi_insn *insn,
+				unsigned int *data)
+{
+	struct usbdux_private *devpriv = dev->private;
+	int ret;
 
 	mutex_lock(&devpriv->mut);
 
@@ -1033,431 +1032,431 @@ ao_cmd_निकास:
 	devpriv->dux_commands[2] = s->state;
 
 	/*
-	 * This command also tells the firmware to वापस
+	 * This command also tells the firmware to return
 	 * the digital input lines.
 	 */
 	ret = send_dux_commands(dev, USBDUX_CMD_DIO_BITS);
-	अगर (ret < 0)
-		जाओ dio_निकास;
+	if (ret < 0)
+		goto dio_exit;
 	ret = receive_dux_commands(dev, USBDUX_CMD_DIO_BITS);
-	अगर (ret < 0)
-		जाओ dio_निकास;
+	if (ret < 0)
+		goto dio_exit;
 
 	data[1] = le16_to_cpu(devpriv->insn_buf[1]);
 
-dio_निकास:
+dio_exit:
 	mutex_unlock(&devpriv->mut);
 
-	वापस ret ? ret : insn->n;
-पूर्ण
+	return ret ? ret : insn->n;
+}
 
-अटल पूर्णांक usbdux_counter_पढ़ो(काष्ठा comedi_device *dev,
-			       काष्ठा comedi_subdevice *s,
-			       काष्ठा comedi_insn *insn,
-			       अचिन्हित पूर्णांक *data)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+static int usbdux_counter_read(struct comedi_device *dev,
+			       struct comedi_subdevice *s,
+			       struct comedi_insn *insn,
+			       unsigned int *data)
+{
+	struct usbdux_private *devpriv = dev->private;
+	unsigned int chan = CR_CHAN(insn->chanspec);
+	int ret = 0;
+	int i;
 
 	mutex_lock(&devpriv->mut);
 
-	क्रम (i = 0; i < insn->n; i++) अणु
+	for (i = 0; i < insn->n; i++) {
 		ret = send_dux_commands(dev, USBDUX_CMD_TIMER_RD);
-		अगर (ret < 0)
-			जाओ counter_पढ़ो_निकास;
+		if (ret < 0)
+			goto counter_read_exit;
 		ret = receive_dux_commands(dev, USBDUX_CMD_TIMER_RD);
-		अगर (ret < 0)
-			जाओ counter_पढ़ो_निकास;
+		if (ret < 0)
+			goto counter_read_exit;
 
 		data[i] = le16_to_cpu(devpriv->insn_buf[chan + 1]);
-	पूर्ण
+	}
 
-counter_पढ़ो_निकास:
+counter_read_exit:
 	mutex_unlock(&devpriv->mut);
 
-	वापस ret ? ret : insn->n;
-पूर्ण
+	return ret ? ret : insn->n;
+}
 
-अटल पूर्णांक usbdux_counter_ग_लिखो(काष्ठा comedi_device *dev,
-				काष्ठा comedi_subdevice *s,
-				काष्ठा comedi_insn *insn,
-				अचिन्हित पूर्णांक *data)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+static int usbdux_counter_write(struct comedi_device *dev,
+				struct comedi_subdevice *s,
+				struct comedi_insn *insn,
+				unsigned int *data)
+{
+	struct usbdux_private *devpriv = dev->private;
+	unsigned int chan = CR_CHAN(insn->chanspec);
 	__le16 *p = (__le16 *)&devpriv->dux_commands[2];
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+	int ret = 0;
+	int i;
 
 	mutex_lock(&devpriv->mut);
 
 	devpriv->dux_commands[1] = chan;
 
-	क्रम (i = 0; i < insn->n; i++) अणु
+	for (i = 0; i < insn->n; i++) {
 		*p = cpu_to_le16(data[i]);
 
 		ret = send_dux_commands(dev, USBDUX_CMD_TIMER_WR);
-		अगर (ret < 0)
-			अवरोध;
-	पूर्ण
+		if (ret < 0)
+			break;
+	}
 
 	mutex_unlock(&devpriv->mut);
 
-	वापस ret ? ret : insn->n;
-पूर्ण
+	return ret ? ret : insn->n;
+}
 
-अटल पूर्णांक usbdux_counter_config(काष्ठा comedi_device *dev,
-				 काष्ठा comedi_subdevice *s,
-				 काष्ठा comedi_insn *insn, अचिन्हित पूर्णांक *data)
-अणु
-	/* nothing to करो so far */
-	वापस 2;
-पूर्ण
+static int usbdux_counter_config(struct comedi_device *dev,
+				 struct comedi_subdevice *s,
+				 struct comedi_insn *insn, unsigned int *data)
+{
+	/* nothing to do so far */
+	return 2;
+}
 
-अटल व्योम usbduxsub_unlink_pwm_urbs(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
+static void usbduxsub_unlink_pwm_urbs(struct comedi_device *dev)
+{
+	struct usbdux_private *devpriv = dev->private;
 
-	usb_समाप्त_urb(devpriv->pwm_urb);
-पूर्ण
+	usb_kill_urb(devpriv->pwm_urb);
+}
 
-अटल व्योम usbdux_pwm_stop(काष्ठा comedi_device *dev, पूर्णांक करो_unlink)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
+static void usbdux_pwm_stop(struct comedi_device *dev, int do_unlink)
+{
+	struct usbdux_private *devpriv = dev->private;
 
-	अगर (करो_unlink)
+	if (do_unlink)
 		usbduxsub_unlink_pwm_urbs(dev);
 
 	devpriv->pwm_cmd_running = 0;
-पूर्ण
+}
 
-अटल पूर्णांक usbdux_pwm_cancel(काष्ठा comedi_device *dev,
-			     काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	पूर्णांक ret;
+static int usbdux_pwm_cancel(struct comedi_device *dev,
+			     struct comedi_subdevice *s)
+{
+	struct usbdux_private *devpriv = dev->private;
+	int ret;
 
 	mutex_lock(&devpriv->mut);
-	/* unlink only अगर it is really running */
+	/* unlink only if it is really running */
 	usbdux_pwm_stop(dev, devpriv->pwm_cmd_running);
 	ret = send_dux_commands(dev, USBDUX_CMD_PWM_OFF);
 	mutex_unlock(&devpriv->mut);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम usbduxsub_pwm_irq(काष्ठा urb *urb)
-अणु
-	काष्ठा comedi_device *dev = urb->context;
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	पूर्णांक ret;
+static void usbduxsub_pwm_irq(struct urb *urb)
+{
+	struct comedi_device *dev = urb->context;
+	struct usbdux_private *devpriv = dev->private;
+	int ret;
 
-	चयन (urb->status) अणु
-	हाल 0:
+	switch (urb->status) {
+	case 0:
 		/* success */
-		अवरोध;
+		break;
 
-	हाल -ECONNRESET:
-	हाल -ENOENT:
-	हाल -ESHUTDOWN:
-	हाल -ECONNABORTED:
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
+	case -ECONNABORTED:
 		/*
 		 * after an unlink command, unplug, ... etc
-		 * no unlink needed here. Alपढ़ोy shutting करोwn.
+		 * no unlink needed here. Already shutting down.
 		 */
-		अगर (devpriv->pwm_cmd_running)
+		if (devpriv->pwm_cmd_running)
 			usbdux_pwm_stop(dev, 0);
 
-		वापस;
+		return;
 
-	शेष:
+	default:
 		/* a real error */
-		अगर (devpriv->pwm_cmd_running) अणु
+		if (devpriv->pwm_cmd_running) {
 			dev_err(dev->class_dev,
 				"Non-zero urb status received in pwm intr context: %d\n",
 				urb->status);
 			usbdux_pwm_stop(dev, 0);
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
 	/* are we actually running? */
-	अगर (!devpriv->pwm_cmd_running)
-		वापस;
+	if (!devpriv->pwm_cmd_running)
+		return;
 
 	urb->transfer_buffer_length = devpriv->pwm_buf_sz;
 	urb->dev = comedi_to_usb_dev(dev);
 	urb->status = 0;
-	अगर (devpriv->pwm_cmd_running) अणु
+	if (devpriv->pwm_cmd_running) {
 		ret = usb_submit_urb(urb, GFP_ATOMIC);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_err(dev->class_dev,
 				"pwm urb resubm failed in int-cont. ret=%d",
 				ret);
-			अगर (ret == -EL2NSYNC)
+			if (ret == -EL2NSYNC)
 				dev_err(dev->class_dev,
 					"buggy USB host controller or bug in IRQ handling!\n");
 
-			/* करोn't करो an unlink here */
+			/* don't do an unlink here */
 			usbdux_pwm_stop(dev, 0);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक usbduxsub_submit_pwm_urbs(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा usb_device *usb = comedi_to_usb_dev(dev);
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	काष्ठा urb *urb = devpriv->pwm_urb;
+static int usbduxsub_submit_pwm_urbs(struct comedi_device *dev)
+{
+	struct usb_device *usb = comedi_to_usb_dev(dev);
+	struct usbdux_private *devpriv = dev->private;
+	struct urb *urb = devpriv->pwm_urb;
 
-	/* in हाल of a resubmission after an unlink... */
+	/* in case of a resubmission after an unlink... */
 	usb_fill_bulk_urb(urb, usb, usb_sndbulkpipe(usb, 4),
 			  urb->transfer_buffer,
 			  devpriv->pwm_buf_sz,
 			  usbduxsub_pwm_irq,
 			  dev);
 
-	वापस usb_submit_urb(urb, GFP_ATOMIC);
-पूर्ण
+	return usb_submit_urb(urb, GFP_ATOMIC);
+}
 
-अटल पूर्णांक usbdux_pwm_period(काष्ठा comedi_device *dev,
-			     काष्ठा comedi_subdevice *s,
-			     अचिन्हित पूर्णांक period)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	पूर्णांक fx2delay;
+static int usbdux_pwm_period(struct comedi_device *dev,
+			     struct comedi_subdevice *s,
+			     unsigned int period)
+{
+	struct usbdux_private *devpriv = dev->private;
+	int fx2delay;
 
-	अगर (period < MIN_PWM_PERIOD)
-		वापस -EAGAIN;
+	if (period < MIN_PWM_PERIOD)
+		return -EAGAIN;
 
 	fx2delay = (period / (6 * 512 * 1000 / 33)) - 6;
-	अगर (fx2delay > 255)
-		वापस -EAGAIN;
+	if (fx2delay > 255)
+		return -EAGAIN;
 
 	devpriv->pwm_delay = fx2delay;
 	devpriv->pwm_period = period;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक usbdux_pwm_start(काष्ठा comedi_device *dev,
-			    काष्ठा comedi_subdevice *s)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	पूर्णांक ret = 0;
+static int usbdux_pwm_start(struct comedi_device *dev,
+			    struct comedi_subdevice *s)
+{
+	struct usbdux_private *devpriv = dev->private;
+	int ret = 0;
 
 	mutex_lock(&devpriv->mut);
 
-	अगर (devpriv->pwm_cmd_running)
-		जाओ pwm_start_निकास;
+	if (devpriv->pwm_cmd_running)
+		goto pwm_start_exit;
 
 	devpriv->dux_commands[1] = devpriv->pwm_delay;
 	ret = send_dux_commands(dev, USBDUX_CMD_PWM_ON);
-	अगर (ret < 0)
-		जाओ pwm_start_निकास;
+	if (ret < 0)
+		goto pwm_start_exit;
 
 	/* initialise the buffer */
-	स_रखो(devpriv->pwm_urb->transfer_buffer, 0, devpriv->pwm_buf_sz);
+	memset(devpriv->pwm_urb->transfer_buffer, 0, devpriv->pwm_buf_sz);
 
 	devpriv->pwm_cmd_running = 1;
 	ret = usbduxsub_submit_pwm_urbs(dev);
-	अगर (ret < 0)
+	if (ret < 0)
 		devpriv->pwm_cmd_running = 0;
 
-pwm_start_निकास:
+pwm_start_exit:
 	mutex_unlock(&devpriv->mut);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम usbdux_pwm_pattern(काष्ठा comedi_device *dev,
-			       काष्ठा comedi_subdevice *s,
-			       अचिन्हित पूर्णांक chan,
-			       अचिन्हित पूर्णांक value,
-			       अचिन्हित पूर्णांक sign)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	अक्षर pwm_mask = (1 << chan);	/* DIO bit क्रम the PWM data */
-	अक्षर sgn_mask = (16 << chan);	/* DIO bit क्रम the sign */
-	अक्षर *buf = (अक्षर *)(devpriv->pwm_urb->transfer_buffer);
-	पूर्णांक szbuf = devpriv->pwm_buf_sz;
-	पूर्णांक i;
+static void usbdux_pwm_pattern(struct comedi_device *dev,
+			       struct comedi_subdevice *s,
+			       unsigned int chan,
+			       unsigned int value,
+			       unsigned int sign)
+{
+	struct usbdux_private *devpriv = dev->private;
+	char pwm_mask = (1 << chan);	/* DIO bit for the PWM data */
+	char sgn_mask = (16 << chan);	/* DIO bit for the sign */
+	char *buf = (char *)(devpriv->pwm_urb->transfer_buffer);
+	int szbuf = devpriv->pwm_buf_sz;
+	int i;
 
-	क्रम (i = 0; i < szbuf; i++) अणु
-		अक्षर c = *buf;
+	for (i = 0; i < szbuf; i++) {
+		char c = *buf;
 
 		c &= ~pwm_mask;
-		अगर (i < value)
+		if (i < value)
 			c |= pwm_mask;
-		अगर (!sign)
+		if (!sign)
 			c &= ~sgn_mask;
-		अन्यथा
+		else
 			c |= sgn_mask;
 		*buf++ = c;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक usbdux_pwm_ग_लिखो(काष्ठा comedi_device *dev,
-			    काष्ठा comedi_subdevice *s,
-			    काष्ठा comedi_insn *insn,
-			    अचिन्हित पूर्णांक *data)
-अणु
-	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+static int usbdux_pwm_write(struct comedi_device *dev,
+			    struct comedi_subdevice *s,
+			    struct comedi_insn *insn,
+			    unsigned int *data)
+{
+	unsigned int chan = CR_CHAN(insn->chanspec);
 
 	/*
-	 * It करोesn't make sense to support more than one value here
-	 * because it would just overग_लिखो the PWM buffer.
+	 * It doesn't make sense to support more than one value here
+	 * because it would just overwrite the PWM buffer.
 	 */
-	अगर (insn->n != 1)
-		वापस -EINVAL;
+	if (insn->n != 1)
+		return -EINVAL;
 
 	/*
 	 * The sign is set via a special INSN only, this gives us 8 bits
-	 * क्रम normal operation, sign is 0 by शेष.
+	 * for normal operation, sign is 0 by default.
 	 */
 	usbdux_pwm_pattern(dev, s, chan, data[0], 0);
 
-	वापस insn->n;
-पूर्ण
+	return insn->n;
+}
 
-अटल पूर्णांक usbdux_pwm_config(काष्ठा comedi_device *dev,
-			     काष्ठा comedi_subdevice *s,
-			     काष्ठा comedi_insn *insn,
-			     अचिन्हित पूर्णांक *data)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+static int usbdux_pwm_config(struct comedi_device *dev,
+			     struct comedi_subdevice *s,
+			     struct comedi_insn *insn,
+			     unsigned int *data)
+{
+	struct usbdux_private *devpriv = dev->private;
+	unsigned int chan = CR_CHAN(insn->chanspec);
 
-	चयन (data[0]) अणु
-	हाल INSN_CONFIG_ARM:
+	switch (data[0]) {
+	case INSN_CONFIG_ARM:
 		/*
-		 * अगर not zero the PWM is limited to a certain समय which is
+		 * if not zero the PWM is limited to a certain time which is
 		 * not supported here
 		 */
-		अगर (data[1] != 0)
-			वापस -EINVAL;
-		वापस usbdux_pwm_start(dev, s);
-	हाल INSN_CONFIG_DISARM:
-		वापस usbdux_pwm_cancel(dev, s);
-	हाल INSN_CONFIG_GET_PWM_STATUS:
+		if (data[1] != 0)
+			return -EINVAL;
+		return usbdux_pwm_start(dev, s);
+	case INSN_CONFIG_DISARM:
+		return usbdux_pwm_cancel(dev, s);
+	case INSN_CONFIG_GET_PWM_STATUS:
 		data[1] = devpriv->pwm_cmd_running;
-		वापस 0;
-	हाल INSN_CONFIG_PWM_SET_PERIOD:
-		वापस usbdux_pwm_period(dev, s, data[1]);
-	हाल INSN_CONFIG_PWM_GET_PERIOD:
+		return 0;
+	case INSN_CONFIG_PWM_SET_PERIOD:
+		return usbdux_pwm_period(dev, s, data[1]);
+	case INSN_CONFIG_PWM_GET_PERIOD:
 		data[1] = devpriv->pwm_period;
-		वापस 0;
-	हाल INSN_CONFIG_PWM_SET_H_BRIDGE:
+		return 0;
+	case INSN_CONFIG_PWM_SET_H_BRIDGE:
 		/*
 		 * data[1] = value
-		 * data[2] = sign (क्रम a relay)
+		 * data[2] = sign (for a relay)
 		 */
 		usbdux_pwm_pattern(dev, s, chan, data[1], (data[2] != 0));
-		वापस 0;
-	हाल INSN_CONFIG_PWM_GET_H_BRIDGE:
-		/* values are not kept in this driver, nothing to वापस here */
-		वापस -EINVAL;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		return 0;
+	case INSN_CONFIG_PWM_GET_H_BRIDGE:
+		/* values are not kept in this driver, nothing to return here */
+		return -EINVAL;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक usbdux_firmware_upload(काष्ठा comedi_device *dev,
-				  स्थिर u8 *data, माप_प्रकार size,
-				  अचिन्हित दीर्घ context)
-अणु
-	काष्ठा usb_device *usb = comedi_to_usb_dev(dev);
+static int usbdux_firmware_upload(struct comedi_device *dev,
+				  const u8 *data, size_t size,
+				  unsigned long context)
+{
+	struct usb_device *usb = comedi_to_usb_dev(dev);
 	u8 *buf;
-	u8 *पंचांगp;
-	पूर्णांक ret;
+	u8 *tmp;
+	int ret;
 
-	अगर (!data)
-		वापस 0;
+	if (!data)
+		return 0;
 
-	अगर (size > USBDUX_FIRMWARE_MAX_LEN) अणु
+	if (size > USBDUX_FIRMWARE_MAX_LEN) {
 		dev_err(dev->class_dev,
 			"usbdux firmware binary it too large for FX2.\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	/* we generate a local buffer क्रम the firmware */
+	/* we generate a local buffer for the firmware */
 	buf = kmemdup(data, size, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
-	/* we need a दो_स्मृति'ed buffer क्रम usb_control_msg() */
-	पंचांगp = kदो_स्मृति(1, GFP_KERNEL);
-	अगर (!पंचांगp) अणु
-		kमुक्त(buf);
-		वापस -ENOMEM;
-	पूर्ण
+	/* we need a malloc'ed buffer for usb_control_msg() */
+	tmp = kmalloc(1, GFP_KERNEL);
+	if (!tmp) {
+		kfree(buf);
+		return -ENOMEM;
+	}
 
 	/* stop the current firmware on the device */
-	*पंचांगp = 1;	/* 7f92 to one */
+	*tmp = 1;	/* 7f92 to one */
 	ret = usb_control_msg(usb, usb_sndctrlpipe(usb, 0),
 			      USBDUX_FIRMWARE_CMD,
-			      VENDOR_सूची_OUT,
+			      VENDOR_DIR_OUT,
 			      USBDUX_CPU_CS, 0x0000,
-			      पंचांगp, 1,
+			      tmp, 1,
 			      BULK_TIMEOUT);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev->class_dev, "can not stop firmware\n");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* upload the new firmware to the device */
 	ret = usb_control_msg(usb, usb_sndctrlpipe(usb, 0),
 			      USBDUX_FIRMWARE_CMD,
-			      VENDOR_सूची_OUT,
+			      VENDOR_DIR_OUT,
 			      0, 0x0000,
 			      buf, size,
 			      BULK_TIMEOUT);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev->class_dev, "firmware upload failed\n");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
 	/* start the new firmware on the device */
-	*पंचांगp = 0;	/* 7f92 to zero */
+	*tmp = 0;	/* 7f92 to zero */
 	ret = usb_control_msg(usb, usb_sndctrlpipe(usb, 0),
 			      USBDUX_FIRMWARE_CMD,
-			      VENDOR_सूची_OUT,
+			      VENDOR_DIR_OUT,
 			      USBDUX_CPU_CS, 0x0000,
-			      पंचांगp, 1,
+			      tmp, 1,
 			      BULK_TIMEOUT);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_err(dev->class_dev, "can not start firmware\n");
 
-करोne:
-	kमुक्त(पंचांगp);
-	kमुक्त(buf);
-	वापस ret;
-पूर्ण
+done:
+	kfree(tmp);
+	kfree(buf);
+	return ret;
+}
 
-अटल पूर्णांक usbdux_alloc_usb_buffers(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा usb_device *usb = comedi_to_usb_dev(dev);
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	काष्ठा urb *urb;
-	पूर्णांक i;
+static int usbdux_alloc_usb_buffers(struct comedi_device *dev)
+{
+	struct usb_device *usb = comedi_to_usb_dev(dev);
+	struct usbdux_private *devpriv = dev->private;
+	struct urb *urb;
+	int i;
 
-	devpriv->dux_commands = kzalloc(SIZखातापूर्णDUXBUFFER, GFP_KERNEL);
+	devpriv->dux_commands = kzalloc(SIZEOFDUXBUFFER, GFP_KERNEL);
 	devpriv->in_buf = kzalloc(SIZEINBUF, GFP_KERNEL);
 	devpriv->insn_buf = kzalloc(SIZEINSNBUF, GFP_KERNEL);
-	devpriv->ai_urbs = kसुस्मृति(devpriv->n_ai_urbs, माप(व्योम *),
+	devpriv->ai_urbs = kcalloc(devpriv->n_ai_urbs, sizeof(void *),
 				   GFP_KERNEL);
-	devpriv->ao_urbs = kसुस्मृति(devpriv->n_ao_urbs, माप(व्योम *),
+	devpriv->ao_urbs = kcalloc(devpriv->n_ao_urbs, sizeof(void *),
 				   GFP_KERNEL);
-	अगर (!devpriv->dux_commands || !devpriv->in_buf || !devpriv->insn_buf ||
+	if (!devpriv->dux_commands || !devpriv->in_buf || !devpriv->insn_buf ||
 	    !devpriv->ai_urbs || !devpriv->ao_urbs)
-		वापस -ENOMEM;
+		return -ENOMEM;
 
-	क्रम (i = 0; i < devpriv->n_ai_urbs; i++) अणु
+	for (i = 0; i < devpriv->n_ai_urbs; i++) {
 		/* one frame: 1ms */
 		urb = usb_alloc_urb(1, GFP_KERNEL);
-		अगर (!urb)
-			वापस -ENOMEM;
+		if (!urb)
+			return -ENOMEM;
 		devpriv->ai_urbs[i] = urb;
 
 		urb->dev = usb;
@@ -1465,21 +1464,21 @@ pwm_start_निकास:
 		urb->pipe = usb_rcvisocpipe(usb, 6);
 		urb->transfer_flags = URB_ISO_ASAP;
 		urb->transfer_buffer = kzalloc(SIZEINBUF, GFP_KERNEL);
-		अगर (!urb->transfer_buffer)
-			वापस -ENOMEM;
+		if (!urb->transfer_buffer)
+			return -ENOMEM;
 
 		urb->complete = usbduxsub_ai_isoc_irq;
 		urb->number_of_packets = 1;
 		urb->transfer_buffer_length = SIZEINBUF;
 		urb->iso_frame_desc[0].offset = 0;
 		urb->iso_frame_desc[0].length = SIZEINBUF;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < devpriv->n_ao_urbs; i++) अणु
+	for (i = 0; i < devpriv->n_ao_urbs; i++) {
 		/* one frame: 1ms */
 		urb = usb_alloc_urb(1, GFP_KERNEL);
-		अगर (!urb)
-			वापस -ENOMEM;
+		if (!urb)
+			return -ENOMEM;
 		devpriv->ao_urbs[i] = urb;
 
 		urb->dev = usb;
@@ -1487,154 +1486,154 @@ pwm_start_निकास:
 		urb->pipe = usb_sndisocpipe(usb, 2);
 		urb->transfer_flags = URB_ISO_ASAP;
 		urb->transfer_buffer = kzalloc(SIZEOUTBUF, GFP_KERNEL);
-		अगर (!urb->transfer_buffer)
-			वापस -ENOMEM;
+		if (!urb->transfer_buffer)
+			return -ENOMEM;
 
 		urb->complete = usbduxsub_ao_isoc_irq;
 		urb->number_of_packets = 1;
 		urb->transfer_buffer_length = SIZEOUTBUF;
 		urb->iso_frame_desc[0].offset = 0;
 		urb->iso_frame_desc[0].length = SIZEOUTBUF;
-		अगर (devpriv->high_speed)
-			urb->पूर्णांकerval = 8;	/* uframes */
-		अन्यथा
-			urb->पूर्णांकerval = 1;	/* frames */
-	पूर्ण
+		if (devpriv->high_speed)
+			urb->interval = 8;	/* uframes */
+		else
+			urb->interval = 1;	/* frames */
+	}
 
 	/* pwm */
-	अगर (devpriv->pwm_buf_sz) अणु
+	if (devpriv->pwm_buf_sz) {
 		urb = usb_alloc_urb(0, GFP_KERNEL);
-		अगर (!urb)
-			वापस -ENOMEM;
+		if (!urb)
+			return -ENOMEM;
 		devpriv->pwm_urb = urb;
 
 		/* max bulk ep size in high speed */
 		urb->transfer_buffer = kzalloc(devpriv->pwm_buf_sz,
 					       GFP_KERNEL);
-		अगर (!urb->transfer_buffer)
-			वापस -ENOMEM;
-	पूर्ण
+		if (!urb->transfer_buffer)
+			return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम usbdux_मुक्त_usb_buffers(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
-	काष्ठा urb *urb;
-	पूर्णांक i;
+static void usbdux_free_usb_buffers(struct comedi_device *dev)
+{
+	struct usbdux_private *devpriv = dev->private;
+	struct urb *urb;
+	int i;
 
 	urb = devpriv->pwm_urb;
-	अगर (urb) अणु
-		kमुक्त(urb->transfer_buffer);
-		usb_मुक्त_urb(urb);
-	पूर्ण
-	अगर (devpriv->ao_urbs) अणु
-		क्रम (i = 0; i < devpriv->n_ao_urbs; i++) अणु
+	if (urb) {
+		kfree(urb->transfer_buffer);
+		usb_free_urb(urb);
+	}
+	if (devpriv->ao_urbs) {
+		for (i = 0; i < devpriv->n_ao_urbs; i++) {
 			urb = devpriv->ao_urbs[i];
-			अगर (urb) अणु
-				kमुक्त(urb->transfer_buffer);
-				usb_मुक्त_urb(urb);
-			पूर्ण
-		पूर्ण
-		kमुक्त(devpriv->ao_urbs);
-	पूर्ण
-	अगर (devpriv->ai_urbs) अणु
-		क्रम (i = 0; i < devpriv->n_ai_urbs; i++) अणु
+			if (urb) {
+				kfree(urb->transfer_buffer);
+				usb_free_urb(urb);
+			}
+		}
+		kfree(devpriv->ao_urbs);
+	}
+	if (devpriv->ai_urbs) {
+		for (i = 0; i < devpriv->n_ai_urbs; i++) {
 			urb = devpriv->ai_urbs[i];
-			अगर (urb) अणु
-				kमुक्त(urb->transfer_buffer);
-				usb_मुक्त_urb(urb);
-			पूर्ण
-		पूर्ण
-		kमुक्त(devpriv->ai_urbs);
-	पूर्ण
-	kमुक्त(devpriv->insn_buf);
-	kमुक्त(devpriv->in_buf);
-	kमुक्त(devpriv->dux_commands);
-पूर्ण
+			if (urb) {
+				kfree(urb->transfer_buffer);
+				usb_free_urb(urb);
+			}
+		}
+		kfree(devpriv->ai_urbs);
+	}
+	kfree(devpriv->insn_buf);
+	kfree(devpriv->in_buf);
+	kfree(devpriv->dux_commands);
+}
 
-अटल पूर्णांक usbdux_स्वतः_attach(काष्ठा comedi_device *dev,
-			      अचिन्हित दीर्घ context_unused)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = comedi_to_usb_पूर्णांकerface(dev);
-	काष्ठा usb_device *usb = comedi_to_usb_dev(dev);
-	काष्ठा usbdux_निजी *devpriv;
-	काष्ठा comedi_subdevice *s;
-	पूर्णांक ret;
+static int usbdux_auto_attach(struct comedi_device *dev,
+			      unsigned long context_unused)
+{
+	struct usb_interface *intf = comedi_to_usb_interface(dev);
+	struct usb_device *usb = comedi_to_usb_dev(dev);
+	struct usbdux_private *devpriv;
+	struct comedi_subdevice *s;
+	int ret;
 
-	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
-	अगर (!devpriv)
-		वापस -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
+	if (!devpriv)
+		return -ENOMEM;
 
 	mutex_init(&devpriv->mut);
 
-	usb_set_पूर्णांकfdata(पूर्णांकf, devpriv);
+	usb_set_intfdata(intf, devpriv);
 
 	devpriv->high_speed = (usb->speed == USB_SPEED_HIGH);
-	अगर (devpriv->high_speed) अणु
+	if (devpriv->high_speed) {
 		devpriv->n_ai_urbs = NUMOFINBUFFERSHIGH;
 		devpriv->n_ao_urbs = NUMOFOUTBUFFERSHIGH;
 		devpriv->pwm_buf_sz = 512;
-	पूर्ण अन्यथा अणु
+	} else {
 		devpriv->n_ai_urbs = NUMOFINBUFFERSFULL;
 		devpriv->n_ao_urbs = NUMOFOUTBUFFERSFULL;
-	पूर्ण
+	}
 
 	ret = usbdux_alloc_usb_buffers(dev);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* setting to alternate setting 3: enabling iso ep and bulk ep. */
-	ret = usb_set_पूर्णांकerface(usb, पूर्णांकf->altsetting->desc.bInterfaceNumber,
+	ret = usb_set_interface(usb, intf->altsetting->desc.bInterfaceNumber,
 				3);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(dev->class_dev,
 			"could not set alternate setting 3 in high speed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = comedi_load_firmware(dev, &usb->dev, USBDUX_FIRMWARE,
 				   usbdux_firmware_upload, 0);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = comedi_alloc_subdevices(dev, (devpriv->high_speed) ? 5 : 4);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Analog Input subdevice */
 	s = &dev->subdevices[0];
-	dev->पढ़ो_subdev = s;
+	dev->read_subdev = s;
 	s->type		= COMEDI_SUBD_AI;
 	s->subdev_flags	= SDF_READABLE | SDF_GROUND | SDF_CMD_READ;
 	s->n_chan	= 8;
 	s->maxdata	= 0x0fff;
 	s->len_chanlist	= 8;
 	s->range_table	= &range_usbdux_ai_range;
-	s->insn_पढ़ो	= usbdux_ai_insn_पढ़ो;
-	s->करो_cmdtest	= usbdux_ai_cmdtest;
-	s->करो_cmd	= usbdux_ai_cmd;
+	s->insn_read	= usbdux_ai_insn_read;
+	s->do_cmdtest	= usbdux_ai_cmdtest;
+	s->do_cmd	= usbdux_ai_cmd;
 	s->cancel	= usbdux_ai_cancel;
 
 	/* Analog Output subdevice */
 	s = &dev->subdevices[1];
-	dev->ग_लिखो_subdev = s;
+	dev->write_subdev = s;
 	s->type		= COMEDI_SUBD_AO;
 	s->subdev_flags	= SDF_WRITABLE | SDF_GROUND | SDF_CMD_WRITE;
 	s->n_chan	= 4;
 	s->maxdata	= 0x0fff;
 	s->len_chanlist	= s->n_chan;
 	s->range_table	= &range_usbdux_ao_range;
-	s->करो_cmdtest	= usbdux_ao_cmdtest;
-	s->करो_cmd	= usbdux_ao_cmd;
+	s->do_cmdtest	= usbdux_ao_cmdtest;
+	s->do_cmd	= usbdux_ao_cmd;
 	s->cancel	= usbdux_ao_cancel;
-	s->insn_पढ़ो	= usbdux_ao_insn_पढ़ो;
-	s->insn_ग_लिखो	= usbdux_ao_insn_ग_लिखो;
+	s->insn_read	= usbdux_ao_insn_read;
+	s->insn_write	= usbdux_ao_insn_write;
 
-	ret = comedi_alloc_subdev_पढ़ोback(s);
-	अगर (ret)
-		वापस ret;
+	ret = comedi_alloc_subdev_readback(s);
+	if (ret)
+		return ret;
 
 	/* Digital I/O subdevice */
 	s = &dev->subdevices[2];
@@ -1652,76 +1651,76 @@ pwm_start_निकास:
 	s->subdev_flags	= SDF_WRITABLE | SDF_READABLE;
 	s->n_chan	= 4;
 	s->maxdata	= 0xffff;
-	s->insn_पढ़ो	= usbdux_counter_पढ़ो;
-	s->insn_ग_लिखो	= usbdux_counter_ग_लिखो;
+	s->insn_read	= usbdux_counter_read;
+	s->insn_write	= usbdux_counter_write;
 	s->insn_config	= usbdux_counter_config;
 
-	अगर (devpriv->high_speed) अणु
+	if (devpriv->high_speed) {
 		/* PWM subdevice */
 		s = &dev->subdevices[4];
 		s->type		= COMEDI_SUBD_PWM;
 		s->subdev_flags	= SDF_WRITABLE | SDF_PWM_HBRIDGE;
 		s->n_chan	= 8;
 		s->maxdata	= devpriv->pwm_buf_sz;
-		s->insn_ग_लिखो	= usbdux_pwm_ग_लिखो;
+		s->insn_write	= usbdux_pwm_write;
 		s->insn_config	= usbdux_pwm_config;
 
 		usbdux_pwm_period(dev, s, PWM_DEFAULT_PERIOD);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम usbdux_detach(काष्ठा comedi_device *dev)
-अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf = comedi_to_usb_पूर्णांकerface(dev);
-	काष्ठा usbdux_निजी *devpriv = dev->निजी;
+static void usbdux_detach(struct comedi_device *dev)
+{
+	struct usb_interface *intf = comedi_to_usb_interface(dev);
+	struct usbdux_private *devpriv = dev->private;
 
-	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
+	usb_set_intfdata(intf, NULL);
 
-	अगर (!devpriv)
-		वापस;
+	if (!devpriv)
+		return;
 
 	mutex_lock(&devpriv->mut);
 
-	/* क्रमce unlink all urbs */
+	/* force unlink all urbs */
 	usbdux_pwm_stop(dev, 1);
 	usbdux_ao_stop(dev, 1);
 	usbdux_ai_stop(dev, 1);
 
-	usbdux_मुक्त_usb_buffers(dev);
+	usbdux_free_usb_buffers(dev);
 
 	mutex_unlock(&devpriv->mut);
 
 	mutex_destroy(&devpriv->mut);
-पूर्ण
+}
 
-अटल काष्ठा comedi_driver usbdux_driver = अणु
+static struct comedi_driver usbdux_driver = {
 	.driver_name	= "usbdux",
 	.module		= THIS_MODULE,
-	.स्वतः_attach	= usbdux_स्वतः_attach,
+	.auto_attach	= usbdux_auto_attach,
 	.detach		= usbdux_detach,
-पूर्ण;
+};
 
-अटल पूर्णांक usbdux_usb_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-			    स्थिर काष्ठा usb_device_id *id)
-अणु
-	वापस comedi_usb_स्वतः_config(पूर्णांकf, &usbdux_driver, 0);
-पूर्ण
+static int usbdux_usb_probe(struct usb_interface *intf,
+			    const struct usb_device_id *id)
+{
+	return comedi_usb_auto_config(intf, &usbdux_driver, 0);
+}
 
-अटल स्थिर काष्ठा usb_device_id usbdux_usb_table[] = अणु
-	अणु USB_DEVICE(0x13d8, 0x0001) पूर्ण,
-	अणु USB_DEVICE(0x13d8, 0x0002) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct usb_device_id usbdux_usb_table[] = {
+	{ USB_DEVICE(0x13d8, 0x0001) },
+	{ USB_DEVICE(0x13d8, 0x0002) },
+	{ }
+};
 MODULE_DEVICE_TABLE(usb, usbdux_usb_table);
 
-अटल काष्ठा usb_driver usbdux_usb_driver = अणु
+static struct usb_driver usbdux_usb_driver = {
 	.name		= "usbdux",
 	.probe		= usbdux_usb_probe,
-	.disconnect	= comedi_usb_स्वतः_unconfig,
+	.disconnect	= comedi_usb_auto_unconfig,
 	.id_table	= usbdux_usb_table,
-पूर्ण;
+};
 module_comedi_usb_driver(usbdux_driver, usbdux_usb_driver);
 
 MODULE_AUTHOR("Bernd Porr, BerndPorr@f2s.com");

@@ -1,133 +1,132 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * mCube MC3230 3-Axis Accelerometer
  *
  * Copyright (c) 2016 Hans de Goede <hdegoede@redhat.com>
  *
- * IIO driver क्रम mCube MC3230; 7-bit I2C address: 0x4c.
+ * IIO driver for mCube MC3230; 7-bit I2C address: 0x4c.
  */
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
 
-#घोषणा MC3230_REG_XOUT			0x00
-#घोषणा MC3230_REG_YOUT			0x01
-#घोषणा MC3230_REG_ZOUT			0x02
+#define MC3230_REG_XOUT			0x00
+#define MC3230_REG_YOUT			0x01
+#define MC3230_REG_ZOUT			0x02
 
-#घोषणा MC3230_REG_MODE			0x07
-#घोषणा MC3230_MODE_OPCON_MASK		0x03
-#घोषणा MC3230_MODE_OPCON_WAKE		0x01
-#घोषणा MC3230_MODE_OPCON_STANDBY	0x03
+#define MC3230_REG_MODE			0x07
+#define MC3230_MODE_OPCON_MASK		0x03
+#define MC3230_MODE_OPCON_WAKE		0x01
+#define MC3230_MODE_OPCON_STANDBY	0x03
 
-#घोषणा MC3230_REG_CHIP_ID		0x18
-#घोषणा MC3230_CHIP_ID			0x01
+#define MC3230_REG_CHIP_ID		0x18
+#define MC3230_CHIP_ID			0x01
 
-#घोषणा MC3230_REG_PRODUCT_CODE		0x3b
-#घोषणा MC3230_PRODUCT_CODE		0x19
+#define MC3230_REG_PRODUCT_CODE		0x3b
+#define MC3230_PRODUCT_CODE		0x19
 
 /*
  * The accelerometer has one measurement range:
  *
- * -1.5g - +1.5g (8-bit, चिन्हित)
+ * -1.5g - +1.5g (8-bit, signed)
  *
  * scale = (1.5 + 1.5) * 9.81 / (2^8 - 1)	= 0.115411765
  */
 
-अटल स्थिर पूर्णांक mc3230_nscale = 115411765;
+static const int mc3230_nscale = 115411765;
 
-#घोषणा MC3230_CHANNEL(reg, axis) अणु	\
+#define MC3230_CHANNEL(reg, axis) {	\
 	.type = IIO_ACCEL,	\
 	.address = reg,	\
-	.modअगरied = 1,	\
+	.modified = 1,	\
 	.channel2 = IIO_MOD_##axis,	\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),	\
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
-पूर्ण
+}
 
-अटल स्थिर काष्ठा iio_chan_spec mc3230_channels[] = अणु
+static const struct iio_chan_spec mc3230_channels[] = {
 	MC3230_CHANNEL(MC3230_REG_XOUT, X),
 	MC3230_CHANNEL(MC3230_REG_YOUT, Y),
 	MC3230_CHANNEL(MC3230_REG_ZOUT, Z),
-पूर्ण;
+};
 
-काष्ठा mc3230_data अणु
-	काष्ठा i2c_client *client;
-पूर्ण;
+struct mc3230_data {
+	struct i2c_client *client;
+};
 
-अटल पूर्णांक mc3230_set_opcon(काष्ठा mc3230_data *data, पूर्णांक opcon)
-अणु
-	पूर्णांक ret;
-	काष्ठा i2c_client *client = data->client;
+static int mc3230_set_opcon(struct mc3230_data *data, int opcon)
+{
+	int ret;
+	struct i2c_client *client = data->client;
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, MC3230_REG_MODE);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_byte_data(client, MC3230_REG_MODE);
+	if (ret < 0) {
 		dev_err(&client->dev, "failed to read mode reg: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret &= ~MC3230_MODE_OPCON_MASK;
 	ret |= opcon;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(client, MC3230_REG_MODE, ret);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_write_byte_data(client, MC3230_REG_MODE, ret);
+	if (ret < 0) {
 		dev_err(&client->dev, "failed to write mode reg: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mc3230_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-				काष्ठा iio_chan_spec स्थिर *chan,
-				पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा mc3230_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int mc3230_read_raw(struct iio_dev *indio_dev,
+				struct iio_chan_spec const *chan,
+				int *val, int *val2, long mask)
+{
+	struct mc3230_data *data = iio_priv(indio_dev);
+	int ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
-		ret = i2c_smbus_पढ़ो_byte_data(data->client, chan->address);
-		अगर (ret < 0)
-			वापस ret;
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
+		ret = i2c_smbus_read_byte_data(data->client, chan->address);
+		if (ret < 0)
+			return ret;
 		*val = sign_extend32(ret, 7);
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
 		*val = 0;
 		*val2 = mc3230_nscale;
-		वापस IIO_VAL_INT_PLUS_न_अंकO;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+		return IIO_VAL_INT_PLUS_NANO;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर काष्ठा iio_info mc3230_info = अणु
-	.पढ़ो_raw	= mc3230_पढ़ो_raw,
-पूर्ण;
+static const struct iio_info mc3230_info = {
+	.read_raw	= mc3230_read_raw,
+};
 
-अटल पूर्णांक mc3230_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	पूर्णांक ret;
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा mc3230_data *data;
+static int mc3230_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	int ret;
+	struct iio_dev *indio_dev;
+	struct mc3230_data *data;
 
 	/* First check chip-id and product-id */
-	ret = i2c_smbus_पढ़ो_byte_data(client, MC3230_REG_CHIP_ID);
-	अगर (ret != MC3230_CHIP_ID)
-		वापस (ret < 0) ? ret : -ENODEV;
+	ret = i2c_smbus_read_byte_data(client, MC3230_REG_CHIP_ID);
+	if (ret != MC3230_CHIP_ID)
+		return (ret < 0) ? ret : -ENODEV;
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, MC3230_REG_PRODUCT_CODE);
-	अगर (ret != MC3230_PRODUCT_CODE)
-		वापस (ret < 0) ? ret : -ENODEV;
+	ret = i2c_smbus_read_byte_data(client, MC3230_REG_PRODUCT_CODE);
+	if (ret != MC3230_PRODUCT_CODE)
+		return (ret < 0) ? ret : -ENODEV;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
-	अगर (!indio_dev) अणु
+	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
+	if (!indio_dev) {
 		dev_err(&client->dev, "iio allocation failed!\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	data = iio_priv(indio_dev);
 	data->client = client;
@@ -135,69 +134,69 @@
 
 	indio_dev->info = &mc3230_info;
 	indio_dev->name = "mc3230";
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 	indio_dev->channels = mc3230_channels;
 	indio_dev->num_channels = ARRAY_SIZE(mc3230_channels);
 
 	ret = mc3230_set_opcon(data, MC3230_MODE_OPCON_WAKE);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = iio_device_रेजिस्टर(indio_dev);
-	अगर (ret < 0) अणु
+	ret = iio_device_register(indio_dev);
+	if (ret < 0) {
 		dev_err(&client->dev, "device_register failed\n");
 		mc3230_set_opcon(data, MC3230_MODE_OPCON_STANDBY);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mc3230_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
+static int mc3230_remove(struct i2c_client *client)
+{
+	struct iio_dev *indio_dev = i2c_get_clientdata(client);
 
-	iio_device_unरेजिस्टर(indio_dev);
+	iio_device_unregister(indio_dev);
 
-	वापस mc3230_set_opcon(iio_priv(indio_dev), MC3230_MODE_OPCON_STANDBY);
-पूर्ण
+	return mc3230_set_opcon(iio_priv(indio_dev), MC3230_MODE_OPCON_STANDBY);
+}
 
-#अगर_घोषित CONFIG_PM_SLEEP
-अटल पूर्णांक mc3230_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा mc3230_data *data;
-
-	data = iio_priv(i2c_get_clientdata(to_i2c_client(dev)));
-
-	वापस mc3230_set_opcon(data, MC3230_MODE_OPCON_STANDBY);
-पूर्ण
-
-अटल पूर्णांक mc3230_resume(काष्ठा device *dev)
-अणु
-	काष्ठा mc3230_data *data;
+#ifdef CONFIG_PM_SLEEP
+static int mc3230_suspend(struct device *dev)
+{
+	struct mc3230_data *data;
 
 	data = iio_priv(i2c_get_clientdata(to_i2c_client(dev)));
 
-	वापस mc3230_set_opcon(data, MC3230_MODE_OPCON_WAKE);
-पूर्ण
-#पूर्ण_अगर
+	return mc3230_set_opcon(data, MC3230_MODE_OPCON_STANDBY);
+}
 
-अटल SIMPLE_DEV_PM_OPS(mc3230_pm_ops, mc3230_suspend, mc3230_resume);
+static int mc3230_resume(struct device *dev)
+{
+	struct mc3230_data *data;
 
-अटल स्थिर काष्ठा i2c_device_id mc3230_i2c_id[] = अणु
-	अणु"mc3230", 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	data = iio_priv(i2c_get_clientdata(to_i2c_client(dev)));
+
+	return mc3230_set_opcon(data, MC3230_MODE_OPCON_WAKE);
+}
+#endif
+
+static SIMPLE_DEV_PM_OPS(mc3230_pm_ops, mc3230_suspend, mc3230_resume);
+
+static const struct i2c_device_id mc3230_i2c_id[] = {
+	{"mc3230", 0},
+	{}
+};
 MODULE_DEVICE_TABLE(i2c, mc3230_i2c_id);
 
-अटल काष्ठा i2c_driver mc3230_driver = अणु
-	.driver = अणु
+static struct i2c_driver mc3230_driver = {
+	.driver = {
 		.name = "mc3230",
 		.pm = &mc3230_pm_ops,
-	पूर्ण,
+	},
 	.probe		= mc3230_probe,
-	.हटाओ		= mc3230_हटाओ,
+	.remove		= mc3230_remove,
 	.id_table	= mc3230_i2c_id,
-पूर्ण;
+};
 
 module_i2c_driver(mc3230_driver);
 

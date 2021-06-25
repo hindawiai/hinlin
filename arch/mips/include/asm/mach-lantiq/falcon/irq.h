@@ -1,17 +1,16 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *
  *  Copyright (C) 2011 Thomas Langer <thomas.langer@lantiq.com>
  */
 
-#अगर_अघोषित __FALCON_IRQ_H
-#घोषणा __FALCON_IRQ_H
+#ifndef __FALCON_IRQ_H
+#define __FALCON_IRQ_H
 
-#समावेश <falcon_irq.h>
+#include <falcon_irq.h>
 
-#घोषणा NR_IRQS 328
+#define NR_IRQS 328
 
-#समावेश <यंत्र/mach-generic/irq.h>
+#include <asm/mach-generic/irq.h>
 
-#पूर्ण_अगर
+#endif

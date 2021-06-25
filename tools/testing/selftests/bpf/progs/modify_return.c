@@ -1,50 +1,49 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 
 /*
  * Copyright 2020 Google LLC.
  */
 
-#समावेश <linux/bpf.h>
-#समावेश <bpf/bpf_helpers.h>
-#समावेश <bpf/bpf_tracing.h>
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_tracing.h>
 
-अक्षर _license[] SEC("license") = "GPL";
+char _license[] SEC("license") = "GPL";
 
-अटल पूर्णांक sequence = 0;
+static int sequence = 0;
 __s32 input_retval = 0;
 
 __u64 fentry_result = 0;
 SEC("fentry/bpf_modify_return_test")
-पूर्णांक BPF_PROG(fentry_test, पूर्णांक a, __u64 b)
-अणु
+int BPF_PROG(fentry_test, int a, __u64 b)
+{
 	sequence++;
 	fentry_result = (sequence == 1);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-__u64 भ_शेष_ret_result = 0;
+__u64 fmod_ret_result = 0;
 SEC("fmod_ret/bpf_modify_return_test")
-पूर्णांक BPF_PROG(भ_शेष_ret_test, पूर्णांक a, पूर्णांक *b, पूर्णांक ret)
-अणु
+int BPF_PROG(fmod_ret_test, int a, int *b, int ret)
+{
 	sequence++;
-	/* This is the first भ_शेष_ret program, the ret passed should be 0 */
-	भ_शेष_ret_result = (sequence == 2 && ret == 0);
-	वापस input_retval;
-पूर्ण
+	/* This is the first fmod_ret program, the ret passed should be 0 */
+	fmod_ret_result = (sequence == 2 && ret == 0);
+	return input_retval;
+}
 
-__u64 fनिकास_result = 0;
+__u64 fexit_result = 0;
 SEC("fexit/bpf_modify_return_test")
-पूर्णांक BPF_PROG(fनिकास_test, पूर्णांक a, __u64 b, पूर्णांक ret)
-अणु
+int BPF_PROG(fexit_test, int a, __u64 b, int ret)
+{
 	sequence++;
-	/* If the input_reval is non-zero a successful modअगरication should have
+	/* If the input_reval is non-zero a successful modification should have
 	 * occurred.
 	 */
-	अगर (input_retval)
-		fनिकास_result = (sequence == 3 && ret == input_retval);
-	अन्यथा
-		fनिकास_result = (sequence == 3 && ret == 4);
+	if (input_retval)
+		fexit_result = (sequence == 3 && ret == input_retval);
+	else
+		fexit_result = (sequence == 3 && ret == 4);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

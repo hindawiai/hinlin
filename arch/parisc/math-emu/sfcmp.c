@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Linux/PA-RISC Project (http://www.parisc-linux.org/)
  *
- * Floating-poपूर्णांक emulation code
+ * Floating-point emulation code
  *  Copyright (C) 2001 Hewlett-Packard (Paul Bame) <bame@debian.org>
  */
 /*
@@ -27,117 +26,117 @@
 */
 
 
-#समावेश "float.h"
-#समावेश "sgl_float.h"
+#include "float.h"
+#include "sgl_float.h"
     
 /*
  * sgl_cmp: compare two values
  */
-पूर्णांक
-sgl_fcmp (sgl_भग्नing_poपूर्णांक * leftptr, sgl_भग्नing_poपूर्णांक * rightptr,
-	  अचिन्हित पूर्णांक cond, अचिन्हित पूर्णांक *status)
+int
+sgl_fcmp (sgl_floating_point * leftptr, sgl_floating_point * rightptr,
+	  unsigned int cond, unsigned int *status)
                                            
                        /* The predicate to be tested */
                          
-    अणु
-    रेजिस्टर अचिन्हित पूर्णांक left, right;
-    रेजिस्टर पूर्णांक xorresult;
+    {
+    register unsigned int left, right;
+    register int xorresult;
         
     /* Create local copies of the numbers */
     left = *leftptr;
     right = *rightptr;
 
     /*
-     * Test क्रम NaN
+     * Test for NaN
      */
-    अगर(    (Sgl_exponent(left) == SGL_अनन्त_EXPONENT)
-        || (Sgl_exponent(right) == SGL_अनन्त_EXPONENT) )
-	अणु
-	/* Check अगर a NaN is involved.  Signal an invalid exception when 
-	 * comparing a संकेतing NaN or when comparing quiet NaNs and the
+    if(    (Sgl_exponent(left) == SGL_INFINITY_EXPONENT)
+        || (Sgl_exponent(right) == SGL_INFINITY_EXPONENT) )
+	{
+	/* Check if a NaN is involved.  Signal an invalid exception when 
+	 * comparing a signaling NaN or when comparing quiet NaNs and the
 	 * low bit of the condition is set */
-        अगर( (  (Sgl_exponent(left) == SGL_अनन्त_EXPONENT)
+        if( (  (Sgl_exponent(left) == SGL_INFINITY_EXPONENT)
 	    && Sgl_isnotzero_mantissa(left) 
-	    && (Exception(cond) || Sgl_isone_संकेतing(left)))
+	    && (Exception(cond) || Sgl_isone_signaling(left)))
 	   ||
-	    (  (Sgl_exponent(right) == SGL_अनन्त_EXPONENT)
+	    (  (Sgl_exponent(right) == SGL_INFINITY_EXPONENT)
 	    && Sgl_isnotzero_mantissa(right) 
-	    && (Exception(cond) || Sgl_isone_संकेतing(right)) ) )
-	    अणु
-	    अगर( Is_invalidtrap_enabled() ) अणु
+	    && (Exception(cond) || Sgl_isone_signaling(right)) ) )
+	    {
+	    if( Is_invalidtrap_enabled() ) {
 	    	Set_status_cbit(Unordered(cond));
-		वापस(INVALIDEXCEPTION);
-	    पूर्ण
-	    अन्यथा Set_invalidflag();
+		return(INVALIDEXCEPTION);
+	    }
+	    else Set_invalidflag();
 	    Set_status_cbit(Unordered(cond));
-	    वापस(NOEXCEPTION);
-	    पूर्ण
-	/* All the exceptional conditions are handled, now special हाल
+	    return(NOEXCEPTION);
+	    }
+	/* All the exceptional conditions are handled, now special case
 	   NaN compares */
-        अन्यथा अगर( ((Sgl_exponent(left) == SGL_अनन्त_EXPONENT)
+        else if( ((Sgl_exponent(left) == SGL_INFINITY_EXPONENT)
 	    && Sgl_isnotzero_mantissa(left))
 	   ||
-	    ((Sgl_exponent(right) == SGL_अनन्त_EXPONENT)
+	    ((Sgl_exponent(right) == SGL_INFINITY_EXPONENT)
 	    && Sgl_isnotzero_mantissa(right)) )
-	    अणु
+	    {
 	    /* NaNs always compare unordered. */
 	    Set_status_cbit(Unordered(cond));
-	    वापस(NOEXCEPTION);
-	    पूर्ण
-	/* infinities will drop करोwn to the normal compare mechanisms */
-	पूर्ण
-    /* First compare क्रम unequal signs => less or greater or
-     * special equal हाल */
-    Sgl_xortoपूर्णांकp1(left,right,xorresult);
-    अगर( xorresult < 0 )
-        अणु
+	    return(NOEXCEPTION);
+	    }
+	/* infinities will drop down to the normal compare mechanisms */
+	}
+    /* First compare for unequal signs => less or greater or
+     * special equal case */
+    Sgl_xortointp1(left,right,xorresult);
+    if( xorresult < 0 )
+        {
         /* left negative => less, left positive => greater.
-         * equal is possible अगर both opeअक्रमs are zeros. */
-        अगर( Sgl_iszero_exponenपंचांगantissa(left) 
-	  && Sgl_iszero_exponenपंचांगantissa(right) )
-            अणु
+         * equal is possible if both operands are zeros. */
+        if( Sgl_iszero_exponentmantissa(left) 
+	  && Sgl_iszero_exponentmantissa(right) )
+            {
 	    Set_status_cbit(Equal(cond));
-	    पूर्ण
-	अन्यथा अगर( Sgl_isone_sign(left) )
-	    अणु
+	    }
+	else if( Sgl_isone_sign(left) )
+	    {
 	    Set_status_cbit(Lessthan(cond));
-	    पूर्ण
-	अन्यथा
-	    अणु
+	    }
+	else
+	    {
 	    Set_status_cbit(Greaterthan(cond));
-	    पूर्ण
-        पूर्ण
+	    }
+        }
     /* Signs are the same.  Treat negative numbers separately
      * from the positives because of the reversed sense.  */
-    अन्यथा अगर( Sgl_all(left) == Sgl_all(right) )
-        अणु
+    else if( Sgl_all(left) == Sgl_all(right) )
+        {
         Set_status_cbit(Equal(cond));
-        पूर्ण
-    अन्यथा अगर( Sgl_iszero_sign(left) )
-        अणु
+        }
+    else if( Sgl_iszero_sign(left) )
+        {
         /* Positive compare */
-        अगर( Sgl_all(left) < Sgl_all(right) )
-	    अणु
+        if( Sgl_all(left) < Sgl_all(right) )
+	    {
 	    Set_status_cbit(Lessthan(cond));
-	    पूर्ण
-	अन्यथा
-	    अणु
+	    }
+	else
+	    {
 	    Set_status_cbit(Greaterthan(cond));
-	    पूर्ण
-	पूर्ण
-    अन्यथा
-        अणु
-        /* Negative compare.  Signed or अचिन्हित compares
+	    }
+	}
+    else
+        {
+        /* Negative compare.  Signed or unsigned compares
          * both work the same.  That distinction is only
-         * important when the sign bits dअगरfer. */
-        अगर( Sgl_all(left) > Sgl_all(right) )
-	    अणु
+         * important when the sign bits differ. */
+        if( Sgl_all(left) > Sgl_all(right) )
+	    {
 	    Set_status_cbit(Lessthan(cond));
-	    पूर्ण
-        अन्यथा
-	    अणु
+	    }
+        else
+	    {
 	    Set_status_cbit(Greaterthan(cond));
-	    पूर्ण
-        पूर्ण
-	वापस(NOEXCEPTION);
-    पूर्ण
+	    }
+        }
+	return(NOEXCEPTION);
+    }

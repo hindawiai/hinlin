@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * Allwinner new F-series F1C100s SoC (suniv) pinctrl driver.
  *
@@ -16,21 +15,21 @@
  *
  * Copyright (C) 2014 Maxime Ripard
  *
- * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Maxime Ripard <maxime.ripard@free-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/pinctrl/pinctrl.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/pinctrl/pinctrl.h>
 
-#समावेश "pinctrl-sunxi.h"
-अटल स्थिर काष्ठा sunxi_desc_pin suniv_f1c100s_pins[] = अणु
+#include "pinctrl-sunxi.h"
+static const struct sunxi_desc_pin suniv_f1c100s_pins[] = {
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(A, 0),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
@@ -388,30 +387,30 @@
 		  SUNXI_FUNCTION(0x3, "jtag"),		/* CK */
 		  SUNXI_FUNCTION(0x4, "pwm1"),		/* PWM1 */
 		  SUNXI_FUNCTION_IRQ_BANK(0x6, 2, 5)),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sunxi_pinctrl_desc suniv_f1c100s_pinctrl_data = अणु
+static const struct sunxi_pinctrl_desc suniv_f1c100s_pinctrl_data = {
 	.pins = suniv_f1c100s_pins,
 	.npins = ARRAY_SIZE(suniv_f1c100s_pins),
 	.irq_banks = 3,
-पूर्ण;
+};
 
-अटल पूर्णांक suniv_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस sunxi_pinctrl_init(pdev,
+static int suniv_pinctrl_probe(struct platform_device *pdev)
+{
+	return sunxi_pinctrl_init(pdev,
 				  &suniv_f1c100s_pinctrl_data);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा of_device_id suniv_f1c100s_pinctrl_match[] = अणु
-	अणु .compatible = "allwinner,suniv-f1c100s-pinctrl", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct of_device_id suniv_f1c100s_pinctrl_match[] = {
+	{ .compatible = "allwinner,suniv-f1c100s-pinctrl", },
+	{}
+};
 
-अटल काष्ठा platक्रमm_driver suniv_f1c100s_pinctrl_driver = अणु
+static struct platform_driver suniv_f1c100s_pinctrl_driver = {
 	.probe	= suniv_pinctrl_probe,
-	.driver	= अणु
+	.driver	= {
 		.name		= "suniv-f1c100s-pinctrl",
 		.of_match_table	= suniv_f1c100s_pinctrl_match,
-	पूर्ण,
-पूर्ण;
-builtin_platक्रमm_driver(suniv_f1c100s_pinctrl_driver);
+	},
+};
+builtin_platform_driver(suniv_f1c100s_pinctrl_driver);

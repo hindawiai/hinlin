@@ -1,28 +1,27 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#घोषणा _RTW_XMIT_C_
+#define _RTW_XMIT_C_
 
-#समावेश <drv_types.h>
-#समावेश <rtw_debug.h>
+#include <drv_types.h>
+#include <rtw_debug.h>
 
-अटल u8 P802_1H_OUI[P80211_OUI_LEN] = अणु 0x00, 0x00, 0xf8 पूर्ण;
-अटल u8 RFC1042_OUI[P80211_OUI_LEN] = अणु 0x00, 0x00, 0x00 पूर्ण;
+static u8 P802_1H_OUI[P80211_OUI_LEN] = { 0x00, 0x00, 0xf8 };
+static u8 RFC1042_OUI[P80211_OUI_LEN] = { 0x00, 0x00, 0x00 };
 
-अटल व्योम _init_txservq(काष्ठा tx_servq *ptxservq)
-अणु
+static void _init_txservq(struct tx_servq *ptxservq)
+{
 	INIT_LIST_HEAD(&ptxservq->tx_pending);
 	_rtw_init_queue(&ptxservq->sta_pending);
 	ptxservq->qcnt = 0;
-पूर्ण
+}
 
-व्योम _rtw_init_sta_xmit_priv(काष्ठा sta_xmit_priv *psta_xmitpriv)
-अणु
-	स_रखो((अचिन्हित अक्षर *)psta_xmitpriv, 0, माप(काष्ठा sta_xmit_priv));
+void _rtw_init_sta_xmit_priv(struct sta_xmit_priv *psta_xmitpriv)
+{
+	memset((unsigned char *)psta_xmitpriv, 0, sizeof(struct sta_xmit_priv));
 
 	spin_lock_init(&psta_xmitpriv->lock);
 
@@ -32,19 +31,19 @@
 	_init_txservq(&psta_xmitpriv->vo_q);
 	INIT_LIST_HEAD(&psta_xmitpriv->legacy_dz);
 	INIT_LIST_HEAD(&psta_xmitpriv->apsd);
-पूर्ण
+}
 
-s32 _rtw_init_xmit_priv(काष्ठा xmit_priv *pxmitpriv, काष्ठा adapter *padapter)
-अणु
-	पूर्णांक i;
-	काष्ठा xmit_buf *pxmitbuf;
-	काष्ठा xmit_frame *pxframe;
-	चिन्हित पूर्णांक	res = _SUCCESS;
+s32 _rtw_init_xmit_priv(struct xmit_priv *pxmitpriv, struct adapter *padapter)
+{
+	int i;
+	struct xmit_buf *pxmitbuf;
+	struct xmit_frame *pxframe;
+	signed int	res = _SUCCESS;
 
 	spin_lock_init(&pxmitpriv->lock);
 	spin_lock_init(&pxmitpriv->lock_sctx);
 	init_completion(&pxmitpriv->xmit_comp);
-	init_completion(&pxmitpriv->terminate_xmitthपढ़ो_comp);
+	init_completion(&pxmitpriv->terminate_xmitthread_comp);
 
 	/*
 	 * Please insert all the queue initializaiton using _rtw_init_queue below
@@ -58,76 +57,76 @@ s32 _rtw_init_xmit_priv(काष्ठा xmit_priv *pxmitpriv, काष्ठ
 	_rtw_init_queue(&pxmitpriv->vo_pending);
 	_rtw_init_queue(&pxmitpriv->bm_pending);
 
-	_rtw_init_queue(&pxmitpriv->मुक्त_xmit_queue);
+	_rtw_init_queue(&pxmitpriv->free_xmit_queue);
 
 	/*
-	 * Please allocate memory with the sz = (काष्ठा xmit_frame) * NR_XMITFRAME,
-	 * and initialize मुक्त_xmit_frame below.
-	 * Please also apply  मुक्त_txobj to link_up all the xmit_frames...
+	 * Please allocate memory with the sz = (struct xmit_frame) * NR_XMITFRAME,
+	 * and initialize free_xmit_frame below.
+	 * Please also apply  free_txobj to link_up all the xmit_frames...
 	 */
 
-	pxmitpriv->pallocated_frame_buf = vzalloc(NR_XMITFRAME * माप(काष्ठा xmit_frame) + 4);
+	pxmitpriv->pallocated_frame_buf = vzalloc(NR_XMITFRAME * sizeof(struct xmit_frame) + 4);
 
-	अगर (!pxmitpriv->pallocated_frame_buf) अणु
-		pxmitpriv->pxmit_frame_buf = शून्य;
+	if (!pxmitpriv->pallocated_frame_buf) {
+		pxmitpriv->pxmit_frame_buf = NULL;
 		res = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	pxmitpriv->pxmit_frame_buf = (u8 *)N_BYTE_ALIGMENT((SIZE_PTR)(pxmitpriv->pallocated_frame_buf), 4);
 
-	pxframe = (काष्ठा xmit_frame *) pxmitpriv->pxmit_frame_buf;
+	pxframe = (struct xmit_frame *) pxmitpriv->pxmit_frame_buf;
 
-	क्रम (i = 0; i < NR_XMITFRAME; i++) अणु
+	for (i = 0; i < NR_XMITFRAME; i++) {
 		INIT_LIST_HEAD(&pxframe->list);
 
 		pxframe->padapter = padapter;
-		pxframe->frame_tag = शून्य_FRAMETAG;
+		pxframe->frame_tag = NULL_FRAMETAG;
 
-		pxframe->pkt = शून्य;
+		pxframe->pkt = NULL;
 
-		pxframe->buf_addr = शून्य;
-		pxframe->pxmitbuf = शून्य;
+		pxframe->buf_addr = NULL;
+		pxframe->pxmitbuf = NULL;
 
 		list_add_tail(&pxframe->list,
-			      &pxmitpriv->मुक्त_xmit_queue.queue);
+			      &pxmitpriv->free_xmit_queue.queue);
 
 		pxframe++;
-	पूर्ण
+	}
 
-	pxmitpriv->मुक्त_xmitframe_cnt = NR_XMITFRAME;
+	pxmitpriv->free_xmitframe_cnt = NR_XMITFRAME;
 
 	pxmitpriv->frag_len = MAX_FRAG_THRESHOLD;
 
 	/* init xmit_buf */
-	_rtw_init_queue(&pxmitpriv->मुक्त_xmitbuf_queue);
+	_rtw_init_queue(&pxmitpriv->free_xmitbuf_queue);
 	_rtw_init_queue(&pxmitpriv->pending_xmitbuf_queue);
 
-	pxmitpriv->pallocated_xmitbuf = vzalloc(NR_XMITBUFF * माप(काष्ठा xmit_buf) + 4);
+	pxmitpriv->pallocated_xmitbuf = vzalloc(NR_XMITBUFF * sizeof(struct xmit_buf) + 4);
 
-	अगर (!pxmitpriv->pallocated_xmitbuf) अणु
+	if (!pxmitpriv->pallocated_xmitbuf) {
 		res = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	pxmitpriv->pxmitbuf = (u8 *)N_BYTE_ALIGMENT((SIZE_PTR)(pxmitpriv->pallocated_xmitbuf), 4);
 
-	pxmitbuf = (काष्ठा xmit_buf *)pxmitpriv->pxmitbuf;
+	pxmitbuf = (struct xmit_buf *)pxmitpriv->pxmitbuf;
 
-	क्रम (i = 0; i < NR_XMITBUFF; i++) अणु
+	for (i = 0; i < NR_XMITBUFF; i++) {
 		INIT_LIST_HEAD(&pxmitbuf->list);
 
-		pxmitbuf->priv_data = शून्य;
+		pxmitbuf->priv_data = NULL;
 		pxmitbuf->padapter = padapter;
 		pxmitbuf->buf_tag = XMITBUF_DATA;
 
-		/* Tx buf allocation may fail someबार, so sleep and retry. */
+		/* Tx buf allocation may fail sometimes, so sleep and retry. */
 		res = rtw_os_xmit_resource_alloc(padapter, pxmitbuf, (MAX_XMITBUF_SZ + XMITBUF_ALIGN_SZ), true);
-		अगर (res == _FAIL) अणु
+		if (res == _FAIL) {
 			msleep(10);
 			res = rtw_os_xmit_resource_alloc(padapter, pxmitbuf, (MAX_XMITBUF_SZ + XMITBUF_ALIGN_SZ), true);
-			अगर (res == _FAIL)
-				जाओ निकास;
-		पूर्ण
+			if (res == _FAIL)
+				goto exit;
+		}
 
 		pxmitbuf->phead = pxmitbuf->pbuf;
 		pxmitbuf->pend = pxmitbuf->pbuf + MAX_XMITBUF_SZ;
@@ -137,75 +136,75 @@ s32 _rtw_init_xmit_priv(काष्ठा xmit_priv *pxmitpriv, काष्ठ
 		pxmitbuf->flags = XMIT_VO_QUEUE;
 
 		list_add_tail(&pxmitbuf->list,
-			      &pxmitpriv->मुक्त_xmitbuf_queue.queue);
-		#अगर_घोषित DBG_XMIT_BUF
+			      &pxmitpriv->free_xmitbuf_queue.queue);
+		#ifdef DBG_XMIT_BUF
 		pxmitbuf->no = i;
-		#पूर्ण_अगर
+		#endif
 
 		pxmitbuf++;
-	पूर्ण
+	}
 
-	pxmitpriv->मुक्त_xmitbuf_cnt = NR_XMITBUFF;
+	pxmitpriv->free_xmitbuf_cnt = NR_XMITBUFF;
 
 	/* init xframe_ext queue,  the same count as extbuf  */
-	_rtw_init_queue(&pxmitpriv->मुक्त_xframe_ext_queue);
+	_rtw_init_queue(&pxmitpriv->free_xframe_ext_queue);
 
-	pxmitpriv->xframe_ext_alloc_addr = vzalloc(NR_XMIT_EXTBUFF * माप(काष्ठा xmit_frame) + 4);
+	pxmitpriv->xframe_ext_alloc_addr = vzalloc(NR_XMIT_EXTBUFF * sizeof(struct xmit_frame) + 4);
 
-	अगर (!pxmitpriv->xframe_ext_alloc_addr) अणु
-		pxmitpriv->xframe_ext = शून्य;
+	if (!pxmitpriv->xframe_ext_alloc_addr) {
+		pxmitpriv->xframe_ext = NULL;
 		res = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 	pxmitpriv->xframe_ext = (u8 *)N_BYTE_ALIGMENT((SIZE_PTR)(pxmitpriv->xframe_ext_alloc_addr), 4);
-	pxframe = (काष्ठा xmit_frame *)pxmitpriv->xframe_ext;
+	pxframe = (struct xmit_frame *)pxmitpriv->xframe_ext;
 
-	क्रम (i = 0; i < NR_XMIT_EXTBUFF; i++) अणु
+	for (i = 0; i < NR_XMIT_EXTBUFF; i++) {
 		INIT_LIST_HEAD(&pxframe->list);
 
 		pxframe->padapter = padapter;
-		pxframe->frame_tag = शून्य_FRAMETAG;
+		pxframe->frame_tag = NULL_FRAMETAG;
 
-		pxframe->pkt = शून्य;
+		pxframe->pkt = NULL;
 
-		pxframe->buf_addr = शून्य;
-		pxframe->pxmitbuf = शून्य;
+		pxframe->buf_addr = NULL;
+		pxframe->pxmitbuf = NULL;
 
 		pxframe->ext_tag = 1;
 
 		list_add_tail(&pxframe->list,
-			      &pxmitpriv->मुक्त_xframe_ext_queue.queue);
+			      &pxmitpriv->free_xframe_ext_queue.queue);
 
 		pxframe++;
-	पूर्ण
-	pxmitpriv->मुक्त_xframe_ext_cnt = NR_XMIT_EXTBUFF;
+	}
+	pxmitpriv->free_xframe_ext_cnt = NR_XMIT_EXTBUFF;
 
 	/*  Init xmit extension buff */
-	_rtw_init_queue(&pxmitpriv->मुक्त_xmit_extbuf_queue);
+	_rtw_init_queue(&pxmitpriv->free_xmit_extbuf_queue);
 
-	pxmitpriv->pallocated_xmit_extbuf = vzalloc(NR_XMIT_EXTBUFF * माप(काष्ठा xmit_buf) + 4);
+	pxmitpriv->pallocated_xmit_extbuf = vzalloc(NR_XMIT_EXTBUFF * sizeof(struct xmit_buf) + 4);
 
-	अगर (!pxmitpriv->pallocated_xmit_extbuf) अणु
+	if (!pxmitpriv->pallocated_xmit_extbuf) {
 		res = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	pxmitpriv->pxmit_extbuf = (u8 *)N_BYTE_ALIGMENT((SIZE_PTR)(pxmitpriv->pallocated_xmit_extbuf), 4);
 
-	pxmitbuf = (काष्ठा xmit_buf *)pxmitpriv->pxmit_extbuf;
+	pxmitbuf = (struct xmit_buf *)pxmitpriv->pxmit_extbuf;
 
-	क्रम (i = 0; i < NR_XMIT_EXTBUFF; i++) अणु
+	for (i = 0; i < NR_XMIT_EXTBUFF; i++) {
 		INIT_LIST_HEAD(&pxmitbuf->list);
 
-		pxmitbuf->priv_data = शून्य;
+		pxmitbuf->priv_data = NULL;
 		pxmitbuf->padapter = padapter;
 		pxmitbuf->buf_tag = XMITBUF_MGNT;
 
 		res = rtw_os_xmit_resource_alloc(padapter, pxmitbuf, MAX_XMIT_EXTBUF_SZ + XMITBUF_ALIGN_SZ, true);
-		अगर (res == _FAIL) अणु
+		if (res == _FAIL) {
 			res = _FAIL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
 		pxmitbuf->phead = pxmitbuf->pbuf;
 		pxmitbuf->pend = pxmitbuf->pbuf + MAX_XMIT_EXTBUF_SZ;
@@ -213,44 +212,44 @@ s32 _rtw_init_xmit_priv(काष्ठा xmit_priv *pxmitpriv, काष्ठ
 		pxmitbuf->pdata = pxmitbuf->ptail = pxmitbuf->phead;
 
 		list_add_tail(&pxmitbuf->list,
-			      &pxmitpriv->मुक्त_xmit_extbuf_queue.queue);
-		#अगर_घोषित DBG_XMIT_BUF_EXT
+			      &pxmitpriv->free_xmit_extbuf_queue.queue);
+		#ifdef DBG_XMIT_BUF_EXT
 		pxmitbuf->no = i;
-		#पूर्ण_अगर
+		#endif
 		pxmitbuf++;
-	पूर्ण
+	}
 
-	pxmitpriv->मुक्त_xmit_extbuf_cnt = NR_XMIT_EXTBUFF;
+	pxmitpriv->free_xmit_extbuf_cnt = NR_XMIT_EXTBUFF;
 
-	क्रम (i = 0; i < CMDBUF_MAX; i++) अणु
+	for (i = 0; i < CMDBUF_MAX; i++) {
 		pxmitbuf = &pxmitpriv->pcmd_xmitbuf[i];
-		अगर (pxmitbuf) अणु
+		if (pxmitbuf) {
 			INIT_LIST_HEAD(&pxmitbuf->list);
 
-			pxmitbuf->priv_data = शून्य;
+			pxmitbuf->priv_data = NULL;
 			pxmitbuf->padapter = padapter;
 			pxmitbuf->buf_tag = XMITBUF_CMD;
 
 			res = rtw_os_xmit_resource_alloc(padapter, pxmitbuf, MAX_CMDBUF_SZ+XMITBUF_ALIGN_SZ, true);
-			अगर (res == _FAIL) अणु
+			if (res == _FAIL) {
 				res = _FAIL;
-				जाओ निकास;
-			पूर्ण
+				goto exit;
+			}
 
 			pxmitbuf->phead = pxmitbuf->pbuf;
 			pxmitbuf->pend = pxmitbuf->pbuf + MAX_CMDBUF_SZ;
 			pxmitbuf->len = 0;
 			pxmitbuf->pdata = pxmitbuf->ptail = pxmitbuf->phead;
 			pxmitbuf->alloc_sz = MAX_CMDBUF_SZ+XMITBUF_ALIGN_SZ;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	res = rtw_alloc_hwxmits(padapter);
-	अगर (res == _FAIL)
-		जाओ निकास;
+	if (res == _FAIL)
+		goto exit;
 	rtw_init_hwxmits(pxmitpriv->hwxmits, pxmitpriv->hwxmit_entry);
 
-	क्रम (i = 0; i < 4; i++)
+	for (i = 0; i < 4; i++)
 		pxmitpriv->wmm_para_seq[i] = i;
 
 	pxmitpriv->ack_tx = false;
@@ -259,177 +258,177 @@ s32 _rtw_init_xmit_priv(काष्ठा xmit_priv *pxmitpriv, काष्ठ
 
 	rtw_hal_init_xmit_priv(padapter);
 
-निकास:
-	वापस res;
-पूर्ण
+exit:
+	return res;
+}
 
-व्योम _rtw_मुक्त_xmit_priv(काष्ठा xmit_priv *pxmitpriv)
-अणु
-	पूर्णांक i;
-	काष्ठा adapter *padapter = pxmitpriv->adapter;
-	काष्ठा xmit_frame	*pxmitframe = (काष्ठा xmit_frame *) pxmitpriv->pxmit_frame_buf;
-	काष्ठा xmit_buf *pxmitbuf = (काष्ठा xmit_buf *)pxmitpriv->pxmitbuf;
+void _rtw_free_xmit_priv(struct xmit_priv *pxmitpriv)
+{
+	int i;
+	struct adapter *padapter = pxmitpriv->adapter;
+	struct xmit_frame	*pxmitframe = (struct xmit_frame *) pxmitpriv->pxmit_frame_buf;
+	struct xmit_buf *pxmitbuf = (struct xmit_buf *)pxmitpriv->pxmitbuf;
 
-	rtw_hal_मुक्त_xmit_priv(padapter);
+	rtw_hal_free_xmit_priv(padapter);
 
-	अगर (!pxmitpriv->pxmit_frame_buf)
-		वापस;
+	if (!pxmitpriv->pxmit_frame_buf)
+		return;
 
-	क्रम (i = 0; i < NR_XMITFRAME; i++) अणु
+	for (i = 0; i < NR_XMITFRAME; i++) {
 		rtw_os_xmit_complete(padapter, pxmitframe);
 
 		pxmitframe++;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < NR_XMITBUFF; i++) अणु
-		rtw_os_xmit_resource_मुक्त(padapter, pxmitbuf, (MAX_XMITBUF_SZ + XMITBUF_ALIGN_SZ), true);
+	for (i = 0; i < NR_XMITBUFF; i++) {
+		rtw_os_xmit_resource_free(padapter, pxmitbuf, (MAX_XMITBUF_SZ + XMITBUF_ALIGN_SZ), true);
 
 		pxmitbuf++;
-	पूर्ण
+	}
 
-	vमुक्त(pxmitpriv->pallocated_frame_buf);
-	vमुक्त(pxmitpriv->pallocated_xmitbuf);
+	vfree(pxmitpriv->pallocated_frame_buf);
+	vfree(pxmitpriv->pallocated_xmitbuf);
 
-	/* मुक्त xframe_ext queue,  the same count as extbuf  */
-	pxmitframe = (काष्ठा xmit_frame *)pxmitpriv->xframe_ext;
-	अगर (pxmitframe) अणु
-		क्रम (i = 0; i < NR_XMIT_EXTBUFF; i++) अणु
+	/* free xframe_ext queue,  the same count as extbuf  */
+	pxmitframe = (struct xmit_frame *)pxmitpriv->xframe_ext;
+	if (pxmitframe) {
+		for (i = 0; i < NR_XMIT_EXTBUFF; i++) {
 			rtw_os_xmit_complete(padapter, pxmitframe);
 			pxmitframe++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	vमुक्त(pxmitpriv->xframe_ext_alloc_addr);
+	vfree(pxmitpriv->xframe_ext_alloc_addr);
 
-	/*  मुक्त xmit extension buff */
-	pxmitbuf = (काष्ठा xmit_buf *)pxmitpriv->pxmit_extbuf;
-	क्रम (i = 0; i < NR_XMIT_EXTBUFF; i++) अणु
-		rtw_os_xmit_resource_मुक्त(padapter, pxmitbuf, (MAX_XMIT_EXTBUF_SZ + XMITBUF_ALIGN_SZ), true);
+	/*  free xmit extension buff */
+	pxmitbuf = (struct xmit_buf *)pxmitpriv->pxmit_extbuf;
+	for (i = 0; i < NR_XMIT_EXTBUFF; i++) {
+		rtw_os_xmit_resource_free(padapter, pxmitbuf, (MAX_XMIT_EXTBUF_SZ + XMITBUF_ALIGN_SZ), true);
 
 		pxmitbuf++;
-	पूर्ण
+	}
 
-	vमुक्त(pxmitpriv->pallocated_xmit_extbuf);
+	vfree(pxmitpriv->pallocated_xmit_extbuf);
 
-	क्रम (i = 0; i < CMDBUF_MAX; i++) अणु
+	for (i = 0; i < CMDBUF_MAX; i++) {
 		pxmitbuf = &pxmitpriv->pcmd_xmitbuf[i];
-		अगर (pxmitbuf)
-			rtw_os_xmit_resource_मुक्त(padapter, pxmitbuf, MAX_CMDBUF_SZ+XMITBUF_ALIGN_SZ, true);
-	पूर्ण
+		if (pxmitbuf)
+			rtw_os_xmit_resource_free(padapter, pxmitbuf, MAX_CMDBUF_SZ+XMITBUF_ALIGN_SZ, true);
+	}
 
-	rtw_मुक्त_hwxmits(padapter);
+	rtw_free_hwxmits(padapter);
 
 	mutex_destroy(&pxmitpriv->ack_tx_mutex);
-पूर्ण
+}
 
-u8 query_ra_लघु_GI(काष्ठा sta_info *psta)
-अणु
+u8 query_ra_short_GI(struct sta_info *psta)
+{
 	u8 sgi = false, sgi_20m = false, sgi_40m = false, sgi_80m = false;
 
 	sgi_20m = psta->htpriv.sgi_20m;
 	sgi_40m = psta->htpriv.sgi_40m;
 
-	चयन (psta->bw_mode) अणु
-	हाल CHANNEL_WIDTH_80:
+	switch (psta->bw_mode) {
+	case CHANNEL_WIDTH_80:
 		sgi = sgi_80m;
-		अवरोध;
-	हाल CHANNEL_WIDTH_40:
+		break;
+	case CHANNEL_WIDTH_40:
 		sgi = sgi_40m;
-		अवरोध;
-	हाल CHANNEL_WIDTH_20:
-	शेष:
+		break;
+	case CHANNEL_WIDTH_20:
+	default:
 		sgi = sgi_20m;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस sgi;
-पूर्ण
+	return sgi;
+}
 
-अटल व्योम update_attrib_vcs_info(काष्ठा adapter *padapter, काष्ठा xmit_frame *pxmitframe)
-अणु
+static void update_attrib_vcs_info(struct adapter *padapter, struct xmit_frame *pxmitframe)
+{
 	u32 sz;
-	काष्ठा pkt_attrib	*pattrib = &pxmitframe->attrib;
-	/* काष्ठा sta_info *psta = pattrib->psta; */
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_ext_info *pmlmeinfo = &pmlmeext->mlmext_info;
+	struct pkt_attrib	*pattrib = &pxmitframe->attrib;
+	/* struct sta_info *psta = pattrib->psta; */
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_ext_info *pmlmeinfo = &pmlmeext->mlmext_info;
 
-	अगर (pattrib->nr_frags != 1)
+	if (pattrib->nr_frags != 1)
 		sz = padapter->xmitpriv.frag_len;
-	अन्यथा /* no frag */
+	else /* no frag */
 		sz = pattrib->last_txcmdsz;
 
 	/*  (1) RTS_Threshold is compared to the MPDU, not MSDU. */
 	/*  (2) If there are more than one frag in  this MSDU, only the first frag uses protection frame. */
-	/* Other fragments are रक्षित by previous fragment. */
+	/* Other fragments are protected by previous fragment. */
 	/* So we only need to check the length of first fragment. */
-	अगर (pmlmeext->cur_wireless_mode < WIRELESS_11_24N  || padapter->registrypriv.wअगरi_spec) अणु
-		अगर (sz > padapter->registrypriv.rts_thresh) अणु
+	if (pmlmeext->cur_wireless_mode < WIRELESS_11_24N  || padapter->registrypriv.wifi_spec) {
+		if (sz > padapter->registrypriv.rts_thresh) {
 			pattrib->vcs_mode = RTS_CTS;
-		पूर्ण अन्यथा अणु
-			अगर (pattrib->rtsen)
+		} else {
+			if (pattrib->rtsen)
 				pattrib->vcs_mode = RTS_CTS;
-			अन्यथा अगर (pattrib->cts2self)
+			else if (pattrib->cts2self)
 				pattrib->vcs_mode = CTS_TO_SELF;
-			अन्यथा
+			else
 				pattrib->vcs_mode = NONE_VCS;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		जबतक (true) अणु
+		}
+	} else {
+		while (true) {
 			/* IOT action */
-			अगर ((pmlmeinfo->assoc_AP_venकरोr == HT_IOT_PEER_ATHEROS) && (pattrib->ampdu_en == true) &&
-				(padapter->securitypriv.करोt11PrivacyAlgrthm == _AES_)) अणु
+			if ((pmlmeinfo->assoc_AP_vendor == HT_IOT_PEER_ATHEROS) && (pattrib->ampdu_en == true) &&
+				(padapter->securitypriv.dot11PrivacyAlgrthm == _AES_)) {
 				pattrib->vcs_mode = CTS_TO_SELF;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			/* check ERP protection */
-			अगर (pattrib->rtsen || pattrib->cts2self) अणु
-				अगर (pattrib->rtsen)
+			if (pattrib->rtsen || pattrib->cts2self) {
+				if (pattrib->rtsen)
 					pattrib->vcs_mode = RTS_CTS;
-				अन्यथा अगर (pattrib->cts2self)
+				else if (pattrib->cts2self)
 					pattrib->vcs_mode = CTS_TO_SELF;
 
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			/* check HT op mode */
-			अगर (pattrib->ht_en) अणु
+			if (pattrib->ht_en) {
 				u8 HTOpMode = pmlmeinfo->HT_protection;
 
-				अगर ((pmlmeext->cur_bwmode && (HTOpMode == 2 || HTOpMode == 3)) ||
-					(!pmlmeext->cur_bwmode && HTOpMode == 3)) अणु
+				if ((pmlmeext->cur_bwmode && (HTOpMode == 2 || HTOpMode == 3)) ||
+					(!pmlmeext->cur_bwmode && HTOpMode == 3)) {
 					pattrib->vcs_mode = RTS_CTS;
-					अवरोध;
-				पूर्ण
-			पूर्ण
+					break;
+				}
+			}
 
 			/* check rts */
-			अगर (sz > padapter->registrypriv.rts_thresh) अणु
+			if (sz > padapter->registrypriv.rts_thresh) {
 				pattrib->vcs_mode = RTS_CTS;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			/* to करो list: check MIMO घातer save condition. */
+			/* to do list: check MIMO power save condition. */
 
-			/* check AMPDU aggregation क्रम TXOP */
-			अगर (pattrib->ampdu_en == true) अणु
+			/* check AMPDU aggregation for TXOP */
+			if (pattrib->ampdu_en == true) {
 				pattrib->vcs_mode = RTS_CTS;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			pattrib->vcs_mode = NONE_VCS;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	/* क्रम debug : क्रमce driver control vrtl_carrier_sense. */
-	अगर (padapter->driver_vcs_en == 1)
+	/* for debug : force driver control vrtl_carrier_sense. */
+	if (padapter->driver_vcs_en == 1)
 		pattrib->vcs_mode = padapter->driver_vcs_type;
-पूर्ण
+}
 
-अटल व्योम update_attrib_phy_info(काष्ठा adapter *padapter, काष्ठा pkt_attrib *pattrib, काष्ठा sta_info *psta)
-अणु
-	काष्ठा mlme_ext_priv *mlmeext = &padapter->mlmeextpriv;
+static void update_attrib_phy_info(struct adapter *padapter, struct pkt_attrib *pattrib, struct sta_info *psta)
+{
+	struct mlme_ext_priv *mlmeext = &padapter->mlmeextpriv;
 
 	pattrib->rtsen = psta->rtsen;
 	pattrib->cts2self = psta->cts2self;
@@ -444,12 +443,12 @@ u8 query_ra_लघु_GI(काष्ठा sta_info *psta)
 
 	pattrib->raid = psta->raid;
 
-	अगर (mlmeext->cur_bwmode < psta->bw_mode)
+	if (mlmeext->cur_bwmode < psta->bw_mode)
 		pattrib->bwmode = mlmeext->cur_bwmode;
-	अन्यथा
+	else
 		pattrib->bwmode = psta->bw_mode;
 
-	pattrib->sgi = query_ra_लघु_GI(psta);
+	pattrib->sgi = query_ra_short_GI(psta);
 
 	pattrib->ldpc = psta->ldpc;
 	pattrib->stbc = psta->stbc;
@@ -458,267 +457,267 @@ u8 query_ra_लघु_GI(काष्ठा sta_info *psta)
 	pattrib->ch_offset = psta->htpriv.ch_offset;
 	pattrib->ampdu_en = false;
 
-	अगर (padapter->driver_ampdu_spacing != 0xFF) /* driver control AMPDU Density क्रम peer sta's rx */
+	if (padapter->driver_ampdu_spacing != 0xFF) /* driver control AMPDU Density for peer sta's rx */
 		pattrib->ampdu_spacing = padapter->driver_ampdu_spacing;
-	अन्यथा
+	else
 		pattrib->ampdu_spacing = psta->htpriv.rx_ampdu_min_spacing;
 
 	pattrib->retry_ctrl = false;
-पूर्ण
+}
 
-अटल s32 update_attrib_sec_info(काष्ठा adapter *padapter, काष्ठा pkt_attrib *pattrib, काष्ठा sta_info *psta)
-अणु
-	चिन्हित पूर्णांक res = _SUCCESS;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
-	चिन्हित पूर्णांक bmcast = IS_MCAST(pattrib->ra);
+static s32 update_attrib_sec_info(struct adapter *padapter, struct pkt_attrib *pattrib, struct sta_info *psta)
+{
+	signed int res = _SUCCESS;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct security_priv *psecuritypriv = &padapter->securitypriv;
+	signed int bmcast = IS_MCAST(pattrib->ra);
 
-	स_रखो(pattrib->करोt118021x_UncstKey.skey,  0, 16);
-	स_रखो(pattrib->करोt11tkiptxmickey.skey,  0, 16);
+	memset(pattrib->dot118021x_UncstKey.skey,  0, 16);
+	memset(pattrib->dot11tkiptxmickey.skey,  0, 16);
 	pattrib->mac_id = psta->mac_id;
 
-	अगर (psta->ieee8021x_blocked == true) अणु
+	if (psta->ieee8021x_blocked == true) {
 		pattrib->encrypt = 0;
 
-		अगर ((pattrib->ether_type != 0x888e) && (check_fwstate(pmlmepriv, WIFI_MP_STATE) == false)) अणु
+		if ((pattrib->ether_type != 0x888e) && (check_fwstate(pmlmepriv, WIFI_MP_STATE) == false)) {
 			res = _FAIL;
-			जाओ निकास;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			goto exit;
+		}
+	} else {
 		GET_ENCRY_ALGO(psecuritypriv, psta, pattrib->encrypt, bmcast);
 
-		चयन (psecuritypriv->करोt11AuthAlgrthm) अणु
-		हाल करोt11AuthAlgrthm_Open:
-		हाल करोt11AuthAlgrthm_Shared:
-		हाल करोt11AuthAlgrthm_Auto:
-			pattrib->key_idx = (u8)psecuritypriv->करोt11PrivacyKeyIndex;
-			अवरोध;
-		हाल करोt11AuthAlgrthm_8021X:
-			अगर (bmcast)
-				pattrib->key_idx = (u8)psecuritypriv->करोt118021XGrpKeyid;
-			अन्यथा
+		switch (psecuritypriv->dot11AuthAlgrthm) {
+		case dot11AuthAlgrthm_Open:
+		case dot11AuthAlgrthm_Shared:
+		case dot11AuthAlgrthm_Auto:
+			pattrib->key_idx = (u8)psecuritypriv->dot11PrivacyKeyIndex;
+			break;
+		case dot11AuthAlgrthm_8021X:
+			if (bmcast)
+				pattrib->key_idx = (u8)psecuritypriv->dot118021XGrpKeyid;
+			else
 				pattrib->key_idx = 0;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pattrib->key_idx = 0;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		/* For WPS 1.0 WEP, driver should not encrypt EAPOL Packet क्रम WPS handshake. */
-		अगर (((pattrib->encrypt == _WEP40_) || (pattrib->encrypt == _WEP104_)) && (pattrib->ether_type == 0x888e))
+		/* For WPS 1.0 WEP, driver should not encrypt EAPOL Packet for WPS handshake. */
+		if (((pattrib->encrypt == _WEP40_) || (pattrib->encrypt == _WEP104_)) && (pattrib->ether_type == 0x888e))
 			pattrib->encrypt = _NO_PRIVACY_;
-	पूर्ण
+	}
 
-	चयन (pattrib->encrypt) अणु
-	हाल _WEP40_:
-	हाल _WEP104_:
+	switch (pattrib->encrypt) {
+	case _WEP40_:
+	case _WEP104_:
 		pattrib->iv_len = 4;
 		pattrib->icv_len = 4;
-		WEP_IV(pattrib->iv, psta->करोt11txpn, pattrib->key_idx);
-		अवरोध;
+		WEP_IV(pattrib->iv, psta->dot11txpn, pattrib->key_idx);
+		break;
 
-	हाल _TKIP_:
+	case _TKIP_:
 		pattrib->iv_len = 8;
 		pattrib->icv_len = 4;
 
-		अगर (psecuritypriv->busetkipkey == _FAIL) अणु
+		if (psecuritypriv->busetkipkey == _FAIL) {
 			res = _FAIL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		अगर (bmcast)
-			TKIP_IV(pattrib->iv, psta->करोt11txpn, pattrib->key_idx);
-		अन्यथा
-			TKIP_IV(pattrib->iv, psta->करोt11txpn, 0);
+		if (bmcast)
+			TKIP_IV(pattrib->iv, psta->dot11txpn, pattrib->key_idx);
+		else
+			TKIP_IV(pattrib->iv, psta->dot11txpn, 0);
 
-		स_नकल(pattrib->करोt11tkiptxmickey.skey, psta->करोt11tkiptxmickey.skey, 16);
+		memcpy(pattrib->dot11tkiptxmickey.skey, psta->dot11tkiptxmickey.skey, 16);
 
-		अवरोध;
+		break;
 
-	हाल _AES_:
+	case _AES_:
 
 		pattrib->iv_len = 8;
 		pattrib->icv_len = 8;
 
-		अगर (bmcast)
-			AES_IV(pattrib->iv, psta->करोt11txpn, pattrib->key_idx);
-		अन्यथा
-			AES_IV(pattrib->iv, psta->करोt11txpn, 0);
+		if (bmcast)
+			AES_IV(pattrib->iv, psta->dot11txpn, pattrib->key_idx);
+		else
+			AES_IV(pattrib->iv, psta->dot11txpn, 0);
 
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		pattrib->iv_len = 0;
 		pattrib->icv_len = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (pattrib->encrypt > 0)
-		स_नकल(pattrib->करोt118021x_UncstKey.skey, psta->करोt118021x_UncstKey.skey, 16);
+	if (pattrib->encrypt > 0)
+		memcpy(pattrib->dot118021x_UncstKey.skey, psta->dot118021x_UncstKey.skey, 16);
 
-	अगर (pattrib->encrypt &&
+	if (pattrib->encrypt &&
 		((padapter->securitypriv.sw_encrypt) || (!psecuritypriv->hw_decrypted)))
 		pattrib->bswenc = true;
-	अन्यथा
+	else
 		pattrib->bswenc = false;
 
-निकास:
+exit:
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
 u8 qos_acm(u8 acm_mask, u8 priority)
-अणु
-	चयन (priority) अणु
-	हाल 0:
-	हाल 3:
-		अगर (acm_mask & BIT(1))
+{
+	switch (priority) {
+	case 0:
+	case 3:
+		if (acm_mask & BIT(1))
 			priority = 1;
-		अवरोध;
-	हाल 1:
-	हाल 2:
-		अवरोध;
-	हाल 4:
-	हाल 5:
-		अगर (acm_mask & BIT(2))
+		break;
+	case 1:
+	case 2:
+		break;
+	case 4:
+	case 5:
+		if (acm_mask & BIT(2))
 			priority = 0;
-		अवरोध;
-	हाल 6:
-	हाल 7:
-		अगर (acm_mask & BIT(3))
+		break;
+	case 6:
+	case 7:
+		if (acm_mask & BIT(3))
 			priority = 5;
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	वापस priority;
-पूर्ण
+	return priority;
+}
 
-अटल व्योम set_qos(काष्ठा pkt_file *ppktfile, काष्ठा pkt_attrib *pattrib)
-अणु
-	काष्ठा ethhdr etherhdr;
-	काष्ठा iphdr ip_hdr;
+static void set_qos(struct pkt_file *ppktfile, struct pkt_attrib *pattrib)
+{
+	struct ethhdr etherhdr;
+	struct iphdr ip_hdr;
 	s32 UserPriority = 0;
 
-	_rtw_खोलो_pktfile(ppktfile->pkt, ppktfile);
-	_rtw_pktfile_पढ़ो(ppktfile, (अचिन्हित अक्षर *)&etherhdr, ETH_HLEN);
+	_rtw_open_pktfile(ppktfile->pkt, ppktfile);
+	_rtw_pktfile_read(ppktfile, (unsigned char *)&etherhdr, ETH_HLEN);
 
 	/*  get UserPriority from IP hdr */
-	अगर (pattrib->ether_type == 0x0800) अणु
-		_rtw_pktfile_पढ़ो(ppktfile, (u8 *)&ip_hdr, माप(ip_hdr));
+	if (pattrib->ether_type == 0x0800) {
+		_rtw_pktfile_read(ppktfile, (u8 *)&ip_hdr, sizeof(ip_hdr));
 		UserPriority = ip_hdr.tos >> 5;
-	पूर्ण
+	}
 	pattrib->priority = UserPriority;
 	pattrib->hdrlen = WLAN_HDR_A3_QOS_LEN;
 	pattrib->subtype = WIFI_QOS_DATA_TYPE;
-पूर्ण
+}
 
-अटल s32 update_attrib(काष्ठा adapter *padapter, काष्ठा sk_buff *pkt, काष्ठा pkt_attrib *pattrib)
-अणु
-	काष्ठा pkt_file pktfile;
-	काष्ठा sta_info *psta = शून्य;
-	काष्ठा ethhdr etherhdr;
+static s32 update_attrib(struct adapter *padapter, struct sk_buff *pkt, struct pkt_attrib *pattrib)
+{
+	struct pkt_file pktfile;
+	struct sta_info *psta = NULL;
+	struct ethhdr etherhdr;
 
-	चिन्हित पूर्णांक bmcast;
-	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा qos_priv *pqospriv = &pmlmepriv->qospriv;
-	चिन्हित पूर्णांक res = _SUCCESS;
+	signed int bmcast;
+	struct sta_priv *pstapriv = &padapter->stapriv;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct qos_priv *pqospriv = &pmlmepriv->qospriv;
+	signed int res = _SUCCESS;
 
-	_rtw_खोलो_pktfile(pkt, &pktfile);
-	_rtw_pktfile_पढ़ो(&pktfile, (u8 *)&etherhdr, ETH_HLEN);
+	_rtw_open_pktfile(pkt, &pktfile);
+	_rtw_pktfile_read(&pktfile, (u8 *)&etherhdr, ETH_HLEN);
 
 	pattrib->ether_type = ntohs(etherhdr.h_proto);
 
-	स_नकल(pattrib->dst, &etherhdr.h_dest, ETH_ALEN);
-	स_नकल(pattrib->src, &etherhdr.h_source, ETH_ALEN);
+	memcpy(pattrib->dst, &etherhdr.h_dest, ETH_ALEN);
+	memcpy(pattrib->src, &etherhdr.h_source, ETH_ALEN);
 
-	अगर ((check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == true) ||
-		(check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) == true)) अणु
-		स_नकल(pattrib->ra, pattrib->dst, ETH_ALEN);
-		स_नकल(pattrib->ta, pattrib->src, ETH_ALEN);
-	पूर्ण अन्यथा अगर (check_fwstate(pmlmepriv, WIFI_STATION_STATE)) अणु
-		स_नकल(pattrib->ra, get_bssid(pmlmepriv), ETH_ALEN);
-		स_नकल(pattrib->ta, pattrib->src, ETH_ALEN);
-	पूर्ण अन्यथा अगर (check_fwstate(pmlmepriv, WIFI_AP_STATE)) अणु
-		स_नकल(pattrib->ra, pattrib->dst, ETH_ALEN);
-		स_नकल(pattrib->ta, get_bssid(pmlmepriv), ETH_ALEN);
-	पूर्ण
+	if ((check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == true) ||
+		(check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) == true)) {
+		memcpy(pattrib->ra, pattrib->dst, ETH_ALEN);
+		memcpy(pattrib->ta, pattrib->src, ETH_ALEN);
+	} else if (check_fwstate(pmlmepriv, WIFI_STATION_STATE)) {
+		memcpy(pattrib->ra, get_bssid(pmlmepriv), ETH_ALEN);
+		memcpy(pattrib->ta, pattrib->src, ETH_ALEN);
+	} else if (check_fwstate(pmlmepriv, WIFI_AP_STATE)) {
+		memcpy(pattrib->ra, pattrib->dst, ETH_ALEN);
+		memcpy(pattrib->ta, get_bssid(pmlmepriv), ETH_ALEN);
+	}
 
 	pattrib->pktlen = pktfile.pkt_len;
 
-	अगर (ETH_P_IP == pattrib->ether_type) अणु
-		/*  The following is क्रम DHCP and ARP packet, we use cck1M to tx these packets and let LPS awake some समय */
+	if (ETH_P_IP == pattrib->ether_type) {
+		/*  The following is for DHCP and ARP packet, we use cck1M to tx these packets and let LPS awake some time */
 		/*  to prevent DHCP protocol fail */
 
-		u8 पंचांगp[24];
+		u8 tmp[24];
 
-		_rtw_pktfile_पढ़ो(&pktfile, &पंचांगp[0], 24);
+		_rtw_pktfile_read(&pktfile, &tmp[0], 24);
 
 		pattrib->dhcp_pkt = 0;
-		अगर (pktfile.pkt_len > 282) अणु/* MINIMUM_DHCP_PACKET_SIZE) अणु */
-			अगर (ETH_P_IP == pattrib->ether_type) अणु/*  IP header */
-				अगर (((पंचांगp[21] == 68) && (पंचांगp[23] == 67)) ||
-					((पंचांगp[21] == 67) && (पंचांगp[23] == 68))) अणु
+		if (pktfile.pkt_len > 282) {/* MINIMUM_DHCP_PACKET_SIZE) { */
+			if (ETH_P_IP == pattrib->ether_type) {/*  IP header */
+				if (((tmp[21] == 68) && (tmp[23] == 67)) ||
+					((tmp[21] == 67) && (tmp[23] == 68))) {
 					/*  68 : UDP BOOTP client */
 					/*  67 : UDP BOOTP server */
 					pattrib->dhcp_pkt = 1;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
-		/* क्रम parsing ICMP pakcets */
-		अणु
-			काष्ठा iphdr *piphdr = (काष्ठा iphdr *)पंचांगp;
+		/* for parsing ICMP pakcets */
+		{
+			struct iphdr *piphdr = (struct iphdr *)tmp;
 
 			pattrib->icmp_pkt = 0;
-			अगर (piphdr->protocol == 0x1) /*  protocol type in ip header 0x1 is ICMP */
+			if (piphdr->protocol == 0x1) /*  protocol type in ip header 0x1 is ICMP */
 				pattrib->icmp_pkt = 1;
-		पूर्ण
-	पूर्ण अन्यथा अगर (0x888e == pattrib->ether_type) अणु
+		}
+	} else if (0x888e == pattrib->ether_type) {
 		netdev_dbg(padapter->pnetdev, "send eapol packet\n");
-	पूर्ण
+	}
 
-	अगर ((pattrib->ether_type == 0x888e) || (pattrib->dhcp_pkt == 1))
+	if ((pattrib->ether_type == 0x888e) || (pattrib->dhcp_pkt == 1))
 		rtw_set_scan_deny(padapter, 3000);
 
 	/*  If EAPOL , ARP , OR DHCP packet, driver must be in active mode. */
-	अगर (pattrib->icmp_pkt == 1)
+	if (pattrib->icmp_pkt == 1)
 		rtw_lps_ctrl_wk_cmd(padapter, LPS_CTRL_LEAVE, 1);
-	अन्यथा अगर (pattrib->dhcp_pkt == 1)
+	else if (pattrib->dhcp_pkt == 1)
 		rtw_lps_ctrl_wk_cmd(padapter, LPS_CTRL_SPECIAL_PACKET, 1);
 
 	bmcast = IS_MCAST(pattrib->ra);
 
 	/*  get sta_info */
-	अगर (bmcast) अणु
+	if (bmcast) {
 		psta = rtw_get_bcmc_stainfo(padapter);
-	पूर्ण अन्यथा अणु
+	} else {
 		psta = rtw_get_stainfo(pstapriv, pattrib->ra);
-		अगर (!psta)	अणु /*  अगर we cannot get psta => drop the pkt */
+		if (!psta)	{ /*  if we cannot get psta => drop the pkt */
 			res = _FAIL;
-			जाओ निकास;
-		पूर्ण अन्यथा अगर ((check_fwstate(pmlmepriv, WIFI_AP_STATE) == true) && (!(psta->state & _FW_LINKED))) अणु
+			goto exit;
+		} else if ((check_fwstate(pmlmepriv, WIFI_AP_STATE) == true) && (!(psta->state & _FW_LINKED))) {
 			res = _FAIL;
-			जाओ निकास;
-		पूर्ण
-	पूर्ण
+			goto exit;
+		}
+	}
 
-	अगर (!psta) अणु
-		/*  अगर we cannot get psta => drop the pkt */
+	if (!psta) {
+		/*  if we cannot get psta => drop the pkt */
 		res = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (!(psta->state & _FW_LINKED))
-		वापस _FAIL;
+	if (!(psta->state & _FW_LINKED))
+		return _FAIL;
 
 	/* TODO:_lock */
-	अगर (update_attrib_sec_info(padapter, pattrib, psta) == _FAIL) अणु
+	if (update_attrib_sec_info(padapter, pattrib, psta) == _FAIL) {
 		res = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	update_attrib_phy_info(padapter, pattrib, psta);
 
@@ -735,290 +734,290 @@ u8 qos_acm(u8 acm_mask, u8 priority)
 	pattrib->subtype = WIFI_DATA_TYPE;
 	pattrib->priority = 0;
 
-	अगर (check_fwstate(pmlmepriv, WIFI_AP_STATE|WIFI_ADHOC_STATE|WIFI_ADHOC_MASTER_STATE)) अणु
-		अगर (pattrib->qos_en)
+	if (check_fwstate(pmlmepriv, WIFI_AP_STATE|WIFI_ADHOC_STATE|WIFI_ADHOC_MASTER_STATE)) {
+		if (pattrib->qos_en)
 			set_qos(&pktfile, pattrib);
-	पूर्ण अन्यथा अणु
-		अगर (pqospriv->qos_option) अणु
+	} else {
+		if (pqospriv->qos_option) {
 			set_qos(&pktfile, pattrib);
 
-			अगर (pmlmepriv->acm_mask != 0)
+			if (pmlmepriv->acm_mask != 0)
 				pattrib->priority = qos_acm(pmlmepriv->acm_mask, pattrib->priority);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* pattrib->priority = 5; क्रमce to used VI queue, क्रम testing */
+	/* pattrib->priority = 5; force to used VI queue, for testing */
 
-निकास:
-	वापस res;
-पूर्ण
+exit:
+	return res;
+}
 
-अटल s32 xmitframe_addmic(काष्ठा adapter *padapter, काष्ठा xmit_frame *pxmitframe)
-अणु
-	चिन्हित पूर्णांक			curfragnum, length;
+static s32 xmitframe_addmic(struct adapter *padapter, struct xmit_frame *pxmitframe)
+{
+	signed int			curfragnum, length;
 	u8 *pframe, *payload, mic[8];
-	काष्ठा mic_data micdata;
-	काष्ठा pkt_attrib *pattrib = &pxmitframe->attrib;
-	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
-	u8 priority[4] = अणु0x0, 0x0, 0x0, 0x0पूर्ण;
+	struct mic_data micdata;
+	struct pkt_attrib *pattrib = &pxmitframe->attrib;
+	struct security_priv *psecuritypriv = &padapter->securitypriv;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	u8 priority[4] = {0x0, 0x0, 0x0, 0x0};
 	u8 hw_hdr_offset = 0;
-	चिन्हित पूर्णांक bmcst = IS_MCAST(pattrib->ra);
+	signed int bmcst = IS_MCAST(pattrib->ra);
 
 	hw_hdr_offset = TXDESC_OFFSET;
 
-	अगर (pattrib->encrypt == _TKIP_) अणु
+	if (pattrib->encrypt == _TKIP_) {
 		/* encode mic code */
-		अणु
-			u8 null_key[16] = अणु0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0पूर्ण;
+		{
+			u8 null_key[16] = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
 
 			pframe = pxmitframe->buf_addr + hw_hdr_offset;
 
-			अगर (bmcst) अणु
-				अगर (!स_भेद(psecuritypriv->करोt118021XGrptxmickey[psecuritypriv->करोt118021XGrpKeyid].skey, null_key, 16))
-					वापस _FAIL;
+			if (bmcst) {
+				if (!memcmp(psecuritypriv->dot118021XGrptxmickey[psecuritypriv->dot118021XGrpKeyid].skey, null_key, 16))
+					return _FAIL;
 				/* start to calculate the mic code */
-				rtw_secmicsetkey(&micdata, psecuritypriv->करोt118021XGrptxmickey[psecuritypriv->करोt118021XGrpKeyid].skey);
-			पूर्ण अन्यथा अणु
-				अगर (!स_भेद(&pattrib->करोt11tkiptxmickey.skey[0], null_key, 16))
-					वापस _FAIL;
+				rtw_secmicsetkey(&micdata, psecuritypriv->dot118021XGrptxmickey[psecuritypriv->dot118021XGrpKeyid].skey);
+			} else {
+				if (!memcmp(&pattrib->dot11tkiptxmickey.skey[0], null_key, 16))
+					return _FAIL;
 				/* start to calculate the mic code */
-				rtw_secmicsetkey(&micdata, &pattrib->करोt11tkiptxmickey.skey[0]);
-			पूर्ण
+				rtw_secmicsetkey(&micdata, &pattrib->dot11tkiptxmickey.skey[0]);
+			}
 
-			अगर (pframe[1]&1) अणु   /* ToDS == 1 */
+			if (pframe[1]&1) {   /* ToDS == 1 */
 				rtw_secmicappend(&micdata, &pframe[16], 6);  /* DA */
-				अगर (pframe[1]&2)  /* From Ds == 1 */
+				if (pframe[1]&2)  /* From Ds == 1 */
 					rtw_secmicappend(&micdata, &pframe[24], 6);
-				अन्यथा
+				else
 					rtw_secmicappend(&micdata, &pframe[10], 6);
-			पूर्ण अन्यथा अणु	/* ToDS == 0 */
+			} else {	/* ToDS == 0 */
 				rtw_secmicappend(&micdata, &pframe[4], 6);   /* DA */
-				अगर (pframe[1]&2)  /* From Ds == 1 */
+				if (pframe[1]&2)  /* From Ds == 1 */
 					rtw_secmicappend(&micdata, &pframe[16], 6);
-				अन्यथा
+				else
 					rtw_secmicappend(&micdata, &pframe[10], 6);
-			पूर्ण
+			}
 
-			अगर (pattrib->qos_en)
+			if (pattrib->qos_en)
 				priority[0] = (u8)pxmitframe->attrib.priority;
 
 			rtw_secmicappend(&micdata, &priority[0], 4);
 
 			payload = pframe;
 
-			क्रम (curfragnum = 0; curfragnum < pattrib->nr_frags; curfragnum++) अणु
+			for (curfragnum = 0; curfragnum < pattrib->nr_frags; curfragnum++) {
 				payload = (u8 *)round_up((SIZE_PTR)(payload), 4);
 				payload = payload+pattrib->hdrlen+pattrib->iv_len;
 
-				अगर ((curfragnum+1) == pattrib->nr_frags) अणु
+				if ((curfragnum+1) == pattrib->nr_frags) {
 					length = pattrib->last_txcmdsz-pattrib->hdrlen-pattrib->iv_len-((pattrib->bswenc) ? pattrib->icv_len : 0);
 					rtw_secmicappend(&micdata, payload, length);
 					payload = payload+length;
-				पूर्ण अन्यथा अणु
+				} else {
 					length = pxmitpriv->frag_len-pattrib->hdrlen-pattrib->iv_len-((pattrib->bswenc) ? pattrib->icv_len : 0);
 					rtw_secmicappend(&micdata, payload, length);
 					payload = payload+length+pattrib->icv_len;
-				पूर्ण
-			पूर्ण
-			rtw_secgeपंचांगic(&micdata, &mic[0]);
+				}
+			}
+			rtw_secgetmic(&micdata, &mic[0]);
 			/* add mic code  and add the mic code length in last_txcmdsz */
 
-			स_नकल(payload, &mic[0], 8);
+			memcpy(payload, &mic[0], 8);
 			pattrib->last_txcmdsz += 8;
-			पूर्ण
-	पूर्ण
-	वापस _SUCCESS;
-पूर्ण
+			}
+	}
+	return _SUCCESS;
+}
 
-अटल s32 xmitframe_swencrypt(काष्ठा adapter *padapter, काष्ठा xmit_frame *pxmitframe)
-अणु
-	काष्ठा	pkt_attrib	 *pattrib = &pxmitframe->attrib;
+static s32 xmitframe_swencrypt(struct adapter *padapter, struct xmit_frame *pxmitframe)
+{
+	struct	pkt_attrib	 *pattrib = &pxmitframe->attrib;
 
-	अगर (pattrib->bswenc) अणु
-		चयन (pattrib->encrypt) अणु
-		हाल _WEP40_:
-		हाल _WEP104_:
+	if (pattrib->bswenc) {
+		switch (pattrib->encrypt) {
+		case _WEP40_:
+		case _WEP104_:
 			rtw_wep_encrypt(padapter, (u8 *)pxmitframe);
-			अवरोध;
-		हाल _TKIP_:
+			break;
+		case _TKIP_:
 			rtw_tkip_encrypt(padapter, (u8 *)pxmitframe);
-			अवरोध;
-		हाल _AES_:
+			break;
+		case _AES_:
 			rtw_aes_encrypt(padapter, (u8 *)pxmitframe);
-			अवरोध;
-		शेष:
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		default:
+				break;
+		}
+	}
 
-	वापस _SUCCESS;
-पूर्ण
+	return _SUCCESS;
+}
 
-s32 rtw_make_wlanhdr(काष्ठा adapter *padapter, u8 *hdr, काष्ठा pkt_attrib *pattrib)
-अणु
+s32 rtw_make_wlanhdr(struct adapter *padapter, u8 *hdr, struct pkt_attrib *pattrib)
+{
 	u16 *qc;
 
-	काष्ठा ieee80211_hdr *pwlanhdr = (काष्ठा ieee80211_hdr *)hdr;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा qos_priv *pqospriv = &pmlmepriv->qospriv;
+	struct ieee80211_hdr *pwlanhdr = (struct ieee80211_hdr *)hdr;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct qos_priv *pqospriv = &pmlmepriv->qospriv;
 	u8 qos_option = false;
-	चिन्हित पूर्णांक res = _SUCCESS;
+	signed int res = _SUCCESS;
 	__le16 *fctrl = &pwlanhdr->frame_control;
 
-	स_रखो(hdr, 0, WLANHDR_OFFSET);
+	memset(hdr, 0, WLANHDR_OFFSET);
 
 	SetFrameSubType(fctrl, pattrib->subtype);
 
-	अगर (pattrib->subtype & WIFI_DATA_TYPE) अणु
-		अगर (check_fwstate(pmlmepriv,  WIFI_STATION_STATE) == true) अणु
+	if (pattrib->subtype & WIFI_DATA_TYPE) {
+		if (check_fwstate(pmlmepriv,  WIFI_STATION_STATE) == true) {
 			/* to_ds = 1, fr_ds = 0; */
 
-			अणु
+			{
 				/*  1.Data transfer to AP */
 				/*  2.Arp pkt will relayed by AP */
 				SetToDs(fctrl);
-				स_नकल(pwlanhdr->addr1, get_bssid(pmlmepriv), ETH_ALEN);
-				स_नकल(pwlanhdr->addr2, pattrib->src, ETH_ALEN);
-				स_नकल(pwlanhdr->addr3, pattrib->dst, ETH_ALEN);
-			पूर्ण
+				memcpy(pwlanhdr->addr1, get_bssid(pmlmepriv), ETH_ALEN);
+				memcpy(pwlanhdr->addr2, pattrib->src, ETH_ALEN);
+				memcpy(pwlanhdr->addr3, pattrib->dst, ETH_ALEN);
+			}
 
-			अगर (pqospriv->qos_option)
+			if (pqospriv->qos_option)
 				qos_option = true;
-		पूर्ण अन्यथा अगर (check_fwstate(pmlmepriv,  WIFI_AP_STATE) == true) अणु
+		} else if (check_fwstate(pmlmepriv,  WIFI_AP_STATE) == true) {
 			/* to_ds = 0, fr_ds = 1; */
 			SetFrDs(fctrl);
-			स_नकल(pwlanhdr->addr1, pattrib->dst, ETH_ALEN);
-			स_नकल(pwlanhdr->addr2, get_bssid(pmlmepriv), ETH_ALEN);
-			स_नकल(pwlanhdr->addr3, pattrib->src, ETH_ALEN);
+			memcpy(pwlanhdr->addr1, pattrib->dst, ETH_ALEN);
+			memcpy(pwlanhdr->addr2, get_bssid(pmlmepriv), ETH_ALEN);
+			memcpy(pwlanhdr->addr3, pattrib->src, ETH_ALEN);
 
-			अगर (pattrib->qos_en)
+			if (pattrib->qos_en)
 				qos_option = true;
-		पूर्ण अन्यथा अगर ((check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == true) ||
-		(check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) == true)) अणु
-			स_नकल(pwlanhdr->addr1, pattrib->dst, ETH_ALEN);
-			स_नकल(pwlanhdr->addr2, pattrib->src, ETH_ALEN);
-			स_नकल(pwlanhdr->addr3, get_bssid(pmlmepriv), ETH_ALEN);
+		} else if ((check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == true) ||
+		(check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) == true)) {
+			memcpy(pwlanhdr->addr1, pattrib->dst, ETH_ALEN);
+			memcpy(pwlanhdr->addr2, pattrib->src, ETH_ALEN);
+			memcpy(pwlanhdr->addr3, get_bssid(pmlmepriv), ETH_ALEN);
 
-			अगर (pattrib->qos_en)
+			if (pattrib->qos_en)
 				qos_option = true;
-		पूर्ण अन्यथा अणु
+		} else {
 			res = _FAIL;
-			जाओ निकास;
-		पूर्ण
+			goto exit;
+		}
 
-		अगर (pattrib->mdata)
+		if (pattrib->mdata)
 			SetMData(fctrl);
 
-		अगर (pattrib->encrypt)
+		if (pattrib->encrypt)
 			SetPrivacy(fctrl);
 
-		अगर (qos_option) अणु
-			qc = (अचिन्हित लघु *)(hdr + pattrib->hdrlen - 2);
+		if (qos_option) {
+			qc = (unsigned short *)(hdr + pattrib->hdrlen - 2);
 
-			अगर (pattrib->priority)
+			if (pattrib->priority)
 				SetPriority(qc, pattrib->priority);
 
 			SetEOSP(qc, pattrib->eosp);
 
 			SetAckpolicy(qc, pattrib->ack_policy);
-		पूर्ण
+		}
 
 		/* TODO: fill HT Control Field */
 
 		/* Update Seq Num will be handled by f/w */
-		अणु
-			काष्ठा sta_info *psta;
+		{
+			struct sta_info *psta;
 
 			psta = rtw_get_stainfo(&padapter->stapriv, pattrib->ra);
-			अगर (pattrib->psta != psta)
-				वापस _FAIL;
+			if (pattrib->psta != psta)
+				return _FAIL;
 
-			अगर (!psta)
-				वापस _FAIL;
+			if (!psta)
+				return _FAIL;
 
-			अगर (!(psta->state & _FW_LINKED))
-				वापस _FAIL;
+			if (!(psta->state & _FW_LINKED))
+				return _FAIL;
 
-			अगर (psta) अणु
+			if (psta) {
 				psta->sta_xmitpriv.txseq_tid[pattrib->priority]++;
 				psta->sta_xmitpriv.txseq_tid[pattrib->priority] &= 0xFFF;
 				pattrib->seqnum = psta->sta_xmitpriv.txseq_tid[pattrib->priority];
 
 				SetSeqNum(hdr, pattrib->seqnum);
 
-				/* check अगर enable ampdu */
-				अगर (pattrib->ht_en && psta->htpriv.ampdu_enable)
-					अगर (psta->htpriv.agg_enable_biपंचांगap & BIT(pattrib->priority))
+				/* check if enable ampdu */
+				if (pattrib->ht_en && psta->htpriv.ampdu_enable)
+					if (psta->htpriv.agg_enable_bitmap & BIT(pattrib->priority))
 						pattrib->ampdu_en = true;
 
-				/* re-check अगर enable ampdu by BA_starting_seqctrl */
-				अगर (pattrib->ampdu_en == true) अणु
+				/* re-check if enable ampdu by BA_starting_seqctrl */
+				if (pattrib->ampdu_en == true) {
 					u16 tx_seq;
 
 					tx_seq = psta->BA_starting_seqctrl[pattrib->priority & 0x0f];
 
 					/* check BA_starting_seqctrl */
-					अगर (SN_LESS(pattrib->seqnum, tx_seq)) अणु
+					if (SN_LESS(pattrib->seqnum, tx_seq)) {
 						pattrib->ampdu_en = false;/* AGG BK */
-					पूर्ण अन्यथा अगर (SN_EQUAL(pattrib->seqnum, tx_seq)) अणु
+					} else if (SN_EQUAL(pattrib->seqnum, tx_seq)) {
 						psta->BA_starting_seqctrl[pattrib->priority & 0x0f] = (tx_seq+1)&0xfff;
 
 						pattrib->ampdu_en = true;/* AGG EN */
-					पूर्ण अन्यथा अणु
+					} else {
 						psta->BA_starting_seqctrl[pattrib->priority & 0x0f] = (pattrib->seqnum+1)&0xfff;
 						pattrib->ampdu_en = true;/* AGG EN */
-					पूर्ण
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-	पूर्ण
+					}
+				}
+			}
+		}
+	} else {
+	}
 
-निकास:
-	वापस res;
-पूर्ण
+exit:
+	return res;
+}
 
-s32 rtw_txframes_pending(काष्ठा adapter *padapter)
-अणु
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+s32 rtw_txframes_pending(struct adapter *padapter)
+{
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
 
-	वापस ((!list_empty(&pxmitpriv->be_pending.queue)) ||
+	return ((!list_empty(&pxmitpriv->be_pending.queue)) ||
 			 (!list_empty(&pxmitpriv->bk_pending.queue)) ||
 			 (!list_empty(&pxmitpriv->vi_pending.queue)) ||
 			 (!list_empty(&pxmitpriv->vo_pending.queue)));
-पूर्ण
+}
 
 /*
  * Calculate wlan 802.11 packet MAX size from pkt_attrib
- * This function करोesn't consider fragment हाल
+ * This function doesn't consider fragment case
  */
-u32 rtw_calculate_wlan_pkt_size_by_attribue(काष्ठा pkt_attrib *pattrib)
-अणु
+u32 rtw_calculate_wlan_pkt_size_by_attribue(struct pkt_attrib *pattrib)
+{
 	u32 len = 0;
 
 	len = pattrib->hdrlen + pattrib->iv_len; /*  WLAN Header and IV */
-	len += SNAP_SIZE + माप(u16); /*  LLC */
+	len += SNAP_SIZE + sizeof(u16); /*  LLC */
 	len += pattrib->pktlen;
-	अगर (pattrib->encrypt == _TKIP_)
+	if (pattrib->encrypt == _TKIP_)
 		len += 8; /*  MIC */
 	len += ((pattrib->bswenc) ? pattrib->icv_len : 0); /*  ICV */
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
 /*
- * This sub-routine will perक्रमm all the following:
- * 1. हटाओ 802.3 header.
+ * This sub-routine will perform all the following:
+ * 1. remove 802.3 header.
  * 2. create wlan_header, based on the info in pxmitframe
  * 3. append sta's iv/ext-iv
  * 4. append LLC
  * 5. move frag chunk from pframe to pxmitframe->mem
- * 6. apply sw-encrypt, अगर necessary.
+ * 6. apply sw-encrypt, if necessary.
  */
-s32 rtw_xmitframe_coalesce(काष्ठा adapter *padapter, काष्ठा sk_buff *pkt, काष्ठा xmit_frame *pxmitframe)
-अणु
-	काष्ठा pkt_file pktfile;
+s32 rtw_xmitframe_coalesce(struct adapter *padapter, struct sk_buff *pkt, struct xmit_frame *pxmitframe)
+{
+	struct pkt_file pktfile;
 
 	s32 frg_inx, frg_len, mpdu_len, llc_sz, mem_sz;
 
@@ -1027,35 +1026,35 @@ s32 rtw_xmitframe_coalesce(काष्ठा adapter *padapter, काष्ठ
 	u8 *pframe, *mem_start;
 	u8 hw_hdr_offset;
 
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
 
-	काष्ठा pkt_attrib	*pattrib = &pxmitframe->attrib;
+	struct pkt_attrib	*pattrib = &pxmitframe->attrib;
 
 	u8 *pbuf_start;
 
 	s32 bmcst = IS_MCAST(pattrib->ra);
 	s32 res = _SUCCESS;
 
-	अगर (!pxmitframe->buf_addr)
-		वापस _FAIL;
+	if (!pxmitframe->buf_addr)
+		return _FAIL;
 
 	pbuf_start = pxmitframe->buf_addr;
 
 	hw_hdr_offset = TXDESC_OFFSET;
 	mem_start = pbuf_start +	hw_hdr_offset;
 
-	अगर (rtw_make_wlanhdr(padapter, mem_start, pattrib) == _FAIL) अणु
+	if (rtw_make_wlanhdr(padapter, mem_start, pattrib) == _FAIL) {
 		res = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	_rtw_खोलो_pktfile(pkt, &pktfile);
-	_rtw_pktfile_पढ़ो(&pktfile, शून्य, pattrib->pkt_hdrlen);
+	_rtw_open_pktfile(pkt, &pktfile);
+	_rtw_pktfile_read(&pktfile, NULL, pattrib->pkt_hdrlen);
 
 	frg_inx = 0;
 	frg_len = pxmitpriv->frag_len - 4;/* 2346-4 = 2342 */
 
-	जबतक (1) अणु
+	while (1) {
 		llc_sz = 0;
 
 		mpdu_len = frg_len;
@@ -1067,41 +1066,41 @@ s32 rtw_xmitframe_coalesce(काष्ठा adapter *padapter, काष्ठ
 		pframe += pattrib->hdrlen;
 		mpdu_len -= pattrib->hdrlen;
 
-		/* adding icv, अगर necessary... */
-		अगर (pattrib->iv_len) अणु
-			स_नकल(pframe, pattrib->iv, pattrib->iv_len);
+		/* adding icv, if necessary... */
+		if (pattrib->iv_len) {
+			memcpy(pframe, pattrib->iv, pattrib->iv_len);
 
 			pframe += pattrib->iv_len;
 
 			mpdu_len -= pattrib->iv_len;
-		पूर्ण
+		}
 
-		अगर (frg_inx == 0) अणु
+		if (frg_inx == 0) {
 			llc_sz = rtw_put_snap(pframe, pattrib->ether_type);
 			pframe += llc_sz;
 			mpdu_len -= llc_sz;
-		पूर्ण
+		}
 
-		अगर ((pattrib->icv_len > 0) && (pattrib->bswenc))
+		if ((pattrib->icv_len > 0) && (pattrib->bswenc))
 			mpdu_len -= pattrib->icv_len;
 
-		अगर (bmcst) अणु
-			/*  करोn't करो fragment to broadcast/multicast packets */
-			mem_sz = _rtw_pktfile_पढ़ो(&pktfile, pframe, pattrib->pktlen);
-		पूर्ण अन्यथा अणु
-			mem_sz = _rtw_pktfile_पढ़ो(&pktfile, pframe, mpdu_len);
-		पूर्ण
+		if (bmcst) {
+			/*  don't do fragment to broadcast/multicast packets */
+			mem_sz = _rtw_pktfile_read(&pktfile, pframe, pattrib->pktlen);
+		} else {
+			mem_sz = _rtw_pktfile_read(&pktfile, pframe, mpdu_len);
+		}
 
 		pframe += mem_sz;
 
-		अगर ((pattrib->icv_len > 0) && (pattrib->bswenc)) अणु
-			स_नकल(pframe, pattrib->icv, pattrib->icv_len);
+		if ((pattrib->icv_len > 0) && (pattrib->bswenc)) {
+			memcpy(pframe, pattrib->icv, pattrib->icv_len);
 			pframe += pattrib->icv_len;
-		पूर्ण
+		}
 
 		frg_inx++;
 
-		अगर (bmcst || (rtw_enकरोfpktfile(&pktfile) == true)) अणु
+		if (bmcst || (rtw_endofpktfile(&pktfile) == true)) {
 			pattrib->nr_frags = frg_inx;
 
 			pattrib->last_txcmdsz = pattrib->hdrlen + pattrib->iv_len + ((pattrib->nr_frags == 1) ? llc_sz:0) +
@@ -1109,140 +1108,140 @@ s32 rtw_xmitframe_coalesce(काष्ठा adapter *padapter, काष्ठ
 
 			ClearMFrag(mem_start);
 
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		addr = (SIZE_PTR)(pframe);
 
-		mem_start = (अचिन्हित अक्षर *)round_up(addr, 4) + hw_hdr_offset;
-		स_नकल(mem_start, pbuf_start + hw_hdr_offset, pattrib->hdrlen);
-	पूर्ण
+		mem_start = (unsigned char *)round_up(addr, 4) + hw_hdr_offset;
+		memcpy(mem_start, pbuf_start + hw_hdr_offset, pattrib->hdrlen);
+	}
 
-	अगर (xmitframe_addmic(padapter, pxmitframe) == _FAIL) अणु
+	if (xmitframe_addmic(padapter, pxmitframe) == _FAIL) {
 		res = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	xmitframe_swencrypt(padapter, pxmitframe);
 
-	अगर (bmcst == false)
+	if (bmcst == false)
 		update_attrib_vcs_info(padapter, pxmitframe);
-	अन्यथा
+	else
 		pattrib->vcs_mode = NONE_VCS;
 
-निकास:
-	वापस res;
-पूर्ण
+exit:
+	return res;
+}
 
 /* broadcast or multicast management pkt use BIP, unicast management pkt use CCMP encryption */
-s32 rtw_mgmt_xmitframe_coalesce(काष्ठा adapter *padapter, काष्ठा sk_buff *pkt, काष्ठा xmit_frame *pxmitframe)
-अणु
-	u8 *pframe, *mem_start = शून्य, *पंचांगp_buf = शून्य;
+s32 rtw_mgmt_xmitframe_coalesce(struct adapter *padapter, struct sk_buff *pkt, struct xmit_frame *pxmitframe)
+{
+	u8 *pframe, *mem_start = NULL, *tmp_buf = NULL;
 	u8 subtype;
-	काष्ठा sta_info *psta = शून्य;
-	काष्ठा pkt_attrib *pattrib = &pxmitframe->attrib;
+	struct sta_info *psta = NULL;
+	struct pkt_attrib *pattrib = &pxmitframe->attrib;
 	s32 bmcst = IS_MCAST(pattrib->ra);
-	u8 *BIP_AAD = शून्य;
-	u8 *MGMT_body = शून्य;
+	u8 *BIP_AAD = NULL;
+	u8 *MGMT_body = NULL;
 
-	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	काष्ठा ieee80211_hdr	*pwlanhdr;
+	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	struct ieee80211_hdr	*pwlanhdr;
 	u8 MME[_MME_IE_LENGTH_];
 	u32 ori_len;
 
 	mem_start = pframe = (u8 *)(pxmitframe->buf_addr) + TXDESC_OFFSET;
-	pwlanhdr = (काष्ठा ieee80211_hdr *)pframe;
+	pwlanhdr = (struct ieee80211_hdr *)pframe;
 
 	ori_len = BIP_AAD_SIZE+pattrib->pktlen;
-	पंचांगp_buf = BIP_AAD = rtw_zदो_स्मृति(ori_len);
+	tmp_buf = BIP_AAD = rtw_zmalloc(ori_len);
 	subtype = GetFrameSubType(pframe); /* bit(7)~bit(2) */
 
-	अगर (!BIP_AAD)
-		वापस _FAIL;
+	if (!BIP_AAD)
+		return _FAIL;
 
 	spin_lock_bh(&padapter->security_key_mutex);
 
 	/* only support station mode */
-	अगर (!check_fwstate(pmlmepriv, WIFI_STATION_STATE) || !check_fwstate(pmlmepriv, _FW_LINKED))
-		जाओ xmitframe_coalesce_success;
+	if (!check_fwstate(pmlmepriv, WIFI_STATION_STATE) || !check_fwstate(pmlmepriv, _FW_LINKED))
+		goto xmitframe_coalesce_success;
 
 	/* IGTK key is not install, it may not support 802.11w */
-	अगर (!padapter->securitypriv.binstallBIPkey)
-		जाओ xmitframe_coalesce_success;
+	if (!padapter->securitypriv.binstallBIPkey)
+		goto xmitframe_coalesce_success;
 
-	/* station mode करोesn't need TX BIP, just पढ़ोy the code */
-	अगर (bmcst) अणु
-		पूर्णांक frame_body_len;
+	/* station mode doesn't need TX BIP, just ready the code */
+	if (bmcst) {
+		int frame_body_len;
 		u8 mic[16];
 
-		स_रखो(MME, 0, 18);
+		memset(MME, 0, 18);
 
-		/* other types करोesn't need the BIP */
-		अगर (GetFrameSubType(pframe) != WIFI_DEAUTH && GetFrameSubType(pframe) != WIFI_DISASSOC)
-			जाओ xmitframe_coalesce_fail;
+		/* other types doesn't need the BIP */
+		if (GetFrameSubType(pframe) != WIFI_DEAUTH && GetFrameSubType(pframe) != WIFI_DISASSOC)
+			goto xmitframe_coalesce_fail;
 
-		MGMT_body = pframe + माप(काष्ठा ieee80211_hdr_3addr);
+		MGMT_body = pframe + sizeof(struct ieee80211_hdr_3addr);
 		pframe += pattrib->pktlen;
 
 		/* octent 0 and 1 is key index , BIP keyid is 4 or 5, LSB only need octent 0 */
-		MME[0] = padapter->securitypriv.करोt11wBIPKeyid;
+		MME[0] = padapter->securitypriv.dot11wBIPKeyid;
 		/* copy packet number */
-		स_नकल(&MME[2], &pmlmeext->mgnt_80211w_IPN, 6);
+		memcpy(&MME[2], &pmlmeext->mgnt_80211w_IPN, 6);
 		/* increase the packet number */
 		pmlmeext->mgnt_80211w_IPN++;
 
-		/* add MME IE with MIC all zero, MME string करोesn't include element id and length */
+		/* add MME IE with MIC all zero, MME string doesn't include element id and length */
 		pframe = rtw_set_ie(pframe, WLAN_EID_MMIE, 16,
 				    MME, &pattrib->pktlen);
 		pattrib->last_txcmdsz = pattrib->pktlen;
 		/*  total frame length - header length */
-		frame_body_len = pattrib->pktlen - माप(काष्ठा ieee80211_hdr_3addr);
+		frame_body_len = pattrib->pktlen - sizeof(struct ieee80211_hdr_3addr);
 
 		/* conscruct AAD, copy frame control field */
-		स_नकल(BIP_AAD, &pwlanhdr->frame_control, 2);
+		memcpy(BIP_AAD, &pwlanhdr->frame_control, 2);
 		ClearRetry(BIP_AAD);
 		ClearPwrMgt(BIP_AAD);
 		ClearMData(BIP_AAD);
 		/* conscruct AAD, copy address 1 to address 3 */
-		स_नकल(BIP_AAD+2, pwlanhdr->addr1, 18);
+		memcpy(BIP_AAD+2, pwlanhdr->addr1, 18);
 		/* copy management fram body */
-		स_नकल(BIP_AAD+BIP_AAD_SIZE, MGMT_body, frame_body_len);
+		memcpy(BIP_AAD+BIP_AAD_SIZE, MGMT_body, frame_body_len);
 		/* calculate mic */
-		अगर (omac1_aes_128(padapter->securitypriv.करोt11wBIPKey[padapter->securitypriv.करोt11wBIPKeyid].skey
+		if (omac1_aes_128(padapter->securitypriv.dot11wBIPKey[padapter->securitypriv.dot11wBIPKeyid].skey
 			, BIP_AAD, BIP_AAD_SIZE+frame_body_len, mic))
-			जाओ xmitframe_coalesce_fail;
+			goto xmitframe_coalesce_fail;
 
 		/* copy right BIP mic value, total is 128bits, we use the 0~63 bits */
-		स_नकल(pframe-8, mic, 8);
-	पूर्ण अन्यथा अणु /* unicast mgmt frame TX */
+		memcpy(pframe-8, mic, 8);
+	} else { /* unicast mgmt frame TX */
 		/* start to encrypt mgmt frame */
-		अगर (subtype == WIFI_DEAUTH || subtype == WIFI_DISASSOC ||
-			subtype == WIFI_REASSOCREQ || subtype == WIFI_ACTION) अणु
-			अगर (pattrib->psta)
+		if (subtype == WIFI_DEAUTH || subtype == WIFI_DISASSOC ||
+			subtype == WIFI_REASSOCREQ || subtype == WIFI_ACTION) {
+			if (pattrib->psta)
 				psta = pattrib->psta;
-			अन्यथा
+			else
 				psta = rtw_get_stainfo(&padapter->stapriv, pattrib->ra);
 
-			अगर (!psta)
-				जाओ xmitframe_coalesce_fail;
+			if (!psta)
+				goto xmitframe_coalesce_fail;
 
-			अगर (!(psta->state & _FW_LINKED) || !pxmitframe->buf_addr)
-				जाओ xmitframe_coalesce_fail;
+			if (!(psta->state & _FW_LINKED) || !pxmitframe->buf_addr)
+				goto xmitframe_coalesce_fail;
 
 			/* according 802.11-2012 standard, these five types are not robust types */
-			अगर (subtype == WIFI_ACTION &&
+			if (subtype == WIFI_ACTION &&
 			(pframe[WLAN_HDR_A3_LEN] == RTW_WLAN_CATEGORY_PUBLIC ||
 			pframe[WLAN_HDR_A3_LEN] == RTW_WLAN_CATEGORY_HT ||
 			pframe[WLAN_HDR_A3_LEN] == RTW_WLAN_CATEGORY_UNPROTECTED_WNM ||
 			pframe[WLAN_HDR_A3_LEN] == RTW_WLAN_CATEGORY_SELF_PROTECTED  ||
 			pframe[WLAN_HDR_A3_LEN] == RTW_WLAN_CATEGORY_P2P))
-				जाओ xmitframe_coalesce_fail;
-			/* beक्रमe encrypt dump the management packet content */
-			अगर (pattrib->encrypt > 0)
-				स_नकल(pattrib->करोt118021x_UncstKey.skey, psta->करोt118021x_UncstKey.skey, 16);
+				goto xmitframe_coalesce_fail;
+			/* before encrypt dump the management packet content */
+			if (pattrib->encrypt > 0)
+				memcpy(pattrib->dot118021x_UncstKey.skey, psta->dot118021x_UncstKey.skey, 16);
 			/* bakeup original management packet */
-			स_नकल(पंचांगp_buf, pframe, pattrib->pktlen);
+			memcpy(tmp_buf, pframe, pattrib->pktlen);
 			/* move to data portion */
 			pframe += pattrib->hdrlen;
 
@@ -1251,70 +1250,70 @@ s32 rtw_mgmt_xmitframe_coalesce(काष्ठा adapter *padapter, काष�
 			/* it's MIC of AES */
 			pattrib->icv_len = 8;
 
-			चयन (pattrib->encrypt) अणु
-			हाल _AES_:
+			switch (pattrib->encrypt) {
+			case _AES_:
 					/* set AES IV header */
-					AES_IV(pattrib->iv, psta->करोt11wtxpn, 0);
-				अवरोध;
-			शेष:
-				जाओ xmitframe_coalesce_fail;
-			पूर्ण
-			/* insert iv header पूर्णांकo management frame */
-			स_नकल(pframe, pattrib->iv, pattrib->iv_len);
+					AES_IV(pattrib->iv, psta->dot11wtxpn, 0);
+				break;
+			default:
+				goto xmitframe_coalesce_fail;
+			}
+			/* insert iv header into management frame */
+			memcpy(pframe, pattrib->iv, pattrib->iv_len);
 			pframe += pattrib->iv_len;
 			/* copy mgmt data portion after CCMP header */
-			स_नकल(pframe, पंचांगp_buf+pattrib->hdrlen, pattrib->pktlen-pattrib->hdrlen);
+			memcpy(pframe, tmp_buf+pattrib->hdrlen, pattrib->pktlen-pattrib->hdrlen);
 			/* move pframe to end of mgmt pkt */
 			pframe += pattrib->pktlen-pattrib->hdrlen;
 			/* add 8 bytes CCMP IV header to length */
 			pattrib->pktlen += pattrib->iv_len;
-			अगर ((pattrib->icv_len > 0) && (pattrib->bswenc)) अणु
-				स_नकल(pframe, pattrib->icv, pattrib->icv_len);
+			if ((pattrib->icv_len > 0) && (pattrib->bswenc)) {
+				memcpy(pframe, pattrib->icv, pattrib->icv_len);
 				pframe += pattrib->icv_len;
-			पूर्ण
+			}
 			/* add 8 bytes MIC */
 			pattrib->pktlen += pattrib->icv_len;
 			/* set final tx command size */
 			pattrib->last_txcmdsz = pattrib->pktlen;
 
-			/* set रक्षित bit must be beofre SW encrypt */
+			/* set protected bit must be beofre SW encrypt */
 			SetPrivacy(mem_start);
 			/* software encrypt */
 			xmitframe_swencrypt(padapter, pxmitframe);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 xmitframe_coalesce_success:
 	spin_unlock_bh(&padapter->security_key_mutex);
-	kमुक्त(BIP_AAD);
-	वापस _SUCCESS;
+	kfree(BIP_AAD);
+	return _SUCCESS;
 
 xmitframe_coalesce_fail:
 	spin_unlock_bh(&padapter->security_key_mutex);
-	kमुक्त(BIP_AAD);
-	वापस _FAIL;
-पूर्ण
+	kfree(BIP_AAD);
+	return _FAIL;
+}
 
-/* Logical Link Control(LLC) SubNetwork Attachment Poपूर्णांक(SNAP) header
+/* Logical Link Control(LLC) SubNetwork Attachment Point(SNAP) header
  * IEEE LLC/SNAP header contains 8 octets
  * First 3 octets comprise the LLC portion
- * SNAP portion, 5 octets, is भागided पूर्णांकo two fields:
- *Organizationally Unique Identअगरier(OUI), 3 octets,
+ * SNAP portion, 5 octets, is divided into two fields:
+ *Organizationally Unique Identifier(OUI), 3 octets,
  *type, defined by that organization, 2 octets.
  */
 s32 rtw_put_snap(u8 *data, u16 h_proto)
-अणु
-	काष्ठा ieee80211_snap_hdr *snap;
+{
+	struct ieee80211_snap_hdr *snap;
 	u8 *oui;
 
-	snap = (काष्ठा ieee80211_snap_hdr *)data;
+	snap = (struct ieee80211_snap_hdr *)data;
 	snap->dsap = 0xaa;
 	snap->ssap = 0xaa;
 	snap->ctrl = 0x03;
 
-	अगर (h_proto == 0x8137 || h_proto == 0x80f3)
+	if (h_proto == 0x8137 || h_proto == 0x80f3)
 		oui = P802_1H_OUI;
-	अन्यथा
+	else
 		oui = RFC1042_OUI;
 
 	snap->oui[0] = oui[0];
@@ -1323,55 +1322,55 @@ s32 rtw_put_snap(u8 *data, u16 h_proto)
 
 	*(__be16 *)(data + SNAP_SIZE) = htons(h_proto);
 
-	वापस SNAP_SIZE + माप(u16);
-पूर्ण
+	return SNAP_SIZE + sizeof(u16);
+}
 
-व्योम rtw_update_protection(काष्ठा adapter *padapter, u8 *ie, uपूर्णांक ie_len)
-अणु
-	uपूर्णांक	protection;
+void rtw_update_protection(struct adapter *padapter, u8 *ie, uint ie_len)
+{
+	uint	protection;
 	u8 *perp;
-	चिन्हित पूर्णांक	 erp_len;
-	काष्ठा	xmit_priv *pxmitpriv = &padapter->xmitpriv;
-	काष्ठा	registry_priv *pregistrypriv = &padapter->registrypriv;
+	signed int	 erp_len;
+	struct	xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct	registry_priv *pregistrypriv = &padapter->registrypriv;
 
-	चयन (pxmitpriv->vcs_setting) अणु
-	हाल DISABLE_VCS:
+	switch (pxmitpriv->vcs_setting) {
+	case DISABLE_VCS:
 		pxmitpriv->vcs = NONE_VCS;
-		अवरोध;
+		break;
 
-	हाल ENABLE_VCS:
-		अवरोध;
+	case ENABLE_VCS:
+		break;
 
-	हाल AUTO_VCS:
-	शेष:
+	case AUTO_VCS:
+	default:
 		perp = rtw_get_ie(ie, WLAN_EID_ERP_INFO, &erp_len, ie_len);
-		अगर (!perp) अणु
+		if (!perp) {
 			pxmitpriv->vcs = NONE_VCS;
-		पूर्ण अन्यथा अणु
+		} else {
 			protection = (*(perp + 2)) & BIT(1);
-			अगर (protection) अणु
-				अगर (pregistrypriv->vcs_type == RTS_CTS)
+			if (protection) {
+				if (pregistrypriv->vcs_type == RTS_CTS)
 					pxmitpriv->vcs = RTS_CTS;
-				अन्यथा
+				else
 					pxmitpriv->vcs = CTS_TO_SELF;
-			पूर्ण अन्यथा अणु
+			} else {
 				pxmitpriv->vcs = NONE_VCS;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-व्योम rtw_count_tx_stats(काष्ठा adapter *padapter, काष्ठा xmit_frame *pxmitframe, पूर्णांक sz)
-अणु
-	काष्ठा sta_info *psta = शून्य;
-	काष्ठा stainfo_stats *pstats = शून्य;
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+void rtw_count_tx_stats(struct adapter *padapter, struct xmit_frame *pxmitframe, int sz)
+{
+	struct sta_info *psta = NULL;
+	struct stainfo_stats *pstats = NULL;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
 	u8 pkt_num = 1;
 
-	अगर ((pxmitframe->frame_tag&0x0f) == DATA_FRAMETAG) अणु
+	if ((pxmitframe->frame_tag&0x0f) == DATA_FRAMETAG) {
 		pkt_num = pxmitframe->agg_num;
 
 		pmlmepriv->LinkDetectInfo.NumTxOkInPeriod += pkt_num;
@@ -1381,52 +1380,52 @@ s32 rtw_put_snap(u8 *data, u16 h_proto)
 		pxmitpriv->tx_bytes += sz;
 
 		psta = pxmitframe->attrib.psta;
-		अगर (psta) अणु
+		if (psta) {
 			pstats = &psta->sta_stats;
 
 			pstats->tx_pkts += pkt_num;
 
 			pstats->tx_bytes += sz;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल काष्ठा xmit_buf *__rtw_alloc_cmd_xmitbuf(काष्ठा xmit_priv *pxmitpriv,
-		क्रमागत cmdbuf_type buf_type)
-अणु
-	काष्ठा xmit_buf *pxmitbuf =  शून्य;
+static struct xmit_buf *__rtw_alloc_cmd_xmitbuf(struct xmit_priv *pxmitpriv,
+		enum cmdbuf_type buf_type)
+{
+	struct xmit_buf *pxmitbuf =  NULL;
 
 	pxmitbuf = &pxmitpriv->pcmd_xmitbuf[buf_type];
-	अगर (pxmitbuf) अणु
-		pxmitbuf->priv_data = शून्य;
+	if (pxmitbuf) {
+		pxmitbuf->priv_data = NULL;
 
 		pxmitbuf->len = 0;
 		pxmitbuf->pdata = pxmitbuf->ptail = pxmitbuf->phead;
 		pxmitbuf->agg_num = 0;
 		pxmitbuf->pg_num = 0;
 
-		अगर (pxmitbuf->sctx)
-			rtw_sctx_करोne_err(&pxmitbuf->sctx, RTW_SCTX_DONE_BUF_ALLOC);
-	पूर्ण
+		if (pxmitbuf->sctx)
+			rtw_sctx_done_err(&pxmitbuf->sctx, RTW_SCTX_DONE_BUF_ALLOC);
+	}
 
-	वापस pxmitbuf;
-पूर्ण
+	return pxmitbuf;
+}
 
-काष्ठा xmit_frame *__rtw_alloc_cmdxmitframe(काष्ठा xmit_priv *pxmitpriv,
-		क्रमागत cmdbuf_type buf_type)
-अणु
-	काष्ठा xmit_frame		*pcmdframe;
-	काष्ठा xmit_buf		*pxmitbuf;
+struct xmit_frame *__rtw_alloc_cmdxmitframe(struct xmit_priv *pxmitpriv,
+		enum cmdbuf_type buf_type)
+{
+	struct xmit_frame		*pcmdframe;
+	struct xmit_buf		*pxmitbuf;
 
 	pcmdframe = rtw_alloc_xmitframe(pxmitpriv);
-	अगर (!pcmdframe)
-		वापस शून्य;
+	if (!pcmdframe)
+		return NULL;
 
 	pxmitbuf = __rtw_alloc_cmd_xmitbuf(pxmitpriv, buf_type);
-	अगर (!pxmitbuf) अणु
-		rtw_मुक्त_xmitframe(pxmitpriv, pcmdframe);
-		वापस शून्य;
-	पूर्ण
+	if (!pxmitbuf) {
+		rtw_free_xmitframe(pxmitpriv, pcmdframe);
+		return NULL;
+	}
 
 	pcmdframe->frame_tag = MGNT_FRAMETAG;
 
@@ -1436,412 +1435,412 @@ s32 rtw_put_snap(u8 *data, u16 h_proto)
 
 	pxmitbuf->priv_data = pcmdframe;
 
-	वापस pcmdframe;
-पूर्ण
+	return pcmdframe;
+}
 
-काष्ठा xmit_buf *rtw_alloc_xmitbuf_ext(काष्ठा xmit_priv *pxmitpriv)
-अणु
-	अचिन्हित दीर्घ irqL;
-	काष्ठा xmit_buf *pxmitbuf =  शून्य;
-	काष्ठा list_head *plist, *phead;
-	काष्ठा __queue *pमुक्त_queue = &pxmitpriv->मुक्त_xmit_extbuf_queue;
+struct xmit_buf *rtw_alloc_xmitbuf_ext(struct xmit_priv *pxmitpriv)
+{
+	unsigned long irqL;
+	struct xmit_buf *pxmitbuf =  NULL;
+	struct list_head *plist, *phead;
+	struct __queue *pfree_queue = &pxmitpriv->free_xmit_extbuf_queue;
 
-	spin_lock_irqsave(&pमुक्त_queue->lock, irqL);
+	spin_lock_irqsave(&pfree_queue->lock, irqL);
 
-	अगर (list_empty(&pमुक्त_queue->queue)) अणु
-		pxmitbuf = शून्य;
-	पूर्ण अन्यथा अणु
-		phead = get_list_head(pमुक्त_queue);
+	if (list_empty(&pfree_queue->queue)) {
+		pxmitbuf = NULL;
+	} else {
+		phead = get_list_head(pfree_queue);
 
 		plist = get_next(phead);
 
-		pxmitbuf = container_of(plist, काष्ठा xmit_buf, list);
+		pxmitbuf = container_of(plist, struct xmit_buf, list);
 
 		list_del_init(&pxmitbuf->list);
-	पूर्ण
+	}
 
-	अगर (pxmitbuf) अणु
-		pxmitpriv->मुक्त_xmit_extbuf_cnt--;
+	if (pxmitbuf) {
+		pxmitpriv->free_xmit_extbuf_cnt--;
 
-		pxmitbuf->priv_data = शून्य;
+		pxmitbuf->priv_data = NULL;
 
 		pxmitbuf->len = 0;
 		pxmitbuf->pdata = pxmitbuf->ptail = pxmitbuf->phead;
 		pxmitbuf->agg_num = 1;
 
-		अगर (pxmitbuf->sctx)
-			rtw_sctx_करोne_err(&pxmitbuf->sctx, RTW_SCTX_DONE_BUF_ALLOC);
-	पूर्ण
+		if (pxmitbuf->sctx)
+			rtw_sctx_done_err(&pxmitbuf->sctx, RTW_SCTX_DONE_BUF_ALLOC);
+	}
 
-	spin_unlock_irqrestore(&pमुक्त_queue->lock, irqL);
+	spin_unlock_irqrestore(&pfree_queue->lock, irqL);
 
-	वापस pxmitbuf;
-पूर्ण
+	return pxmitbuf;
+}
 
-s32 rtw_मुक्त_xmitbuf_ext(काष्ठा xmit_priv *pxmitpriv, काष्ठा xmit_buf *pxmitbuf)
-अणु
-	अचिन्हित दीर्घ irqL;
-	काष्ठा __queue *pमुक्त_queue = &pxmitpriv->मुक्त_xmit_extbuf_queue;
+s32 rtw_free_xmitbuf_ext(struct xmit_priv *pxmitpriv, struct xmit_buf *pxmitbuf)
+{
+	unsigned long irqL;
+	struct __queue *pfree_queue = &pxmitpriv->free_xmit_extbuf_queue;
 
-	अगर (!pxmitbuf)
-		वापस _FAIL;
+	if (!pxmitbuf)
+		return _FAIL;
 
-	spin_lock_irqsave(&pमुक्त_queue->lock, irqL);
+	spin_lock_irqsave(&pfree_queue->lock, irqL);
 
 	list_del_init(&pxmitbuf->list);
 
-	list_add_tail(&pxmitbuf->list, get_list_head(pमुक्त_queue));
-	pxmitpriv->मुक्त_xmit_extbuf_cnt++;
+	list_add_tail(&pxmitbuf->list, get_list_head(pfree_queue));
+	pxmitpriv->free_xmit_extbuf_cnt++;
 
-	spin_unlock_irqrestore(&pमुक्त_queue->lock, irqL);
+	spin_unlock_irqrestore(&pfree_queue->lock, irqL);
 
-	वापस _SUCCESS;
-पूर्ण
+	return _SUCCESS;
+}
 
-काष्ठा xmit_buf *rtw_alloc_xmitbuf(काष्ठा xmit_priv *pxmitpriv)
-अणु
-	अचिन्हित दीर्घ irqL;
-	काष्ठा xmit_buf *pxmitbuf =  शून्य;
-	काष्ठा list_head *plist, *phead;
-	काष्ठा __queue *pमुक्त_xmitbuf_queue = &pxmitpriv->मुक्त_xmitbuf_queue;
+struct xmit_buf *rtw_alloc_xmitbuf(struct xmit_priv *pxmitpriv)
+{
+	unsigned long irqL;
+	struct xmit_buf *pxmitbuf =  NULL;
+	struct list_head *plist, *phead;
+	struct __queue *pfree_xmitbuf_queue = &pxmitpriv->free_xmitbuf_queue;
 
-	spin_lock_irqsave(&pमुक्त_xmitbuf_queue->lock, irqL);
+	spin_lock_irqsave(&pfree_xmitbuf_queue->lock, irqL);
 
-	अगर (list_empty(&pमुक्त_xmitbuf_queue->queue)) अणु
-		pxmitbuf = शून्य;
-	पूर्ण अन्यथा अणु
-		phead = get_list_head(pमुक्त_xmitbuf_queue);
+	if (list_empty(&pfree_xmitbuf_queue->queue)) {
+		pxmitbuf = NULL;
+	} else {
+		phead = get_list_head(pfree_xmitbuf_queue);
 
 		plist = get_next(phead);
 
-		pxmitbuf = container_of(plist, काष्ठा xmit_buf, list);
+		pxmitbuf = container_of(plist, struct xmit_buf, list);
 
 		list_del_init(&pxmitbuf->list);
-	पूर्ण
+	}
 
-	अगर (pxmitbuf) अणु
-		pxmitpriv->मुक्त_xmitbuf_cnt--;
+	if (pxmitbuf) {
+		pxmitpriv->free_xmitbuf_cnt--;
 
-		pxmitbuf->priv_data = शून्य;
+		pxmitbuf->priv_data = NULL;
 
 		pxmitbuf->len = 0;
 		pxmitbuf->pdata = pxmitbuf->ptail = pxmitbuf->phead;
 		pxmitbuf->agg_num = 0;
 		pxmitbuf->pg_num = 0;
 
-		अगर (pxmitbuf->sctx)
-			rtw_sctx_करोne_err(&pxmitbuf->sctx, RTW_SCTX_DONE_BUF_ALLOC);
-	पूर्ण
+		if (pxmitbuf->sctx)
+			rtw_sctx_done_err(&pxmitbuf->sctx, RTW_SCTX_DONE_BUF_ALLOC);
+	}
 
-	spin_unlock_irqrestore(&pमुक्त_xmitbuf_queue->lock, irqL);
+	spin_unlock_irqrestore(&pfree_xmitbuf_queue->lock, irqL);
 
-	वापस pxmitbuf;
-पूर्ण
+	return pxmitbuf;
+}
 
-s32 rtw_मुक्त_xmitbuf(काष्ठा xmit_priv *pxmitpriv, काष्ठा xmit_buf *pxmitbuf)
-अणु
-	अचिन्हित दीर्घ irqL;
-	काष्ठा __queue *pमुक्त_xmitbuf_queue = &pxmitpriv->मुक्त_xmitbuf_queue;
+s32 rtw_free_xmitbuf(struct xmit_priv *pxmitpriv, struct xmit_buf *pxmitbuf)
+{
+	unsigned long irqL;
+	struct __queue *pfree_xmitbuf_queue = &pxmitpriv->free_xmitbuf_queue;
 
-	अगर (!pxmitbuf)
-		वापस _FAIL;
+	if (!pxmitbuf)
+		return _FAIL;
 
-	अगर (pxmitbuf->sctx)
-		rtw_sctx_करोne_err(&pxmitbuf->sctx, RTW_SCTX_DONE_BUF_FREE);
+	if (pxmitbuf->sctx)
+		rtw_sctx_done_err(&pxmitbuf->sctx, RTW_SCTX_DONE_BUF_FREE);
 
-	अगर (pxmitbuf->buf_tag == XMITBUF_CMD) अणु
-	पूर्ण अन्यथा अगर (pxmitbuf->buf_tag == XMITBUF_MGNT) अणु
-		rtw_मुक्त_xmitbuf_ext(pxmitpriv, pxmitbuf);
-	पूर्ण अन्यथा अणु
-		spin_lock_irqsave(&pमुक्त_xmitbuf_queue->lock, irqL);
+	if (pxmitbuf->buf_tag == XMITBUF_CMD) {
+	} else if (pxmitbuf->buf_tag == XMITBUF_MGNT) {
+		rtw_free_xmitbuf_ext(pxmitpriv, pxmitbuf);
+	} else {
+		spin_lock_irqsave(&pfree_xmitbuf_queue->lock, irqL);
 
 		list_del_init(&pxmitbuf->list);
 
 		list_add_tail(&pxmitbuf->list,
-			      get_list_head(pमुक्त_xmitbuf_queue));
+			      get_list_head(pfree_xmitbuf_queue));
 
-		pxmitpriv->मुक्त_xmitbuf_cnt++;
-		spin_unlock_irqrestore(&pमुक्त_xmitbuf_queue->lock, irqL);
-	पूर्ण
-	वापस _SUCCESS;
-पूर्ण
+		pxmitpriv->free_xmitbuf_cnt++;
+		spin_unlock_irqrestore(&pfree_xmitbuf_queue->lock, irqL);
+	}
+	return _SUCCESS;
+}
 
-अटल व्योम rtw_init_xmitframe(काष्ठा xmit_frame *pxframe)
-अणु
-	अगर (pxframe) अणु /* शेष value setting */
-		pxframe->buf_addr = शून्य;
-		pxframe->pxmitbuf = शून्य;
+static void rtw_init_xmitframe(struct xmit_frame *pxframe)
+{
+	if (pxframe) { /* default value setting */
+		pxframe->buf_addr = NULL;
+		pxframe->pxmitbuf = NULL;
 
-		स_रखो(&pxframe->attrib, 0, माप(काष्ठा pkt_attrib));
+		memset(&pxframe->attrib, 0, sizeof(struct pkt_attrib));
 
 		pxframe->frame_tag = DATA_FRAMETAG;
 
 		pxframe->pg_num = 1;
 		pxframe->agg_num = 1;
 		pxframe->ack_report = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Calling context:
  * 1. OS_TXENTRY
- * 2. RXENTRY (rx_thपढ़ो or RX_ISR/RX_CallBack)
+ * 2. RXENTRY (rx_thread or RX_ISR/RX_CallBack)
  *
- * If we turn on USE_RXTHREAD, then, no need क्रम critical section.
- * Otherwise, we must use _enter/_निकास critical to protect मुक्त_xmit_queue...
+ * If we turn on USE_RXTHREAD, then, no need for critical section.
+ * Otherwise, we must use _enter/_exit critical to protect free_xmit_queue...
  *
  * Must be very, very cautious...
  */
-काष्ठा xmit_frame *rtw_alloc_xmitframe(काष्ठा xmit_priv *pxmitpriv)/* _queue *pमुक्त_xmit_queue) */
-अणु
+struct xmit_frame *rtw_alloc_xmitframe(struct xmit_priv *pxmitpriv)/* _queue *pfree_xmit_queue) */
+{
 	/*
 	 *	Please remember to use all the osdep_service api,
-	 *	and lock/unlock or _enter/_निकास critical to protect
-	 *	pमुक्त_xmit_queue
+	 *	and lock/unlock or _enter/_exit critical to protect
+	 *	pfree_xmit_queue
 	 */
 
-	काष्ठा xmit_frame *pxframe = शून्य;
-	काष्ठा list_head *plist, *phead;
-	काष्ठा __queue *pमुक्त_xmit_queue = &pxmitpriv->मुक्त_xmit_queue;
+	struct xmit_frame *pxframe = NULL;
+	struct list_head *plist, *phead;
+	struct __queue *pfree_xmit_queue = &pxmitpriv->free_xmit_queue;
 
-	spin_lock_bh(&pमुक्त_xmit_queue->lock);
+	spin_lock_bh(&pfree_xmit_queue->lock);
 
-	अगर (list_empty(&pमुक्त_xmit_queue->queue)) अणु
-		pxframe =  शून्य;
-	पूर्ण अन्यथा अणु
-		phead = get_list_head(pमुक्त_xmit_queue);
+	if (list_empty(&pfree_xmit_queue->queue)) {
+		pxframe =  NULL;
+	} else {
+		phead = get_list_head(pfree_xmit_queue);
 
 		plist = get_next(phead);
 
-		pxframe = container_of(plist, काष्ठा xmit_frame, list);
+		pxframe = container_of(plist, struct xmit_frame, list);
 
 		list_del_init(&pxframe->list);
-		pxmitpriv->मुक्त_xmitframe_cnt--;
-	पूर्ण
+		pxmitpriv->free_xmitframe_cnt--;
+	}
 
-	spin_unlock_bh(&pमुक्त_xmit_queue->lock);
+	spin_unlock_bh(&pfree_xmit_queue->lock);
 
 	rtw_init_xmitframe(pxframe);
-	वापस pxframe;
-पूर्ण
+	return pxframe;
+}
 
-काष्ठा xmit_frame *rtw_alloc_xmitframe_ext(काष्ठा xmit_priv *pxmitpriv)
-अणु
-	काष्ठा xmit_frame *pxframe = शून्य;
-	काष्ठा list_head *plist, *phead;
-	काष्ठा __queue *queue = &pxmitpriv->मुक्त_xframe_ext_queue;
+struct xmit_frame *rtw_alloc_xmitframe_ext(struct xmit_priv *pxmitpriv)
+{
+	struct xmit_frame *pxframe = NULL;
+	struct list_head *plist, *phead;
+	struct __queue *queue = &pxmitpriv->free_xframe_ext_queue;
 
 	spin_lock_bh(&queue->lock);
 
-	अगर (list_empty(&queue->queue)) अणु
-		pxframe =  शून्य;
-	पूर्ण अन्यथा अणु
+	if (list_empty(&queue->queue)) {
+		pxframe =  NULL;
+	} else {
 		phead = get_list_head(queue);
 		plist = get_next(phead);
-		pxframe = container_of(plist, काष्ठा xmit_frame, list);
+		pxframe = container_of(plist, struct xmit_frame, list);
 
 		list_del_init(&pxframe->list);
-		pxmitpriv->मुक्त_xframe_ext_cnt--;
-	पूर्ण
+		pxmitpriv->free_xframe_ext_cnt--;
+	}
 
 	spin_unlock_bh(&queue->lock);
 
 	rtw_init_xmitframe(pxframe);
 
-	वापस pxframe;
-पूर्ण
+	return pxframe;
+}
 
-काष्ठा xmit_frame *rtw_alloc_xmitframe_once(काष्ठा xmit_priv *pxmitpriv)
-अणु
-	काष्ठा xmit_frame *pxframe = शून्य;
+struct xmit_frame *rtw_alloc_xmitframe_once(struct xmit_priv *pxmitpriv)
+{
+	struct xmit_frame *pxframe = NULL;
 	u8 *alloc_addr;
 
-	alloc_addr = rtw_zदो_स्मृति(माप(काष्ठा xmit_frame) + 4);
+	alloc_addr = rtw_zmalloc(sizeof(struct xmit_frame) + 4);
 
-	अगर (!alloc_addr)
-		जाओ निकास;
+	if (!alloc_addr)
+		goto exit;
 
-	pxframe = (काष्ठा xmit_frame *)N_BYTE_ALIGMENT((SIZE_PTR)(alloc_addr), 4);
+	pxframe = (struct xmit_frame *)N_BYTE_ALIGMENT((SIZE_PTR)(alloc_addr), 4);
 	pxframe->alloc_addr = alloc_addr;
 
 	pxframe->padapter = pxmitpriv->adapter;
-	pxframe->frame_tag = शून्य_FRAMETAG;
+	pxframe->frame_tag = NULL_FRAMETAG;
 
-	pxframe->pkt = शून्य;
+	pxframe->pkt = NULL;
 
-	pxframe->buf_addr = शून्य;
-	pxframe->pxmitbuf = शून्य;
+	pxframe->buf_addr = NULL;
+	pxframe->pxmitbuf = NULL;
 
 	rtw_init_xmitframe(pxframe);
 
-निकास:
-	वापस pxframe;
-पूर्ण
+exit:
+	return pxframe;
+}
 
-s32 rtw_मुक्त_xmitframe(काष्ठा xmit_priv *pxmitpriv, काष्ठा xmit_frame *pxmitframe)
-अणु
-	काष्ठा __queue *queue = शून्य;
-	काष्ठा adapter *padapter = pxmitpriv->adapter;
-	काष्ठा sk_buff *pndis_pkt = शून्य;
+s32 rtw_free_xmitframe(struct xmit_priv *pxmitpriv, struct xmit_frame *pxmitframe)
+{
+	struct __queue *queue = NULL;
+	struct adapter *padapter = pxmitpriv->adapter;
+	struct sk_buff *pndis_pkt = NULL;
 
-	अगर (!pxmitframe)
-		जाओ निकास;
+	if (!pxmitframe)
+		goto exit;
 
-	अगर (pxmitframe->pkt) अणु
+	if (pxmitframe->pkt) {
 		pndis_pkt = pxmitframe->pkt;
-		pxmitframe->pkt = शून्य;
-	पूर्ण
+		pxmitframe->pkt = NULL;
+	}
 
-	अगर (pxmitframe->alloc_addr) अणु
-		kमुक्त(pxmitframe->alloc_addr);
-		जाओ check_pkt_complete;
-	पूर्ण
+	if (pxmitframe->alloc_addr) {
+		kfree(pxmitframe->alloc_addr);
+		goto check_pkt_complete;
+	}
 
-	अगर (pxmitframe->ext_tag == 0)
-		queue = &pxmitpriv->मुक्त_xmit_queue;
-	अन्यथा अगर (pxmitframe->ext_tag == 1)
-		queue = &pxmitpriv->मुक्त_xframe_ext_queue;
-	अन्यथा अणु
-	पूर्ण
+	if (pxmitframe->ext_tag == 0)
+		queue = &pxmitpriv->free_xmit_queue;
+	else if (pxmitframe->ext_tag == 1)
+		queue = &pxmitpriv->free_xframe_ext_queue;
+	else {
+	}
 
 	spin_lock_bh(&queue->lock);
 
 	list_del_init(&pxmitframe->list);
 	list_add_tail(&pxmitframe->list, get_list_head(queue));
-	अगर (pxmitframe->ext_tag == 0)
-		pxmitpriv->मुक्त_xmitframe_cnt++;
-	अन्यथा अगर (pxmitframe->ext_tag == 1)
-		pxmitpriv->मुक्त_xframe_ext_cnt++;
+	if (pxmitframe->ext_tag == 0)
+		pxmitpriv->free_xmitframe_cnt++;
+	else if (pxmitframe->ext_tag == 1)
+		pxmitpriv->free_xframe_ext_cnt++;
 
 	spin_unlock_bh(&queue->lock);
 
 check_pkt_complete:
 
-	अगर (pndis_pkt)
+	if (pndis_pkt)
 		rtw_os_pkt_complete(padapter, pndis_pkt);
 
-निकास:
-	वापस _SUCCESS;
-पूर्ण
+exit:
+	return _SUCCESS;
+}
 
-व्योम rtw_मुक्त_xmitframe_queue(काष्ठा xmit_priv *pxmitpriv, काष्ठा __queue *pframequeue)
-अणु
-	काष्ठा list_head	*plist, *phead;
-	काष्ठा	xmit_frame	*pxmitframe;
+void rtw_free_xmitframe_queue(struct xmit_priv *pxmitpriv, struct __queue *pframequeue)
+{
+	struct list_head	*plist, *phead;
+	struct	xmit_frame	*pxmitframe;
 
 	spin_lock_bh(&pframequeue->lock);
 
 	phead = get_list_head(pframequeue);
 	plist = get_next(phead);
 
-	जबतक (phead != plist) अणु
-		pxmitframe = container_of(plist, काष्ठा xmit_frame, list);
+	while (phead != plist) {
+		pxmitframe = container_of(plist, struct xmit_frame, list);
 
 		plist = get_next(plist);
 
-		rtw_मुक्त_xmitframe(pxmitpriv, pxmitframe);
-	पूर्ण
+		rtw_free_xmitframe(pxmitpriv, pxmitframe);
+	}
 	spin_unlock_bh(&pframequeue->lock);
-पूर्ण
+}
 
-s32 rtw_xmitframe_enqueue(काष्ठा adapter *padapter, काष्ठा xmit_frame *pxmitframe)
-अणु
-	अगर (rtw_xmit_classअगरier(padapter, pxmitframe) == _FAIL)
-		वापस _FAIL;
+s32 rtw_xmitframe_enqueue(struct adapter *padapter, struct xmit_frame *pxmitframe)
+{
+	if (rtw_xmit_classifier(padapter, pxmitframe) == _FAIL)
+		return _FAIL;
 
-	वापस _SUCCESS;
-पूर्ण
+	return _SUCCESS;
+}
 
-काष्ठा tx_servq *rtw_get_sta_pending(काष्ठा adapter *padapter, काष्ठा sta_info *psta, चिन्हित पूर्णांक up, u8 *ac)
-अणु
-	काष्ठा tx_servq *ptxservq = शून्य;
+struct tx_servq *rtw_get_sta_pending(struct adapter *padapter, struct sta_info *psta, signed int up, u8 *ac)
+{
+	struct tx_servq *ptxservq = NULL;
 
-	चयन (up) अणु
-	हाल 1:
-	हाल 2:
+	switch (up) {
+	case 1:
+	case 2:
 		ptxservq = &psta->sta_xmitpriv.bk_q;
 		*(ac) = 3;
-		अवरोध;
+		break;
 
-	हाल 4:
-	हाल 5:
+	case 4:
+	case 5:
 		ptxservq = &psta->sta_xmitpriv.vi_q;
 		*(ac) = 1;
-		अवरोध;
+		break;
 
-	हाल 6:
-	हाल 7:
+	case 6:
+	case 7:
 		ptxservq = &psta->sta_xmitpriv.vo_q;
 		*(ac) = 0;
-		अवरोध;
+		break;
 
-	हाल 0:
-	हाल 3:
-	शेष:
+	case 0:
+	case 3:
+	default:
 		ptxservq = &psta->sta_xmitpriv.be_q;
 		*(ac) = 2;
-	अवरोध;
-	पूर्ण
+	break;
+	}
 
-	वापस ptxservq;
-पूर्ण
+	return ptxservq;
+}
 
 /*
  * Will enqueue pxmitframe to the proper queue,
  * and indicate it to xx_pending list.....
  */
-s32 rtw_xmit_classअगरier(काष्ठा adapter *padapter, काष्ठा xmit_frame *pxmitframe)
-अणु
+s32 rtw_xmit_classifier(struct adapter *padapter, struct xmit_frame *pxmitframe)
+{
 	u8 ac_index;
-	काष्ठा sta_info *psta;
-	काष्ठा tx_servq	*ptxservq;
-	काष्ठा pkt_attrib	*pattrib = &pxmitframe->attrib;
-	काष्ठा hw_xmit	*phwxmits =  padapter->xmitpriv.hwxmits;
-	चिन्हित पूर्णांक res = _SUCCESS;
+	struct sta_info *psta;
+	struct tx_servq	*ptxservq;
+	struct pkt_attrib	*pattrib = &pxmitframe->attrib;
+	struct hw_xmit	*phwxmits =  padapter->xmitpriv.hwxmits;
+	signed int res = _SUCCESS;
 
 	psta = rtw_get_stainfo(&padapter->stapriv, pattrib->ra);
-	अगर (pattrib->psta != psta)
-		वापस _FAIL;
+	if (pattrib->psta != psta)
+		return _FAIL;
 
-	अगर (!psta) अणु
+	if (!psta) {
 		res = _FAIL;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	अगर (!(psta->state & _FW_LINKED))
-		वापस _FAIL;
+	if (!(psta->state & _FW_LINKED))
+		return _FAIL;
 
 	ptxservq = rtw_get_sta_pending(padapter, psta, pattrib->priority, (u8 *)(&ac_index));
 
-	अगर (list_empty(&ptxservq->tx_pending))
+	if (list_empty(&ptxservq->tx_pending))
 		list_add_tail(&ptxservq->tx_pending, get_list_head(phwxmits[ac_index].sta_queue));
 
 	list_add_tail(&pxmitframe->list, get_list_head(&ptxservq->sta_pending));
 	ptxservq->qcnt++;
 	phwxmits[ac_index].accnt++;
 
-निकास:
+exit:
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-s32 rtw_alloc_hwxmits(काष्ठा adapter *padapter)
-अणु
-	काष्ठा hw_xmit *hwxmits;
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+s32 rtw_alloc_hwxmits(struct adapter *padapter)
+{
+	struct hw_xmit *hwxmits;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
 
 	pxmitpriv->hwxmit_entry = HWXMIT_ENTRY;
 
-	pxmitpriv->hwxmits = शून्य;
+	pxmitpriv->hwxmits = NULL;
 
-	pxmitpriv->hwxmits = rtw_zदो_स्मृति(माप(काष्ठा hw_xmit) * pxmitpriv->hwxmit_entry);
+	pxmitpriv->hwxmits = rtw_zmalloc(sizeof(struct hw_xmit) * pxmitpriv->hwxmit_entry);
 
-	अगर (!pxmitpriv->hwxmits)
-		वापस _FAIL;
+	if (!pxmitpriv->hwxmits)
+		return _FAIL;
 
 	hwxmits = pxmitpriv->hwxmits;
 
-	अगर (pxmitpriv->hwxmit_entry == 5) अणु
+	if (pxmitpriv->hwxmit_entry == 5) {
 		hwxmits[0] .sta_queue = &pxmitpriv->bm_pending;
 
 		hwxmits[1] .sta_queue = &pxmitpriv->vo_pending;
@@ -1851,7 +1850,7 @@ s32 rtw_alloc_hwxmits(काष्ठा adapter *padapter)
 		hwxmits[3] .sta_queue = &pxmitpriv->bk_pending;
 
 		hwxmits[4] .sta_queue = &pxmitpriv->be_pending;
-	पूर्ण अन्यथा अगर (pxmitpriv->hwxmit_entry == 4) अणु
+	} else if (pxmitpriv->hwxmit_entry == 4) {
 		hwxmits[0] .sta_queue = &pxmitpriv->vo_pending;
 
 		hwxmits[1] .sta_queue = &pxmitpriv->vi_pending;
@@ -1859,191 +1858,191 @@ s32 rtw_alloc_hwxmits(काष्ठा adapter *padapter)
 		hwxmits[2] .sta_queue = &pxmitpriv->be_pending;
 
 		hwxmits[3] .sta_queue = &pxmitpriv->bk_pending;
-	पूर्ण अन्यथा अणु
-	पूर्ण
+	} else {
+	}
 
-	वापस _SUCCESS;
-पूर्ण
+	return _SUCCESS;
+}
 
-व्योम rtw_मुक्त_hwxmits(काष्ठा adapter *padapter)
-अणु
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+void rtw_free_hwxmits(struct adapter *padapter)
+{
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
 
-	kमुक्त(pxmitpriv->hwxmits);
-पूर्ण
+	kfree(pxmitpriv->hwxmits);
+}
 
-व्योम rtw_init_hwxmits(काष्ठा hw_xmit *phwxmit, चिन्हित पूर्णांक entry)
-अणु
-	चिन्हित पूर्णांक i;
+void rtw_init_hwxmits(struct hw_xmit *phwxmit, signed int entry)
+{
+	signed int i;
 
-	क्रम (i = 0; i < entry; i++, phwxmit++)
+	for (i = 0; i < entry; i++, phwxmit++)
 		phwxmit->accnt = 0;
-पूर्ण
+}
 
-u32 rtw_get_ff_hwaddr(काष्ठा xmit_frame *pxmitframe)
-अणु
+u32 rtw_get_ff_hwaddr(struct xmit_frame *pxmitframe)
+{
 	u32 addr;
-	काष्ठा pkt_attrib *pattrib = &pxmitframe->attrib;
+	struct pkt_attrib *pattrib = &pxmitframe->attrib;
 
-	चयन (pattrib->qsel) अणु
-	हाल 0:
-	हाल 3:
+	switch (pattrib->qsel) {
+	case 0:
+	case 3:
 		addr = BE_QUEUE_INX;
-		अवरोध;
-	हाल 1:
-	हाल 2:
+		break;
+	case 1:
+	case 2:
 		addr = BK_QUEUE_INX;
-		अवरोध;
-	हाल 4:
-	हाल 5:
+		break;
+	case 4:
+	case 5:
 		addr = VI_QUEUE_INX;
-		अवरोध;
-	हाल 6:
-	हाल 7:
+		break;
+	case 6:
+	case 7:
 		addr = VO_QUEUE_INX;
-		अवरोध;
-	हाल 0x10:
+		break;
+	case 0x10:
 		addr = BCN_QUEUE_INX;
-		अवरोध;
-	हाल 0x11:/* BC/MC in PS (HIQ) */
+		break;
+	case 0x11:/* BC/MC in PS (HIQ) */
 		addr = HIGH_QUEUE_INX;
-		अवरोध;
-	हाल 0x12:
-	शेष:
+		break;
+	case 0x12:
+	default:
 		addr = MGT_QUEUE_INX;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
-अटल व्योम करो_queue_select(काष्ठा adapter	*padapter, काष्ठा pkt_attrib *pattrib)
-अणु
+static void do_queue_select(struct adapter	*padapter, struct pkt_attrib *pattrib)
+{
 	u8 qsel;
 
 	qsel = pattrib->priority;
 
 	pattrib->qsel = qsel;
-पूर्ण
+}
 
 /*
- * The मुख्य transmit(tx) entry
+ * The main transmit(tx) entry
  *
  * Return
  *1	enqueue
  *0	success, hardware will handle this xmit frame(packet)
  *<0	fail
  */
-s32 rtw_xmit(काष्ठा adapter *padapter, काष्ठा sk_buff **ppkt)
-अणु
-	अटल अचिन्हित दीर्घ start;
-	अटल u32 drop_cnt;
+s32 rtw_xmit(struct adapter *padapter, struct sk_buff **ppkt)
+{
+	static unsigned long start;
+	static u32 drop_cnt;
 
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
-	काष्ठा xmit_frame *pxmitframe = शून्य;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct xmit_frame *pxmitframe = NULL;
 
 	s32 res;
 
-	अगर (start == 0)
-		start = jअगरfies;
+	if (start == 0)
+		start = jiffies;
 
 	pxmitframe = rtw_alloc_xmitframe(pxmitpriv);
 
-	अगर (jअगरfies_to_msecs(jअगरfies - start) > 2000) अणु
-		start = jअगरfies;
+	if (jiffies_to_msecs(jiffies - start) > 2000) {
+		start = jiffies;
 		drop_cnt = 0;
-	पूर्ण
+	}
 
-	अगर (!pxmitframe) अणु
+	if (!pxmitframe) {
 		drop_cnt++;
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	res = update_attrib(padapter, *ppkt, &pxmitframe->attrib);
 
-	अगर (res == _FAIL) अणु
-		rtw_मुक्त_xmitframe(pxmitpriv, pxmitframe);
-		वापस -1;
-	पूर्ण
+	if (res == _FAIL) {
+		rtw_free_xmitframe(pxmitpriv, pxmitframe);
+		return -1;
+	}
 	pxmitframe->pkt = *ppkt;
 
-	करो_queue_select(padapter, &pxmitframe->attrib);
+	do_queue_select(padapter, &pxmitframe->attrib);
 
 	spin_lock_bh(&pxmitpriv->lock);
-	अगर (xmitframe_enqueue_क्रम_sleeping_sta(padapter, pxmitframe) == true) अणु
+	if (xmitframe_enqueue_for_sleeping_sta(padapter, pxmitframe) == true) {
 		spin_unlock_bh(&pxmitpriv->lock);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 	spin_unlock_bh(&pxmitpriv->lock);
 
 	/* pre_xmitframe */
-	अगर (rtw_hal_xmit(padapter, pxmitframe) == false)
-		वापस 1;
+	if (rtw_hal_xmit(padapter, pxmitframe) == false)
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा RTW_HIQ_FILTER_ALLOW_ALL 0
-#घोषणा RTW_HIQ_FILTER_ALLOW_SPECIAL 1
-#घोषणा RTW_HIQ_FILTER_DENY_ALL 2
+#define RTW_HIQ_FILTER_ALLOW_ALL 0
+#define RTW_HIQ_FILTER_ALLOW_SPECIAL 1
+#define RTW_HIQ_FILTER_DENY_ALL 2
 
-अंतरभूत bool xmitframe_hiq_filter(काष्ठा xmit_frame *xmitframe)
-अणु
+inline bool xmitframe_hiq_filter(struct xmit_frame *xmitframe)
+{
 	bool allow = false;
-	काष्ठा adapter *adapter = xmitframe->padapter;
-	काष्ठा registry_priv *registry = &adapter->registrypriv;
+	struct adapter *adapter = xmitframe->padapter;
+	struct registry_priv *registry = &adapter->registrypriv;
 
-	अगर (registry->hiq_filter == RTW_HIQ_FILTER_ALLOW_SPECIAL) अणु
-		काष्ठा pkt_attrib *attrib = &xmitframe->attrib;
+	if (registry->hiq_filter == RTW_HIQ_FILTER_ALLOW_SPECIAL) {
+		struct pkt_attrib *attrib = &xmitframe->attrib;
 
-		अगर (attrib->ether_type == 0x0806 ||
+		if (attrib->ether_type == 0x0806 ||
 		    attrib->ether_type == 0x888e ||
 		    attrib->dhcp_pkt
 		)
 			allow = true;
 
-	पूर्ण अन्यथा अगर (registry->hiq_filter == RTW_HIQ_FILTER_ALLOW_ALL)
+	} else if (registry->hiq_filter == RTW_HIQ_FILTER_ALLOW_ALL)
 		allow = true;
-	अन्यथा अगर (registry->hiq_filter == RTW_HIQ_FILTER_DENY_ALL) अणु
-	पूर्ण अन्यथा
+	else if (registry->hiq_filter == RTW_HIQ_FILTER_DENY_ALL) {
+	} else
 		rtw_warn_on(1);
 
-	वापस allow;
-पूर्ण
+	return allow;
+}
 
-चिन्हित पूर्णांक xmitframe_enqueue_क्रम_sleeping_sta(काष्ठा adapter *padapter, काष्ठा xmit_frame *pxmitframe)
-अणु
-	चिन्हित पूर्णांक ret = false;
-	काष्ठा sta_info *psta = शून्य;
-	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
-	काष्ठा pkt_attrib *pattrib = &pxmitframe->attrib;
-	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	चिन्हित पूर्णांक bmcst = IS_MCAST(pattrib->ra);
+signed int xmitframe_enqueue_for_sleeping_sta(struct adapter *padapter, struct xmit_frame *pxmitframe)
+{
+	signed int ret = false;
+	struct sta_info *psta = NULL;
+	struct sta_priv *pstapriv = &padapter->stapriv;
+	struct pkt_attrib *pattrib = &pxmitframe->attrib;
+	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	signed int bmcst = IS_MCAST(pattrib->ra);
 	bool update_tim = false;
 
-	अगर (check_fwstate(pmlmepriv, WIFI_AP_STATE) == false)
-		वापस ret;
+	if (check_fwstate(pmlmepriv, WIFI_AP_STATE) == false)
+		return ret;
 	psta = rtw_get_stainfo(&padapter->stapriv, pattrib->ra);
-	अगर (pattrib->psta != psta)
-		वापस false;
+	if (pattrib->psta != psta)
+		return false;
 
-	अगर (!psta)
-		वापस false;
+	if (!psta)
+		return false;
 
-	अगर (!(psta->state & _FW_LINKED))
-		वापस false;
+	if (!(psta->state & _FW_LINKED))
+		return false;
 
-	अगर (pattrib->triggered == 1) अणु
-		अगर (bmcst && xmitframe_hiq_filter(pxmitframe))
+	if (pattrib->triggered == 1) {
+		if (bmcst && xmitframe_hiq_filter(pxmitframe))
 			pattrib->qsel = 0x11;/* HIQ */
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (bmcst) अणु
+	if (bmcst) {
 		spin_lock_bh(&psta->sleep_q.lock);
 
-		अगर (pstapriv->sta_dz_biपंचांगap) अणु /* अगर anyone sta is in ps mode */
+		if (pstapriv->sta_dz_bitmap) { /* if anyone sta is in ps mode */
 			/* pattrib->qsel = 0x11;HIQ */
 
 			list_del_init(&pxmitframe->list);
@@ -2052,95 +2051,95 @@ s32 rtw_xmit(काष्ठा adapter *padapter, काष्ठा sk_buff **
 
 			psta->sleepq_len++;
 
-			अगर (!(pstapriv->tim_biपंचांगap & BIT(0)))
+			if (!(pstapriv->tim_bitmap & BIT(0)))
 				update_tim = true;
 
-			pstapriv->tim_biपंचांगap |= BIT(0);
-			pstapriv->sta_dz_biपंचांगap |= BIT(0);
+			pstapriv->tim_bitmap |= BIT(0);
+			pstapriv->sta_dz_bitmap |= BIT(0);
 
-			अगर (update_tim)
-				update_beacon(padapter, WLAN_EID_TIM, शून्य, true);
-			अन्यथा
+			if (update_tim)
+				update_beacon(padapter, WLAN_EID_TIM, NULL, true);
+			else
 				chk_bmc_sleepq_cmd(padapter);
 
 			ret = true;
-		पूर्ण
+		}
 
 		spin_unlock_bh(&psta->sleep_q.lock);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	spin_lock_bh(&psta->sleep_q.lock);
 
-	अगर (psta->state&WIFI_SLEEP_STATE) अणु
+	if (psta->state&WIFI_SLEEP_STATE) {
 		u8 wmmps_ac = 0;
 
-		अगर (pstapriv->sta_dz_biपंचांगap & BIT(psta->aid)) अणु
+		if (pstapriv->sta_dz_bitmap & BIT(psta->aid)) {
 			list_del_init(&pxmitframe->list);
 
 			list_add_tail(&pxmitframe->list, get_list_head(&psta->sleep_q));
 
 			psta->sleepq_len++;
 
-			चयन (pattrib->priority) अणु
-			हाल 1:
-			हाल 2:
+			switch (pattrib->priority) {
+			case 1:
+			case 2:
 				wmmps_ac = psta->uapsd_bk&BIT(0);
-				अवरोध;
-			हाल 4:
-			हाल 5:
+				break;
+			case 4:
+			case 5:
 				wmmps_ac = psta->uapsd_vi&BIT(0);
-				अवरोध;
-			हाल 6:
-			हाल 7:
+				break;
+			case 6:
+			case 7:
 				wmmps_ac = psta->uapsd_vo&BIT(0);
-				अवरोध;
-			हाल 0:
-			हाल 3:
-			शेष:
+				break;
+			case 0:
+			case 3:
+			default:
 				wmmps_ac = psta->uapsd_be&BIT(0);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			अगर (wmmps_ac)
+			if (wmmps_ac)
 				psta->sleepq_ac_len++;
 
-			अगर (((psta->has_legacy_ac) && (!wmmps_ac)) || ((!psta->has_legacy_ac) && (wmmps_ac))) अणु
-				अगर (!(pstapriv->tim_biपंचांगap & BIT(psta->aid)))
+			if (((psta->has_legacy_ac) && (!wmmps_ac)) || ((!psta->has_legacy_ac) && (wmmps_ac))) {
+				if (!(pstapriv->tim_bitmap & BIT(psta->aid)))
 					update_tim = true;
 
-				pstapriv->tim_biपंचांगap |= BIT(psta->aid);
+				pstapriv->tim_bitmap |= BIT(psta->aid);
 
-				अगर (update_tim)
-					/* update BCN क्रम TIM IE */
-					update_beacon(padapter, WLAN_EID_TIM, शून्य, true);
-			पूर्ण
+				if (update_tim)
+					/* update BCN for TIM IE */
+					update_beacon(padapter, WLAN_EID_TIM, NULL, true);
+			}
 
 			ret = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_unlock_bh(&psta->sleep_q.lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम dequeue_xmitframes_to_sleeping_queue(काष्ठा adapter *padapter, काष्ठा sta_info *psta, काष्ठा __queue *pframequeue)
-अणु
-	चिन्हित पूर्णांक ret;
-	काष्ठा list_head	*plist, *phead;
+static void dequeue_xmitframes_to_sleeping_queue(struct adapter *padapter, struct sta_info *psta, struct __queue *pframequeue)
+{
+	signed int ret;
+	struct list_head	*plist, *phead;
 	u8 ac_index;
-	काष्ठा tx_servq	*ptxservq;
-	काष्ठा pkt_attrib	*pattrib;
-	काष्ठा xmit_frame	*pxmitframe;
-	काष्ठा hw_xmit *phwxmits =  padapter->xmitpriv.hwxmits;
+	struct tx_servq	*ptxservq;
+	struct pkt_attrib	*pattrib;
+	struct xmit_frame	*pxmitframe;
+	struct hw_xmit *phwxmits =  padapter->xmitpriv.hwxmits;
 
 	phead = get_list_head(pframequeue);
 	plist = get_next(phead);
 
-	जबतक (phead != plist) अणु
-		pxmitframe = container_of(plist, काष्ठा xmit_frame, list);
+	while (phead != plist) {
+		pxmitframe = container_of(plist, struct xmit_frame, list);
 
 		plist = get_next(plist);
 
@@ -2148,35 +2147,35 @@ s32 rtw_xmit(काष्ठा adapter *padapter, काष्ठा sk_buff **
 
 		pattrib->triggered = 0;
 
-		ret = xmitframe_enqueue_क्रम_sleeping_sta(padapter, pxmitframe);
+		ret = xmitframe_enqueue_for_sleeping_sta(padapter, pxmitframe);
 
-		अगर (true == ret) अणु
+		if (true == ret) {
 			ptxservq = rtw_get_sta_pending(padapter, psta, pattrib->priority, (u8 *)(&ac_index));
 
 			ptxservq->qcnt--;
 			phwxmits[ac_index].accnt--;
-		पूर्ण अन्यथा अणु
-		पूर्ण
-	पूर्ण
-पूर्ण
+		} else {
+		}
+	}
+}
 
-व्योम stop_sta_xmit(काष्ठा adapter *padapter, काष्ठा sta_info *psta)
-अणु
-	काष्ठा sta_info *psta_bmc;
-	काष्ठा sta_xmit_priv *pstaxmitpriv;
-	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+void stop_sta_xmit(struct adapter *padapter, struct sta_info *psta)
+{
+	struct sta_info *psta_bmc;
+	struct sta_xmit_priv *pstaxmitpriv;
+	struct sta_priv *pstapriv = &padapter->stapriv;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
 
 	pstaxmitpriv = &psta->sta_xmitpriv;
 
-	/* क्रम BC/MC Frames */
+	/* for BC/MC Frames */
 	psta_bmc = rtw_get_bcmc_stainfo(padapter);
 
 	spin_lock_bh(&pxmitpriv->lock);
 
 	psta->state |= WIFI_SLEEP_STATE;
 
-	pstapriv->sta_dz_biपंचांगap |= BIT(psta->aid);
+	pstapriv->sta_dz_bitmap |= BIT(psta->aid);
 
 	dequeue_xmitframes_to_sleeping_queue(padapter, psta, &pstaxmitpriv->vo_q.sta_pending);
 	list_del_init(&pstaxmitpriv->vo_q.tx_pending);
@@ -2190,22 +2189,22 @@ s32 rtw_xmit(काष्ठा adapter *padapter, काष्ठा sk_buff **
 	dequeue_xmitframes_to_sleeping_queue(padapter, psta, &pstaxmitpriv->bk_q.sta_pending);
 	list_del_init(&pstaxmitpriv->bk_q.tx_pending);
 
-	/* क्रम BC/MC Frames */
+	/* for BC/MC Frames */
 	pstaxmitpriv = &psta_bmc->sta_xmitpriv;
 	dequeue_xmitframes_to_sleeping_queue(padapter, psta_bmc, &pstaxmitpriv->be_q.sta_pending);
 	list_del_init(&pstaxmitpriv->be_q.tx_pending);
 
 	spin_unlock_bh(&pxmitpriv->lock);
-पूर्ण
+}
 
-व्योम wakeup_sta_to_xmit(काष्ठा adapter *padapter, काष्ठा sta_info *psta)
-अणु
+void wakeup_sta_to_xmit(struct adapter *padapter, struct sta_info *psta)
+{
 	u8 update_mask = 0, wmmps_ac = 0;
-	काष्ठा sta_info *psta_bmc;
-	काष्ठा list_head	*xmitframe_plist, *xmitframe_phead;
-	काष्ठा xmit_frame *pxmitframe = शून्य;
-	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct sta_info *psta_bmc;
+	struct list_head	*xmitframe_plist, *xmitframe_phead;
+	struct xmit_frame *pxmitframe = NULL;
+	struct sta_priv *pstapriv = &padapter->stapriv;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
 
 	psta_bmc = rtw_get_bcmc_stainfo(padapter);
 
@@ -2214,185 +2213,185 @@ s32 rtw_xmit(काष्ठा adapter *padapter, काष्ठा sk_buff **
 	xmitframe_phead = get_list_head(&psta->sleep_q);
 	xmitframe_plist = get_next(xmitframe_phead);
 
-	जबतक (xmitframe_phead != xmitframe_plist) अणु
-		pxmitframe = container_of(xmitframe_plist, काष्ठा xmit_frame, list);
+	while (xmitframe_phead != xmitframe_plist) {
+		pxmitframe = container_of(xmitframe_plist, struct xmit_frame, list);
 
 		xmitframe_plist = get_next(xmitframe_plist);
 
 		list_del_init(&pxmitframe->list);
 
-		चयन (pxmitframe->attrib.priority) अणु
-		हाल 1:
-		हाल 2:
+		switch (pxmitframe->attrib.priority) {
+		case 1:
+		case 2:
 			wmmps_ac = psta->uapsd_bk&BIT(1);
-			अवरोध;
-		हाल 4:
-		हाल 5:
+			break;
+		case 4:
+		case 5:
 			wmmps_ac = psta->uapsd_vi&BIT(1);
-			अवरोध;
-		हाल 6:
-		हाल 7:
+			break;
+		case 6:
+		case 7:
 			wmmps_ac = psta->uapsd_vo&BIT(1);
-			अवरोध;
-		हाल 0:
-		हाल 3:
-		शेष:
+			break;
+		case 0:
+		case 3:
+		default:
 			wmmps_ac = psta->uapsd_be&BIT(1);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		psta->sleepq_len--;
-		अगर (psta->sleepq_len > 0)
+		if (psta->sleepq_len > 0)
 			pxmitframe->attrib.mdata = 1;
-		अन्यथा
+		else
 			pxmitframe->attrib.mdata = 0;
 
-		अगर (wmmps_ac) अणु
+		if (wmmps_ac) {
 			psta->sleepq_ac_len--;
-			अगर (psta->sleepq_ac_len > 0) अणु
+			if (psta->sleepq_ac_len > 0) {
 				pxmitframe->attrib.mdata = 1;
 				pxmitframe->attrib.eosp = 0;
-			पूर्ण अन्यथा अणु
+			} else {
 				pxmitframe->attrib.mdata = 0;
 				pxmitframe->attrib.eosp = 1;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		pxmitframe->attrib.triggered = 1;
 
 		rtw_hal_xmitframe_enqueue(padapter, pxmitframe);
-	पूर्ण
+	}
 
-	अगर (psta->sleepq_len == 0) अणु
-		अगर (pstapriv->tim_biपंचांगap & BIT(psta->aid))
+	if (psta->sleepq_len == 0) {
+		if (pstapriv->tim_bitmap & BIT(psta->aid))
 			update_mask = BIT(0);
 
-		pstapriv->tim_biपंचांगap &= ~BIT(psta->aid);
+		pstapriv->tim_bitmap &= ~BIT(psta->aid);
 
-		अगर (psta->state&WIFI_SLEEP_STATE)
+		if (psta->state&WIFI_SLEEP_STATE)
 			psta->state ^= WIFI_SLEEP_STATE;
 
-		अगर (psta->state & WIFI_STA_ALIVE_CHK_STATE) अणु
+		if (psta->state & WIFI_STA_ALIVE_CHK_STATE) {
 			psta->expire_to = pstapriv->expire_to;
 			psta->state ^= WIFI_STA_ALIVE_CHK_STATE;
-		पूर्ण
+		}
 
-		pstapriv->sta_dz_biपंचांगap &= ~BIT(psta->aid);
-	पूर्ण
+		pstapriv->sta_dz_bitmap &= ~BIT(psta->aid);
+	}
 
-	/* क्रम BC/MC Frames */
-	अगर (!psta_bmc)
-		जाओ _निकास;
+	/* for BC/MC Frames */
+	if (!psta_bmc)
+		goto _exit;
 
-	अगर ((pstapriv->sta_dz_biपंचांगap&0xfffe) == 0x0) अणु /* no any sta in ps mode */
+	if ((pstapriv->sta_dz_bitmap&0xfffe) == 0x0) { /* no any sta in ps mode */
 		xmitframe_phead = get_list_head(&psta_bmc->sleep_q);
 		xmitframe_plist = get_next(xmitframe_phead);
 
-		जबतक (xmitframe_phead != xmitframe_plist) अणु
-			pxmitframe = container_of(xmitframe_plist, काष्ठा xmit_frame, list);
+		while (xmitframe_phead != xmitframe_plist) {
+			pxmitframe = container_of(xmitframe_plist, struct xmit_frame, list);
 
 			xmitframe_plist = get_next(xmitframe_plist);
 
 			list_del_init(&pxmitframe->list);
 
 			psta_bmc->sleepq_len--;
-			अगर (psta_bmc->sleepq_len > 0)
+			if (psta_bmc->sleepq_len > 0)
 				pxmitframe->attrib.mdata = 1;
-			अन्यथा
+			else
 				pxmitframe->attrib.mdata = 0;
 
 			pxmitframe->attrib.triggered = 1;
 			rtw_hal_xmitframe_enqueue(padapter, pxmitframe);
-		पूर्ण
+		}
 
-		अगर (psta_bmc->sleepq_len == 0) अणु
-			अगर (pstapriv->tim_biपंचांगap & BIT(0))
+		if (psta_bmc->sleepq_len == 0) {
+			if (pstapriv->tim_bitmap & BIT(0))
 				update_mask |= BIT(1);
 
-			pstapriv->tim_biपंचांगap &= ~BIT(0);
-			pstapriv->sta_dz_biपंचांगap &= ~BIT(0);
-		पूर्ण
-	पूर्ण
+			pstapriv->tim_bitmap &= ~BIT(0);
+			pstapriv->sta_dz_bitmap &= ~BIT(0);
+		}
+	}
 
-_निकास:
+_exit:
 
 	spin_unlock_bh(&pxmitpriv->lock);
 
-	अगर (update_mask)
-		update_beacon(padapter, WLAN_EID_TIM, शून्य, true);
-पूर्ण
+	if (update_mask)
+		update_beacon(padapter, WLAN_EID_TIM, NULL, true);
+}
 
-व्योम xmit_delivery_enabled_frames(काष्ठा adapter *padapter, काष्ठा sta_info *psta)
-अणु
+void xmit_delivery_enabled_frames(struct adapter *padapter, struct sta_info *psta)
+{
 	u8 wmmps_ac = 0;
-	काष्ठा list_head	*xmitframe_plist, *xmitframe_phead;
-	काष्ठा xmit_frame *pxmitframe = शून्य;
-	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
-	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct list_head	*xmitframe_plist, *xmitframe_phead;
+	struct xmit_frame *pxmitframe = NULL;
+	struct sta_priv *pstapriv = &padapter->stapriv;
+	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
 
 	spin_lock_bh(&pxmitpriv->lock);
 
 	xmitframe_phead = get_list_head(&psta->sleep_q);
 	xmitframe_plist = get_next(xmitframe_phead);
 
-	जबतक (xmitframe_phead != xmitframe_plist) अणु
-		pxmitframe = container_of(xmitframe_plist, काष्ठा xmit_frame, list);
+	while (xmitframe_phead != xmitframe_plist) {
+		pxmitframe = container_of(xmitframe_plist, struct xmit_frame, list);
 
 		xmitframe_plist = get_next(xmitframe_plist);
 
-		चयन (pxmitframe->attrib.priority) अणु
-		हाल 1:
-		हाल 2:
+		switch (pxmitframe->attrib.priority) {
+		case 1:
+		case 2:
 			wmmps_ac = psta->uapsd_bk&BIT(1);
-			अवरोध;
-		हाल 4:
-		हाल 5:
+			break;
+		case 4:
+		case 5:
 			wmmps_ac = psta->uapsd_vi&BIT(1);
-			अवरोध;
-		हाल 6:
-		हाल 7:
+			break;
+		case 6:
+		case 7:
 			wmmps_ac = psta->uapsd_vo&BIT(1);
-			अवरोध;
-		हाल 0:
-		हाल 3:
-		शेष:
+			break;
+		case 0:
+		case 3:
+		default:
 			wmmps_ac = psta->uapsd_be&BIT(1);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!wmmps_ac)
-			जारी;
+		if (!wmmps_ac)
+			continue;
 
 		list_del_init(&pxmitframe->list);
 
 		psta->sleepq_len--;
 		psta->sleepq_ac_len--;
 
-		अगर (psta->sleepq_ac_len > 0) अणु
+		if (psta->sleepq_ac_len > 0) {
 			pxmitframe->attrib.mdata = 1;
 			pxmitframe->attrib.eosp = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			pxmitframe->attrib.mdata = 0;
 			pxmitframe->attrib.eosp = 1;
-		पूर्ण
+		}
 
 		pxmitframe->attrib.triggered = 1;
 		rtw_hal_xmitframe_enqueue(padapter, pxmitframe);
 
-		अगर ((psta->sleepq_ac_len == 0) && (!psta->has_legacy_ac) && (wmmps_ac)) अणु
-			pstapriv->tim_biपंचांगap &= ~BIT(psta->aid);
+		if ((psta->sleepq_ac_len == 0) && (!psta->has_legacy_ac) && (wmmps_ac)) {
+			pstapriv->tim_bitmap &= ~BIT(psta->aid);
 
-			update_beacon(padapter, WLAN_EID_TIM, शून्य, true);
-		पूर्ण
-	पूर्ण
+			update_beacon(padapter, WLAN_EID_TIM, NULL, true);
+		}
+	}
 
 	spin_unlock_bh(&pxmitpriv->lock);
-पूर्ण
+}
 
-व्योम enqueue_pending_xmitbuf(काष्ठा xmit_priv *pxmitpriv, काष्ठा xmit_buf *pxmitbuf)
-अणु
-	काष्ठा __queue *pqueue;
-	काष्ठा adapter *pri_adapter = pxmitpriv->adapter;
+void enqueue_pending_xmitbuf(struct xmit_priv *pxmitpriv, struct xmit_buf *pxmitbuf)
+{
+	struct __queue *pqueue;
+	struct adapter *pri_adapter = pxmitpriv->adapter;
 
 	pqueue = &pxmitpriv->pending_xmitbuf_queue;
 
@@ -2402,11 +2401,11 @@ _निकास:
 	spin_unlock_bh(&pqueue->lock);
 
 	complete(&pri_adapter->xmitpriv.xmit_comp);
-पूर्ण
+}
 
-व्योम enqueue_pending_xmitbuf_to_head(काष्ठा xmit_priv *pxmitpriv, काष्ठा xmit_buf *pxmitbuf)
-अणु
-	काष्ठा __queue *pqueue;
+void enqueue_pending_xmitbuf_to_head(struct xmit_priv *pxmitpriv, struct xmit_buf *pxmitbuf)
+{
+	struct __queue *pqueue;
 
 	pqueue = &pxmitpriv->pending_xmitbuf_queue;
 
@@ -2414,165 +2413,165 @@ _निकास:
 	list_del_init(&pxmitbuf->list);
 	list_add(&pxmitbuf->list, get_list_head(pqueue));
 	spin_unlock_bh(&pqueue->lock);
-पूर्ण
+}
 
-काष्ठा xmit_buf *dequeue_pending_xmitbuf(काष्ठा xmit_priv *pxmitpriv)
-अणु
-	काष्ठा xmit_buf *pxmitbuf;
-	काष्ठा __queue *pqueue;
+struct xmit_buf *dequeue_pending_xmitbuf(struct xmit_priv *pxmitpriv)
+{
+	struct xmit_buf *pxmitbuf;
+	struct __queue *pqueue;
 
-	pxmitbuf = शून्य;
+	pxmitbuf = NULL;
 	pqueue = &pxmitpriv->pending_xmitbuf_queue;
 
 	spin_lock_bh(&pqueue->lock);
 
-	अगर (!list_empty(&pqueue->queue)) अणु
-		काष्ठा list_head *plist, *phead;
+	if (!list_empty(&pqueue->queue)) {
+		struct list_head *plist, *phead;
 
 		phead = get_list_head(pqueue);
 		plist = get_next(phead);
-		pxmitbuf = container_of(plist, काष्ठा xmit_buf, list);
+		pxmitbuf = container_of(plist, struct xmit_buf, list);
 		list_del_init(&pxmitbuf->list);
-	पूर्ण
+	}
 
 	spin_unlock_bh(&pqueue->lock);
 
-	वापस pxmitbuf;
-पूर्ण
+	return pxmitbuf;
+}
 
-काष्ठा xmit_buf *dequeue_pending_xmitbuf_under_survey(काष्ठा xmit_priv *pxmitpriv)
-अणु
-	काष्ठा xmit_buf *pxmitbuf;
-	काष्ठा __queue *pqueue;
+struct xmit_buf *dequeue_pending_xmitbuf_under_survey(struct xmit_priv *pxmitpriv)
+{
+	struct xmit_buf *pxmitbuf;
+	struct __queue *pqueue;
 
-	pxmitbuf = शून्य;
+	pxmitbuf = NULL;
 	pqueue = &pxmitpriv->pending_xmitbuf_queue;
 
 	spin_lock_bh(&pqueue->lock);
 
-	अगर (!list_empty(&pqueue->queue)) अणु
-		काष्ठा list_head *plist, *phead;
+	if (!list_empty(&pqueue->queue)) {
+		struct list_head *plist, *phead;
 		u8 type;
 
 		phead = get_list_head(pqueue);
 		plist = phead;
-		करो अणु
+		do {
 			plist = get_next(plist);
-			अगर (plist == phead)
-				अवरोध;
+			if (plist == phead)
+				break;
 
-			pxmitbuf = container_of(plist, काष्ठा xmit_buf, list);
+			pxmitbuf = container_of(plist, struct xmit_buf, list);
 
 			type = GetFrameSubType(pxmitbuf->pbuf + TXDESC_OFFSET);
 
-			अगर ((type == WIFI_PROBEREQ) ||
-				(type == WIFI_DATA_शून्य) ||
-				(type == WIFI_QOS_DATA_शून्य)) अणु
+			if ((type == WIFI_PROBEREQ) ||
+				(type == WIFI_DATA_NULL) ||
+				(type == WIFI_QOS_DATA_NULL)) {
 				list_del_init(&pxmitbuf->list);
-				अवरोध;
-			पूर्ण
-			pxmitbuf = शून्य;
-		पूर्ण जबतक (1);
-	पूर्ण
+				break;
+			}
+			pxmitbuf = NULL;
+		} while (1);
+	}
 
 	spin_unlock_bh(&pqueue->lock);
 
-	वापस pxmitbuf;
-पूर्ण
+	return pxmitbuf;
+}
 
-चिन्हित पूर्णांक check_pending_xmitbuf(काष्ठा xmit_priv *pxmitpriv)
-अणु
-	काष्ठा __queue *pqueue;
-	चिन्हित पूर्णांक	ret = false;
+signed int check_pending_xmitbuf(struct xmit_priv *pxmitpriv)
+{
+	struct __queue *pqueue;
+	signed int	ret = false;
 
 	pqueue = &pxmitpriv->pending_xmitbuf_queue;
 
 	spin_lock_bh(&pqueue->lock);
 
-	अगर (!list_empty(&pqueue->queue))
+	if (!list_empty(&pqueue->queue))
 		ret = true;
 
 	spin_unlock_bh(&pqueue->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक rtw_xmit_thपढ़ो(व्योम *context)
-अणु
+int rtw_xmit_thread(void *context)
+{
 	s32 err;
-	काष्ठा adapter *padapter;
+	struct adapter *padapter;
 
 	err = _SUCCESS;
 	padapter = context;
 
-	thपढ़ो_enter("RTW_XMIT_THREAD");
+	thread_enter("RTW_XMIT_THREAD");
 
-	करो अणु
-		err = rtw_hal_xmit_thपढ़ो_handler(padapter);
-		flush_संकेतs_thपढ़ो();
-	पूर्ण जबतक (err == _SUCCESS);
+	do {
+		err = rtw_hal_xmit_thread_handler(padapter);
+		flush_signals_thread();
+	} while (err == _SUCCESS);
 
-	complete(&padapter->xmitpriv.terminate_xmitthपढ़ो_comp);
+	complete(&padapter->xmitpriv.terminate_xmitthread_comp);
 
-	thपढ़ो_निकास();
-पूर्ण
+	thread_exit();
+}
 
-व्योम rtw_sctx_init(काष्ठा submit_ctx *sctx, पूर्णांक समयout_ms)
-अणु
-	sctx->समयout_ms = समयout_ms;
-	sctx->submit_समय = jअगरfies;
-	init_completion(&sctx->करोne);
+void rtw_sctx_init(struct submit_ctx *sctx, int timeout_ms)
+{
+	sctx->timeout_ms = timeout_ms;
+	sctx->submit_time = jiffies;
+	init_completion(&sctx->done);
 	sctx->status = RTW_SCTX_SUBMITTED;
-पूर्ण
+}
 
-पूर्णांक rtw_sctx_रुको(काष्ठा submit_ctx *sctx, स्थिर अक्षर *msg)
-अणु
-	पूर्णांक ret = _FAIL;
-	अचिन्हित दीर्घ expire;
-	पूर्णांक status = 0;
+int rtw_sctx_wait(struct submit_ctx *sctx, const char *msg)
+{
+	int ret = _FAIL;
+	unsigned long expire;
+	int status = 0;
 
-	expire = sctx->समयout_ms ? msecs_to_jअगरfies(sctx->समयout_ms) : MAX_SCHEDULE_TIMEOUT;
-	अगर (!रुको_क्रम_completion_समयout(&sctx->करोne, expire))
-		/* समयout, करो something?? */
+	expire = sctx->timeout_ms ? msecs_to_jiffies(sctx->timeout_ms) : MAX_SCHEDULE_TIMEOUT;
+	if (!wait_for_completion_timeout(&sctx->done, expire))
+		/* timeout, do something?? */
 		status = RTW_SCTX_DONE_TIMEOUT;
-	अन्यथा
+	else
 		status = sctx->status;
 
-	अगर (status == RTW_SCTX_DONE_SUCCESS)
+	if (status == RTW_SCTX_DONE_SUCCESS)
 		ret = _SUCCESS;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम rtw_sctx_करोne_err(काष्ठा submit_ctx **sctx, पूर्णांक status)
-अणु
-	अगर (*sctx) अणु
+void rtw_sctx_done_err(struct submit_ctx **sctx, int status)
+{
+	if (*sctx) {
 		(*sctx)->status = status;
-		complete(&((*sctx)->करोne));
-		*sctx = शून्य;
-	पूर्ण
-पूर्ण
+		complete(&((*sctx)->done));
+		*sctx = NULL;
+	}
+}
 
-व्योम rtw_sctx_करोne(काष्ठा submit_ctx **sctx)
-अणु
-	rtw_sctx_करोne_err(sctx, RTW_SCTX_DONE_SUCCESS);
-पूर्ण
+void rtw_sctx_done(struct submit_ctx **sctx)
+{
+	rtw_sctx_done_err(sctx, RTW_SCTX_DONE_SUCCESS);
+}
 
-पूर्णांक rtw_ack_tx_रुको(काष्ठा xmit_priv *pxmitpriv, u32 समयout_ms)
-अणु
-	काष्ठा submit_ctx *pack_tx_ops = &pxmitpriv->ack_tx_ops;
+int rtw_ack_tx_wait(struct xmit_priv *pxmitpriv, u32 timeout_ms)
+{
+	struct submit_ctx *pack_tx_ops = &pxmitpriv->ack_tx_ops;
 
-	pack_tx_ops->submit_समय = jअगरfies;
-	pack_tx_ops->समयout_ms = समयout_ms;
+	pack_tx_ops->submit_time = jiffies;
+	pack_tx_ops->timeout_ms = timeout_ms;
 	pack_tx_ops->status = RTW_SCTX_SUBMITTED;
 
-	वापस rtw_sctx_रुको(pack_tx_ops, __func__);
-पूर्ण
+	return rtw_sctx_wait(pack_tx_ops, __func__);
+}
 
-व्योम rtw_ack_tx_करोne(काष्ठा xmit_priv *pxmitpriv, पूर्णांक status)
-अणु
-	काष्ठा submit_ctx *pack_tx_ops = &pxmitpriv->ack_tx_ops;
+void rtw_ack_tx_done(struct xmit_priv *pxmitpriv, int status)
+{
+	struct submit_ctx *pack_tx_ops = &pxmitpriv->ack_tx_ops;
 
-	अगर (pxmitpriv->ack_tx)
-		rtw_sctx_करोne_err(&pack_tx_ops, status);
-पूर्ण
+	if (pxmitpriv->ack_tx)
+		rtw_sctx_done_err(&pack_tx_ops, status);
+}

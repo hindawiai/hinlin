@@ -1,364 +1,363 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Joystick device driver क्रम the input driver suite.
+ * Joystick device driver for the input driver suite.
  *
  * Copyright (c) 1999-2002 Vojtech Pavlik
  * Copyright (c) 1999 Colin Van Dyke
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <यंत्र/पन.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/joystick.h>
-#समावेश <linux/input.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/major.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/module.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/init.h>
-#समावेश <linux/device.h>
-#समावेश <linux/cdev.h>
+#include <asm/io.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/joystick.h>
+#include <linux/input.h>
+#include <linux/kernel.h>
+#include <linux/major.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/mm.h>
+#include <linux/module.h>
+#include <linux/poll.h>
+#include <linux/init.h>
+#include <linux/device.h>
+#include <linux/cdev.h>
 
 MODULE_AUTHOR("Vojtech Pavlik <vojtech@ucw.cz>");
 MODULE_DESCRIPTION("Joystick device interfaces");
 MODULE_LICENSE("GPL");
 
-#घोषणा JOYDEV_MINOR_BASE	0
-#घोषणा JOYDEV_MINORS		16
-#घोषणा JOYDEV_BUFFER_SIZE	64
+#define JOYDEV_MINOR_BASE	0
+#define JOYDEV_MINORS		16
+#define JOYDEV_BUFFER_SIZE	64
 
-काष्ठा joydev अणु
-	पूर्णांक खोलो;
-	काष्ठा input_handle handle;
-	रुको_queue_head_t रुको;
-	काष्ठा list_head client_list;
+struct joydev {
+	int open;
+	struct input_handle handle;
+	wait_queue_head_t wait;
+	struct list_head client_list;
 	spinlock_t client_lock; /* protects client_list */
-	काष्ठा mutex mutex;
-	काष्ठा device dev;
-	काष्ठा cdev cdev;
+	struct mutex mutex;
+	struct device dev;
+	struct cdev cdev;
 	bool exist;
 
-	काष्ठा js_corr corr[ABS_CNT];
-	काष्ठा JS_DATA_SAVE_TYPE glue;
-	पूर्णांक nअसल;
-	पूर्णांक nkey;
+	struct js_corr corr[ABS_CNT];
+	struct JS_DATA_SAVE_TYPE glue;
+	int nabs;
+	int nkey;
 	__u16 keymap[KEY_MAX - BTN_MISC + 1];
 	__u16 keypam[KEY_MAX - BTN_MISC + 1];
-	__u8 असलmap[ABS_CNT];
-	__u8 असलpam[ABS_CNT];
-	__s16 असल[ABS_CNT];
-पूर्ण;
+	__u8 absmap[ABS_CNT];
+	__u8 abspam[ABS_CNT];
+	__s16 abs[ABS_CNT];
+};
 
-काष्ठा joydev_client अणु
-	काष्ठा js_event buffer[JOYDEV_BUFFER_SIZE];
-	पूर्णांक head;
-	पूर्णांक tail;
-	पूर्णांक startup;
+struct joydev_client {
+	struct js_event buffer[JOYDEV_BUFFER_SIZE];
+	int head;
+	int tail;
+	int startup;
 	spinlock_t buffer_lock; /* protects access to buffer, head and tail */
-	काष्ठा fasync_काष्ठा *fasync;
-	काष्ठा joydev *joydev;
-	काष्ठा list_head node;
-पूर्ण;
+	struct fasync_struct *fasync;
+	struct joydev *joydev;
+	struct list_head node;
+};
 
-अटल पूर्णांक joydev_correct(पूर्णांक value, काष्ठा js_corr *corr)
-अणु
-	चयन (corr->type) अणु
+static int joydev_correct(int value, struct js_corr *corr)
+{
+	switch (corr->type) {
 
-	हाल JS_CORR_NONE:
-		अवरोध;
+	case JS_CORR_NONE:
+		break;
 
-	हाल JS_CORR_BROKEN:
+	case JS_CORR_BROKEN:
 		value = value > corr->coef[0] ? (value < corr->coef[1] ? 0 :
 			((corr->coef[3] * (value - corr->coef[1])) >> 14)) :
 			((corr->coef[2] * (value - corr->coef[0])) >> 14);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस 0;
-	पूर्ण
+	default:
+		return 0;
+	}
 
-	वापस clamp(value, -32767, 32767);
-पूर्ण
+	return clamp(value, -32767, 32767);
+}
 
-अटल व्योम joydev_pass_event(काष्ठा joydev_client *client,
-			      काष्ठा js_event *event)
-अणु
-	काष्ठा joydev *joydev = client->joydev;
+static void joydev_pass_event(struct joydev_client *client,
+			      struct js_event *event)
+{
+	struct joydev *joydev = client->joydev;
 
 	/*
-	 * IRQs alपढ़ोy disabled, just acquire the lock
+	 * IRQs already disabled, just acquire the lock
 	 */
 	spin_lock(&client->buffer_lock);
 
 	client->buffer[client->head] = *event;
 
-	अगर (client->startup == joydev->nअसल + joydev->nkey) अणु
+	if (client->startup == joydev->nabs + joydev->nkey) {
 		client->head++;
 		client->head &= JOYDEV_BUFFER_SIZE - 1;
-		अगर (client->tail == client->head)
+		if (client->tail == client->head)
 			client->startup = 0;
-	पूर्ण
+	}
 
 	spin_unlock(&client->buffer_lock);
 
-	समाप्त_fasync(&client->fasync, SIGIO, POLL_IN);
-पूर्ण
+	kill_fasync(&client->fasync, SIGIO, POLL_IN);
+}
 
-अटल व्योम joydev_event(काष्ठा input_handle *handle,
-			 अचिन्हित पूर्णांक type, अचिन्हित पूर्णांक code, पूर्णांक value)
-अणु
-	काष्ठा joydev *joydev = handle->निजी;
-	काष्ठा joydev_client *client;
-	काष्ठा js_event event;
+static void joydev_event(struct input_handle *handle,
+			 unsigned int type, unsigned int code, int value)
+{
+	struct joydev *joydev = handle->private;
+	struct joydev_client *client;
+	struct js_event event;
 
-	चयन (type) अणु
+	switch (type) {
 
-	हाल EV_KEY:
-		अगर (code < BTN_MISC || value == 2)
-			वापस;
+	case EV_KEY:
+		if (code < BTN_MISC || value == 2)
+			return;
 		event.type = JS_EVENT_BUTTON;
 		event.number = joydev->keymap[code - BTN_MISC];
 		event.value = value;
-		अवरोध;
+		break;
 
-	हाल EV_ABS:
+	case EV_ABS:
 		event.type = JS_EVENT_AXIS;
-		event.number = joydev->असलmap[code];
+		event.number = joydev->absmap[code];
 		event.value = joydev_correct(value,
 					&joydev->corr[event.number]);
-		अगर (event.value == joydev->असल[event.number])
-			वापस;
-		joydev->असल[event.number] = event.value;
-		अवरोध;
+		if (event.value == joydev->abs[event.number])
+			return;
+		joydev->abs[event.number] = event.value;
+		break;
 
-	शेष:
-		वापस;
-	पूर्ण
+	default:
+		return;
+	}
 
-	event.समय = jअगरfies_to_msecs(jअगरfies);
+	event.time = jiffies_to_msecs(jiffies);
 
-	rcu_पढ़ो_lock();
-	list_क्रम_each_entry_rcu(client, &joydev->client_list, node)
+	rcu_read_lock();
+	list_for_each_entry_rcu(client, &joydev->client_list, node)
 		joydev_pass_event(client, &event);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	wake_up_पूर्णांकerruptible(&joydev->रुको);
-पूर्ण
+	wake_up_interruptible(&joydev->wait);
+}
 
-अटल पूर्णांक joydev_fasync(पूर्णांक fd, काष्ठा file *file, पूर्णांक on)
-अणु
-	काष्ठा joydev_client *client = file->निजी_data;
+static int joydev_fasync(int fd, struct file *file, int on)
+{
+	struct joydev_client *client = file->private_data;
 
-	वापस fasync_helper(fd, file, on, &client->fasync);
-पूर्ण
+	return fasync_helper(fd, file, on, &client->fasync);
+}
 
-अटल व्योम joydev_मुक्त(काष्ठा device *dev)
-अणु
-	काष्ठा joydev *joydev = container_of(dev, काष्ठा joydev, dev);
+static void joydev_free(struct device *dev)
+{
+	struct joydev *joydev = container_of(dev, struct joydev, dev);
 
 	input_put_device(joydev->handle.dev);
-	kमुक्त(joydev);
-पूर्ण
+	kfree(joydev);
+}
 
-अटल व्योम joydev_attach_client(काष्ठा joydev *joydev,
-				 काष्ठा joydev_client *client)
-अणु
+static void joydev_attach_client(struct joydev *joydev,
+				 struct joydev_client *client)
+{
 	spin_lock(&joydev->client_lock);
 	list_add_tail_rcu(&client->node, &joydev->client_list);
 	spin_unlock(&joydev->client_lock);
-पूर्ण
+}
 
-अटल व्योम joydev_detach_client(काष्ठा joydev *joydev,
-				 काष्ठा joydev_client *client)
-अणु
+static void joydev_detach_client(struct joydev *joydev,
+				 struct joydev_client *client)
+{
 	spin_lock(&joydev->client_lock);
 	list_del_rcu(&client->node);
 	spin_unlock(&joydev->client_lock);
 	synchronize_rcu();
-पूर्ण
+}
 
-अटल व्योम joydev_refresh_state(काष्ठा joydev *joydev)
-अणु
-	काष्ठा input_dev *dev = joydev->handle.dev;
-	पूर्णांक i, val;
+static void joydev_refresh_state(struct joydev *joydev)
+{
+	struct input_dev *dev = joydev->handle.dev;
+	int i, val;
 
-	क्रम (i = 0; i < joydev->nअसल; i++) अणु
-		val = input_असल_get_val(dev, joydev->असलpam[i]);
-		joydev->असल[i] = joydev_correct(val, &joydev->corr[i]);
-	पूर्ण
-पूर्ण
+	for (i = 0; i < joydev->nabs; i++) {
+		val = input_abs_get_val(dev, joydev->abspam[i]);
+		joydev->abs[i] = joydev_correct(val, &joydev->corr[i]);
+	}
+}
 
-अटल पूर्णांक joydev_खोलो_device(काष्ठा joydev *joydev)
-अणु
-	पूर्णांक retval;
+static int joydev_open_device(struct joydev *joydev)
+{
+	int retval;
 
-	retval = mutex_lock_पूर्णांकerruptible(&joydev->mutex);
-	अगर (retval)
-		वापस retval;
+	retval = mutex_lock_interruptible(&joydev->mutex);
+	if (retval)
+		return retval;
 
-	अगर (!joydev->exist)
+	if (!joydev->exist)
 		retval = -ENODEV;
-	अन्यथा अगर (!joydev->खोलो++) अणु
-		retval = input_खोलो_device(&joydev->handle);
-		अगर (retval)
-			joydev->खोलो--;
-		अन्यथा
+	else if (!joydev->open++) {
+		retval = input_open_device(&joydev->handle);
+		if (retval)
+			joydev->open--;
+		else
 			joydev_refresh_state(joydev);
-	पूर्ण
+	}
 
 	mutex_unlock(&joydev->mutex);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम joydev_बंद_device(काष्ठा joydev *joydev)
-अणु
+static void joydev_close_device(struct joydev *joydev)
+{
 	mutex_lock(&joydev->mutex);
 
-	अगर (joydev->exist && !--joydev->खोलो)
-		input_बंद_device(&joydev->handle);
+	if (joydev->exist && !--joydev->open)
+		input_close_device(&joydev->handle);
 
 	mutex_unlock(&joydev->mutex);
-पूर्ण
+}
 
 /*
- * Wake up users रुकोing क्रम IO so they can disconnect from
+ * Wake up users waiting for IO so they can disconnect from
  * dead device.
  */
-अटल व्योम joydev_hangup(काष्ठा joydev *joydev)
-अणु
-	काष्ठा joydev_client *client;
+static void joydev_hangup(struct joydev *joydev)
+{
+	struct joydev_client *client;
 
 	spin_lock(&joydev->client_lock);
-	list_क्रम_each_entry(client, &joydev->client_list, node)
-		समाप्त_fasync(&client->fasync, SIGIO, POLL_HUP);
+	list_for_each_entry(client, &joydev->client_list, node)
+		kill_fasync(&client->fasync, SIGIO, POLL_HUP);
 	spin_unlock(&joydev->client_lock);
 
-	wake_up_पूर्णांकerruptible(&joydev->रुको);
-पूर्ण
+	wake_up_interruptible(&joydev->wait);
+}
 
-अटल पूर्णांक joydev_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा joydev_client *client = file->निजी_data;
-	काष्ठा joydev *joydev = client->joydev;
+static int joydev_release(struct inode *inode, struct file *file)
+{
+	struct joydev_client *client = file->private_data;
+	struct joydev *joydev = client->joydev;
 
 	joydev_detach_client(joydev, client);
-	kमुक्त(client);
+	kfree(client);
 
-	joydev_बंद_device(joydev);
+	joydev_close_device(joydev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक joydev_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा joydev *joydev =
-			container_of(inode->i_cdev, काष्ठा joydev, cdev);
-	काष्ठा joydev_client *client;
-	पूर्णांक error;
+static int joydev_open(struct inode *inode, struct file *file)
+{
+	struct joydev *joydev =
+			container_of(inode->i_cdev, struct joydev, cdev);
+	struct joydev_client *client;
+	int error;
 
-	client = kzalloc(माप(काष्ठा joydev_client), GFP_KERNEL);
-	अगर (!client)
-		वापस -ENOMEM;
+	client = kzalloc(sizeof(struct joydev_client), GFP_KERNEL);
+	if (!client)
+		return -ENOMEM;
 
 	spin_lock_init(&client->buffer_lock);
 	client->joydev = joydev;
 	joydev_attach_client(joydev, client);
 
-	error = joydev_खोलो_device(joydev);
-	अगर (error)
-		जाओ err_मुक्त_client;
+	error = joydev_open_device(joydev);
+	if (error)
+		goto err_free_client;
 
-	file->निजी_data = client;
-	stream_खोलो(inode, file);
+	file->private_data = client;
+	stream_open(inode, file);
 
-	वापस 0;
+	return 0;
 
- err_मुक्त_client:
+ err_free_client:
 	joydev_detach_client(joydev, client);
-	kमुक्त(client);
-	वापस error;
-पूर्ण
+	kfree(client);
+	return error;
+}
 
-अटल पूर्णांक joydev_generate_startup_event(काष्ठा joydev_client *client,
-					 काष्ठा input_dev *input,
-					 काष्ठा js_event *event)
-अणु
-	काष्ठा joydev *joydev = client->joydev;
-	पूर्णांक have_event;
+static int joydev_generate_startup_event(struct joydev_client *client,
+					 struct input_dev *input,
+					 struct js_event *event)
+{
+	struct joydev *joydev = client->joydev;
+	int have_event;
 
 	spin_lock_irq(&client->buffer_lock);
 
-	have_event = client->startup < joydev->nअसल + joydev->nkey;
+	have_event = client->startup < joydev->nabs + joydev->nkey;
 
-	अगर (have_event) अणु
+	if (have_event) {
 
-		event->समय = jअगरfies_to_msecs(jअगरfies);
-		अगर (client->startup < joydev->nkey) अणु
+		event->time = jiffies_to_msecs(jiffies);
+		if (client->startup < joydev->nkey) {
 			event->type = JS_EVENT_BUTTON | JS_EVENT_INIT;
 			event->number = client->startup;
 			event->value = !!test_bit(joydev->keypam[event->number],
 						  input->key);
-		पूर्ण अन्यथा अणु
+		} else {
 			event->type = JS_EVENT_AXIS | JS_EVENT_INIT;
 			event->number = client->startup - joydev->nkey;
-			event->value = joydev->असल[event->number];
-		पूर्ण
+			event->value = joydev->abs[event->number];
+		}
 		client->startup++;
-	पूर्ण
+	}
 
 	spin_unlock_irq(&client->buffer_lock);
 
-	वापस have_event;
-पूर्ण
+	return have_event;
+}
 
-अटल पूर्णांक joydev_fetch_next_event(काष्ठा joydev_client *client,
-				   काष्ठा js_event *event)
-अणु
-	पूर्णांक have_event;
+static int joydev_fetch_next_event(struct joydev_client *client,
+				   struct js_event *event)
+{
+	int have_event;
 
 	spin_lock_irq(&client->buffer_lock);
 
 	have_event = client->head != client->tail;
-	अगर (have_event) अणु
+	if (have_event) {
 		*event = client->buffer[client->tail++];
 		client->tail &= JOYDEV_BUFFER_SIZE - 1;
-	पूर्ण
+	}
 
 	spin_unlock_irq(&client->buffer_lock);
 
-	वापस have_event;
-पूर्ण
+	return have_event;
+}
 
 /*
- * Old joystick पूर्णांकerface
+ * Old joystick interface
  */
-अटल sमाप_प्रकार joydev_0x_पढ़ो(काष्ठा joydev_client *client,
-			      काष्ठा input_dev *input,
-			      अक्षर __user *buf)
-अणु
-	काष्ठा joydev *joydev = client->joydev;
-	काष्ठा JS_DATA_TYPE data;
-	पूर्णांक i;
+static ssize_t joydev_0x_read(struct joydev_client *client,
+			      struct input_dev *input,
+			      char __user *buf)
+{
+	struct joydev *joydev = client->joydev;
+	struct JS_DATA_TYPE data;
+	int i;
 
 	spin_lock_irq(&input->event_lock);
 
 	/*
 	 * Get device state
 	 */
-	क्रम (data.buttons = i = 0; i < 32 && i < joydev->nkey; i++)
+	for (data.buttons = i = 0; i < 32 && i < joydev->nkey; i++)
 		data.buttons |=
 			test_bit(joydev->keypam[i], input->key) ? (1 << i) : 0;
-	data.x = (joydev->असल[0] / 256 + 128) >> joydev->glue.JS_CORR.x;
-	data.y = (joydev->असल[1] / 256 + 128) >> joydev->glue.JS_CORR.y;
+	data.x = (joydev->abs[0] / 256 + 128) >> joydev->glue.JS_CORR.x;
+	data.y = (joydev->abs[1] / 256 + 128) >> joydev->glue.JS_CORR.y;
 
 	/*
-	 * Reset पढ़ोer's event queue
+	 * Reset reader's event queue
 	 */
 	spin_lock(&client->buffer_lock);
 	client->startup = 0;
@@ -367,278 +366,278 @@ MODULE_LICENSE("GPL");
 
 	spin_unlock_irq(&input->event_lock);
 
-	अगर (copy_to_user(buf, &data, माप(काष्ठा JS_DATA_TYPE)))
-		वापस -EFAULT;
+	if (copy_to_user(buf, &data, sizeof(struct JS_DATA_TYPE)))
+		return -EFAULT;
 
-	वापस माप(काष्ठा JS_DATA_TYPE);
-पूर्ण
+	return sizeof(struct JS_DATA_TYPE);
+}
 
-अटल अंतरभूत पूर्णांक joydev_data_pending(काष्ठा joydev_client *client)
-अणु
-	काष्ठा joydev *joydev = client->joydev;
+static inline int joydev_data_pending(struct joydev_client *client)
+{
+	struct joydev *joydev = client->joydev;
 
-	वापस client->startup < joydev->nअसल + joydev->nkey ||
+	return client->startup < joydev->nabs + joydev->nkey ||
 		client->head != client->tail;
-पूर्ण
+}
 
-अटल sमाप_प्रकार joydev_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
-			   माप_प्रकार count, loff_t *ppos)
-अणु
-	काष्ठा joydev_client *client = file->निजी_data;
-	काष्ठा joydev *joydev = client->joydev;
-	काष्ठा input_dev *input = joydev->handle.dev;
-	काष्ठा js_event event;
-	पूर्णांक retval;
+static ssize_t joydev_read(struct file *file, char __user *buf,
+			   size_t count, loff_t *ppos)
+{
+	struct joydev_client *client = file->private_data;
+	struct joydev *joydev = client->joydev;
+	struct input_dev *input = joydev->handle.dev;
+	struct js_event event;
+	int retval;
 
-	अगर (!joydev->exist)
-		वापस -ENODEV;
+	if (!joydev->exist)
+		return -ENODEV;
 
-	अगर (count < माप(काष्ठा js_event))
-		वापस -EINVAL;
+	if (count < sizeof(struct js_event))
+		return -EINVAL;
 
-	अगर (count == माप(काष्ठा JS_DATA_TYPE))
-		वापस joydev_0x_पढ़ो(client, input, buf);
+	if (count == sizeof(struct JS_DATA_TYPE))
+		return joydev_0x_read(client, input, buf);
 
-	अगर (!joydev_data_pending(client) && (file->f_flags & O_NONBLOCK))
-		वापस -EAGAIN;
+	if (!joydev_data_pending(client) && (file->f_flags & O_NONBLOCK))
+		return -EAGAIN;
 
-	retval = रुको_event_पूर्णांकerruptible(joydev->रुको,
+	retval = wait_event_interruptible(joydev->wait,
 			!joydev->exist || joydev_data_pending(client));
-	अगर (retval)
-		वापस retval;
+	if (retval)
+		return retval;
 
-	अगर (!joydev->exist)
-		वापस -ENODEV;
+	if (!joydev->exist)
+		return -ENODEV;
 
-	जबतक (retval + माप(काष्ठा js_event) <= count &&
-	       joydev_generate_startup_event(client, input, &event)) अणु
+	while (retval + sizeof(struct js_event) <= count &&
+	       joydev_generate_startup_event(client, input, &event)) {
 
-		अगर (copy_to_user(buf + retval, &event, माप(काष्ठा js_event)))
-			वापस -EFAULT;
+		if (copy_to_user(buf + retval, &event, sizeof(struct js_event)))
+			return -EFAULT;
 
-		retval += माप(काष्ठा js_event);
-	पूर्ण
+		retval += sizeof(struct js_event);
+	}
 
-	जबतक (retval + माप(काष्ठा js_event) <= count &&
-	       joydev_fetch_next_event(client, &event)) अणु
+	while (retval + sizeof(struct js_event) <= count &&
+	       joydev_fetch_next_event(client, &event)) {
 
-		अगर (copy_to_user(buf + retval, &event, माप(काष्ठा js_event)))
-			वापस -EFAULT;
+		if (copy_to_user(buf + retval, &event, sizeof(struct js_event)))
+			return -EFAULT;
 
-		retval += माप(काष्ठा js_event);
-	पूर्ण
+		retval += sizeof(struct js_event);
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /* No kernel lock - fine */
-अटल __poll_t joydev_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा joydev_client *client = file->निजी_data;
-	काष्ठा joydev *joydev = client->joydev;
+static __poll_t joydev_poll(struct file *file, poll_table *wait)
+{
+	struct joydev_client *client = file->private_data;
+	struct joydev *joydev = client->joydev;
 
-	poll_रुको(file, &joydev->रुको, रुको);
-	वापस (joydev_data_pending(client) ? (EPOLLIN | EPOLLRDNORM) : 0) |
+	poll_wait(file, &joydev->wait, wait);
+	return (joydev_data_pending(client) ? (EPOLLIN | EPOLLRDNORM) : 0) |
 		(joydev->exist ?  0 : (EPOLLHUP | EPOLLERR));
-पूर्ण
+}
 
-अटल पूर्णांक joydev_handle_JSIOCSAXMAP(काष्ठा joydev *joydev,
-				     व्योम __user *argp, माप_प्रकार len)
-अणु
-	__u8 *असलpam;
-	पूर्णांक i;
-	पूर्णांक retval = 0;
+static int joydev_handle_JSIOCSAXMAP(struct joydev *joydev,
+				     void __user *argp, size_t len)
+{
+	__u8 *abspam;
+	int i;
+	int retval = 0;
 
-	len = min(len, माप(joydev->असलpam));
+	len = min(len, sizeof(joydev->abspam));
 
 	/* Validate the map. */
-	असलpam = memdup_user(argp, len);
-	अगर (IS_ERR(असलpam))
-		वापस PTR_ERR(असलpam);
+	abspam = memdup_user(argp, len);
+	if (IS_ERR(abspam))
+		return PTR_ERR(abspam);
 
-	क्रम (i = 0; i < len && i < joydev->nअसल; i++) अणु
-		अगर (असलpam[i] > ABS_MAX) अणु
+	for (i = 0; i < len && i < joydev->nabs; i++) {
+		if (abspam[i] > ABS_MAX) {
 			retval = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	स_नकल(joydev->असलpam, असलpam, len);
+	memcpy(joydev->abspam, abspam, len);
 
-	क्रम (i = 0; i < joydev->nअसल; i++)
-		joydev->असलmap[joydev->असलpam[i]] = i;
+	for (i = 0; i < joydev->nabs; i++)
+		joydev->absmap[joydev->abspam[i]] = i;
 
  out:
-	kमुक्त(असलpam);
-	वापस retval;
-पूर्ण
+	kfree(abspam);
+	return retval;
+}
 
-अटल पूर्णांक joydev_handle_JSIOCSBTNMAP(काष्ठा joydev *joydev,
-				      व्योम __user *argp, माप_प्रकार len)
-अणु
+static int joydev_handle_JSIOCSBTNMAP(struct joydev *joydev,
+				      void __user *argp, size_t len)
+{
 	__u16 *keypam;
-	पूर्णांक i;
-	पूर्णांक retval = 0;
+	int i;
+	int retval = 0;
 
-	अगर (len % माप(*keypam))
-		वापस -EINVAL;
+	if (len % sizeof(*keypam))
+		return -EINVAL;
 
-	len = min(len, माप(joydev->keypam));
+	len = min(len, sizeof(joydev->keypam));
 
 	/* Validate the map. */
 	keypam = memdup_user(argp, len);
-	अगर (IS_ERR(keypam))
-		वापस PTR_ERR(keypam);
+	if (IS_ERR(keypam))
+		return PTR_ERR(keypam);
 
-	क्रम (i = 0; i < (len / 2) && i < joydev->nkey; i++) अणु
-		अगर (keypam[i] > KEY_MAX || keypam[i] < BTN_MISC) अणु
+	for (i = 0; i < (len / 2) && i < joydev->nkey; i++) {
+		if (keypam[i] > KEY_MAX || keypam[i] < BTN_MISC) {
 			retval = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	स_नकल(joydev->keypam, keypam, len);
+	memcpy(joydev->keypam, keypam, len);
 
-	क्रम (i = 0; i < joydev->nkey; i++)
+	for (i = 0; i < joydev->nkey; i++)
 		joydev->keymap[keypam[i] - BTN_MISC] = i;
 
  out:
-	kमुक्त(keypam);
-	वापस retval;
-पूर्ण
+	kfree(keypam);
+	return retval;
+}
 
 
-अटल पूर्णांक joydev_ioctl_common(काष्ठा joydev *joydev,
-				अचिन्हित पूर्णांक cmd, व्योम __user *argp)
-अणु
-	काष्ठा input_dev *dev = joydev->handle.dev;
-	माप_प्रकार len;
-	पूर्णांक i;
-	स्थिर अक्षर *name;
+static int joydev_ioctl_common(struct joydev *joydev,
+				unsigned int cmd, void __user *argp)
+{
+	struct input_dev *dev = joydev->handle.dev;
+	size_t len;
+	int i;
+	const char *name;
 
 	/* Process fixed-sized commands. */
-	चयन (cmd) अणु
+	switch (cmd) {
 
-	हाल JS_SET_CAL:
-		वापस copy_from_user(&joydev->glue.JS_CORR, argp,
-				माप(joydev->glue.JS_CORR)) ? -EFAULT : 0;
+	case JS_SET_CAL:
+		return copy_from_user(&joydev->glue.JS_CORR, argp,
+				sizeof(joydev->glue.JS_CORR)) ? -EFAULT : 0;
 
-	हाल JS_GET_CAL:
-		वापस copy_to_user(argp, &joydev->glue.JS_CORR,
-				माप(joydev->glue.JS_CORR)) ? -EFAULT : 0;
+	case JS_GET_CAL:
+		return copy_to_user(argp, &joydev->glue.JS_CORR,
+				sizeof(joydev->glue.JS_CORR)) ? -EFAULT : 0;
 
-	हाल JS_SET_TIMEOUT:
-		वापस get_user(joydev->glue.JS_TIMEOUT, (s32 __user *) argp);
+	case JS_SET_TIMEOUT:
+		return get_user(joydev->glue.JS_TIMEOUT, (s32 __user *) argp);
 
-	हाल JS_GET_TIMEOUT:
-		वापस put_user(joydev->glue.JS_TIMEOUT, (s32 __user *) argp);
+	case JS_GET_TIMEOUT:
+		return put_user(joydev->glue.JS_TIMEOUT, (s32 __user *) argp);
 
-	हाल JSIOCGVERSION:
-		वापस put_user(JS_VERSION, (__u32 __user *) argp);
+	case JSIOCGVERSION:
+		return put_user(JS_VERSION, (__u32 __user *) argp);
 
-	हाल JSIOCGAXES:
-		वापस put_user(joydev->nअसल, (__u8 __user *) argp);
+	case JSIOCGAXES:
+		return put_user(joydev->nabs, (__u8 __user *) argp);
 
-	हाल JSIOCGBUTTONS:
-		वापस put_user(joydev->nkey, (__u8 __user *) argp);
+	case JSIOCGBUTTONS:
+		return put_user(joydev->nkey, (__u8 __user *) argp);
 
-	हाल JSIOCSCORR:
-		अगर (copy_from_user(joydev->corr, argp,
-			      माप(joydev->corr[0]) * joydev->nअसल))
-			वापस -EFAULT;
+	case JSIOCSCORR:
+		if (copy_from_user(joydev->corr, argp,
+			      sizeof(joydev->corr[0]) * joydev->nabs))
+			return -EFAULT;
 
-		क्रम (i = 0; i < joydev->nअसल; i++) अणु
-			पूर्णांक val = input_असल_get_val(dev, joydev->असलpam[i]);
-			joydev->असल[i] = joydev_correct(val, &joydev->corr[i]);
-		पूर्ण
-		वापस 0;
+		for (i = 0; i < joydev->nabs; i++) {
+			int val = input_abs_get_val(dev, joydev->abspam[i]);
+			joydev->abs[i] = joydev_correct(val, &joydev->corr[i]);
+		}
+		return 0;
 
-	हाल JSIOCGCORR:
-		वापस copy_to_user(argp, joydev->corr,
-			माप(joydev->corr[0]) * joydev->nअसल) ? -EFAULT : 0;
+	case JSIOCGCORR:
+		return copy_to_user(argp, joydev->corr,
+			sizeof(joydev->corr[0]) * joydev->nabs) ? -EFAULT : 0;
 
-	पूर्ण
+	}
 
 	/*
 	 * Process variable-sized commands (the axis and button map commands
 	 * are considered variable-sized to decouple them from the values of
 	 * ABS_MAX and KEY_MAX).
 	 */
-	चयन (cmd & ~IOCSIZE_MASK) अणु
+	switch (cmd & ~IOCSIZE_MASK) {
 
-	हाल (JSIOCSAXMAP & ~IOCSIZE_MASK):
-		वापस joydev_handle_JSIOCSAXMAP(joydev, argp, _IOC_SIZE(cmd));
+	case (JSIOCSAXMAP & ~IOCSIZE_MASK):
+		return joydev_handle_JSIOCSAXMAP(joydev, argp, _IOC_SIZE(cmd));
 
-	हाल (JSIOCGAXMAP & ~IOCSIZE_MASK):
-		len = min_t(माप_प्रकार, _IOC_SIZE(cmd), माप(joydev->असलpam));
-		वापस copy_to_user(argp, joydev->असलpam, len) ? -EFAULT : len;
+	case (JSIOCGAXMAP & ~IOCSIZE_MASK):
+		len = min_t(size_t, _IOC_SIZE(cmd), sizeof(joydev->abspam));
+		return copy_to_user(argp, joydev->abspam, len) ? -EFAULT : len;
 
-	हाल (JSIOCSBTNMAP & ~IOCSIZE_MASK):
-		वापस joydev_handle_JSIOCSBTNMAP(joydev, argp, _IOC_SIZE(cmd));
+	case (JSIOCSBTNMAP & ~IOCSIZE_MASK):
+		return joydev_handle_JSIOCSBTNMAP(joydev, argp, _IOC_SIZE(cmd));
 
-	हाल (JSIOCGBTNMAP & ~IOCSIZE_MASK):
-		len = min_t(माप_प्रकार, _IOC_SIZE(cmd), माप(joydev->keypam));
-		वापस copy_to_user(argp, joydev->keypam, len) ? -EFAULT : len;
+	case (JSIOCGBTNMAP & ~IOCSIZE_MASK):
+		len = min_t(size_t, _IOC_SIZE(cmd), sizeof(joydev->keypam));
+		return copy_to_user(argp, joydev->keypam, len) ? -EFAULT : len;
 
-	हाल JSIOCGNAME(0):
+	case JSIOCGNAME(0):
 		name = dev->name;
-		अगर (!name)
-			वापस 0;
+		if (!name)
+			return 0;
 
-		len = min_t(माप_प्रकार, _IOC_SIZE(cmd), म_माप(name) + 1);
-		वापस copy_to_user(argp, name, len) ? -EFAULT : len;
-	पूर्ण
+		len = min_t(size_t, _IOC_SIZE(cmd), strlen(name) + 1);
+		return copy_to_user(argp, name, len) ? -EFAULT : len;
+	}
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-#अगर_घोषित CONFIG_COMPAT
-अटल दीर्घ joydev_compat_ioctl(काष्ठा file *file,
-				अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा joydev_client *client = file->निजी_data;
-	काष्ठा joydev *joydev = client->joydev;
-	व्योम __user *argp = (व्योम __user *)arg;
-	s32 पंचांगp32;
-	काष्ठा JS_DATA_SAVE_TYPE_32 ds32;
-	पूर्णांक retval;
+#ifdef CONFIG_COMPAT
+static long joydev_compat_ioctl(struct file *file,
+				unsigned int cmd, unsigned long arg)
+{
+	struct joydev_client *client = file->private_data;
+	struct joydev *joydev = client->joydev;
+	void __user *argp = (void __user *)arg;
+	s32 tmp32;
+	struct JS_DATA_SAVE_TYPE_32 ds32;
+	int retval;
 
-	retval = mutex_lock_पूर्णांकerruptible(&joydev->mutex);
-	अगर (retval)
-		वापस retval;
+	retval = mutex_lock_interruptible(&joydev->mutex);
+	if (retval)
+		return retval;
 
-	अगर (!joydev->exist) अणु
+	if (!joydev->exist) {
 		retval = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (cmd) अणु
+	switch (cmd) {
 
-	हाल JS_SET_TIMELIMIT:
-		retval = get_user(पंचांगp32, (s32 __user *) arg);
-		अगर (retval == 0)
-			joydev->glue.JS_TIMELIMIT = पंचांगp32;
-		अवरोध;
+	case JS_SET_TIMELIMIT:
+		retval = get_user(tmp32, (s32 __user *) arg);
+		if (retval == 0)
+			joydev->glue.JS_TIMELIMIT = tmp32;
+		break;
 
-	हाल JS_GET_TIMELIMIT:
-		पंचांगp32 = joydev->glue.JS_TIMELIMIT;
-		retval = put_user(पंचांगp32, (s32 __user *) arg);
-		अवरोध;
+	case JS_GET_TIMELIMIT:
+		tmp32 = joydev->glue.JS_TIMELIMIT;
+		retval = put_user(tmp32, (s32 __user *) arg);
+		break;
 
-	हाल JS_SET_ALL:
+	case JS_SET_ALL:
 		retval = copy_from_user(&ds32, argp,
-					माप(ds32)) ? -EFAULT : 0;
-		अगर (retval == 0) अणु
+					sizeof(ds32)) ? -EFAULT : 0;
+		if (retval == 0) {
 			joydev->glue.JS_TIMEOUT    = ds32.JS_TIMEOUT;
 			joydev->glue.BUSY          = ds32.BUSY;
 			joydev->glue.JS_EXPIRETIME = ds32.JS_EXPIRETIME;
 			joydev->glue.JS_TIMELIMIT  = ds32.JS_TIMELIMIT;
 			joydev->glue.JS_SAVE       = ds32.JS_SAVE;
 			joydev->glue.JS_CORR       = ds32.JS_CORR;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल JS_GET_ALL:
+	case JS_GET_ALL:
 		ds32.JS_TIMEOUT    = joydev->glue.JS_TIMEOUT;
 		ds32.BUSY          = joydev->glue.BUSY;
 		ds32.JS_EXPIRETIME = joydev->glue.JS_EXPIRETIME;
@@ -646,170 +645,170 @@ MODULE_LICENSE("GPL");
 		ds32.JS_SAVE       = joydev->glue.JS_SAVE;
 		ds32.JS_CORR       = joydev->glue.JS_CORR;
 
-		retval = copy_to_user(argp, &ds32, माप(ds32)) ? -EFAULT : 0;
-		अवरोध;
+		retval = copy_to_user(argp, &ds32, sizeof(ds32)) ? -EFAULT : 0;
+		break;
 
-	शेष:
+	default:
 		retval = joydev_ioctl_common(joydev, cmd, argp);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
  out:
 	mutex_unlock(&joydev->mutex);
-	वापस retval;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_COMPAT */
+	return retval;
+}
+#endif /* CONFIG_COMPAT */
 
-अटल दीर्घ joydev_ioctl(काष्ठा file *file,
-			 अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा joydev_client *client = file->निजी_data;
-	काष्ठा joydev *joydev = client->joydev;
-	व्योम __user *argp = (व्योम __user *)arg;
-	पूर्णांक retval;
+static long joydev_ioctl(struct file *file,
+			 unsigned int cmd, unsigned long arg)
+{
+	struct joydev_client *client = file->private_data;
+	struct joydev *joydev = client->joydev;
+	void __user *argp = (void __user *)arg;
+	int retval;
 
-	retval = mutex_lock_पूर्णांकerruptible(&joydev->mutex);
-	अगर (retval)
-		वापस retval;
+	retval = mutex_lock_interruptible(&joydev->mutex);
+	if (retval)
+		return retval;
 
-	अगर (!joydev->exist) अणु
+	if (!joydev->exist) {
 		retval = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (cmd) अणु
+	switch (cmd) {
 
-	हाल JS_SET_TIMELIMIT:
+	case JS_SET_TIMELIMIT:
 		retval = get_user(joydev->glue.JS_TIMELIMIT,
-				  (दीर्घ __user *) arg);
-		अवरोध;
+				  (long __user *) arg);
+		break;
 
-	हाल JS_GET_TIMELIMIT:
+	case JS_GET_TIMELIMIT:
 		retval = put_user(joydev->glue.JS_TIMELIMIT,
-				  (दीर्घ __user *) arg);
-		अवरोध;
+				  (long __user *) arg);
+		break;
 
-	हाल JS_SET_ALL:
+	case JS_SET_ALL:
 		retval = copy_from_user(&joydev->glue, argp,
-					माप(joydev->glue)) ? -EFAULT : 0;
-		अवरोध;
+					sizeof(joydev->glue)) ? -EFAULT : 0;
+		break;
 
-	हाल JS_GET_ALL:
+	case JS_GET_ALL:
 		retval = copy_to_user(argp, &joydev->glue,
-				      माप(joydev->glue)) ? -EFAULT : 0;
-		अवरोध;
+				      sizeof(joydev->glue)) ? -EFAULT : 0;
+		break;
 
-	शेष:
+	default:
 		retval = joydev_ioctl_common(joydev, cmd, argp);
-		अवरोध;
-	पूर्ण
+		break;
+	}
  out:
 	mutex_unlock(&joydev->mutex);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल स्थिर काष्ठा file_operations joydev_fops = अणु
+static const struct file_operations joydev_fops = {
 	.owner		= THIS_MODULE,
-	.पढ़ो		= joydev_पढ़ो,
+	.read		= joydev_read,
 	.poll		= joydev_poll,
-	.खोलो		= joydev_खोलो,
+	.open		= joydev_open,
 	.release	= joydev_release,
 	.unlocked_ioctl	= joydev_ioctl,
-#अगर_घोषित CONFIG_COMPAT
+#ifdef CONFIG_COMPAT
 	.compat_ioctl	= joydev_compat_ioctl,
-#पूर्ण_अगर
+#endif
 	.fasync		= joydev_fasync,
 	.llseek		= no_llseek,
-पूर्ण;
+};
 
 /*
- * Mark device non-existent. This disables ग_लिखोs, ioctls and
- * prevents new users from खोलोing the device. Alपढ़ोy posted
- * blocking पढ़ोs will stay, however new ones will fail.
+ * Mark device non-existent. This disables writes, ioctls and
+ * prevents new users from opening the device. Already posted
+ * blocking reads will stay, however new ones will fail.
  */
-अटल व्योम joydev_mark_dead(काष्ठा joydev *joydev)
-अणु
+static void joydev_mark_dead(struct joydev *joydev)
+{
 	mutex_lock(&joydev->mutex);
 	joydev->exist = false;
 	mutex_unlock(&joydev->mutex);
-पूर्ण
+}
 
-अटल व्योम joydev_cleanup(काष्ठा joydev *joydev)
-अणु
-	काष्ठा input_handle *handle = &joydev->handle;
+static void joydev_cleanup(struct joydev *joydev)
+{
+	struct input_handle *handle = &joydev->handle;
 
 	joydev_mark_dead(joydev);
 	joydev_hangup(joydev);
 
-	/* joydev is marked dead so no one अन्यथा accesses joydev->खोलो */
-	अगर (joydev->खोलो)
-		input_बंद_device(handle);
-पूर्ण
+	/* joydev is marked dead so no one else accesses joydev->open */
+	if (joydev->open)
+		input_close_device(handle);
+}
 
 /*
- * These codes are copied from from hid-ids.h, unक्रमtunately there is no common
+ * These codes are copied from from hid-ids.h, unfortunately there is no common
  * usb_ids/bt_ids.h header.
  */
-#घोषणा USB_VENDOR_ID_SONY			0x054c
-#घोषणा USB_DEVICE_ID_SONY_PS3_CONTROLLER		0x0268
-#घोषणा USB_DEVICE_ID_SONY_PS4_CONTROLLER		0x05c4
-#घोषणा USB_DEVICE_ID_SONY_PS4_CONTROLLER_2		0x09cc
-#घोषणा USB_DEVICE_ID_SONY_PS4_CONTROLLER_DONGLE	0x0ba0
+#define USB_VENDOR_ID_SONY			0x054c
+#define USB_DEVICE_ID_SONY_PS3_CONTROLLER		0x0268
+#define USB_DEVICE_ID_SONY_PS4_CONTROLLER		0x05c4
+#define USB_DEVICE_ID_SONY_PS4_CONTROLLER_2		0x09cc
+#define USB_DEVICE_ID_SONY_PS4_CONTROLLER_DONGLE	0x0ba0
 
-#घोषणा USB_VENDOR_ID_THQ			0x20d6
-#घोषणा USB_DEVICE_ID_THQ_PS3_UDRAW			0xcb17
+#define USB_VENDOR_ID_THQ			0x20d6
+#define USB_DEVICE_ID_THQ_PS3_UDRAW			0xcb17
 
-#घोषणा ACCEL_DEV(vnd, prd)						\
-	अणु								\
+#define ACCEL_DEV(vnd, prd)						\
+	{								\
 		.flags = INPUT_DEVICE_ID_MATCH_VENDOR |			\
 				INPUT_DEVICE_ID_MATCH_PRODUCT |		\
 				INPUT_DEVICE_ID_MATCH_PROPBIT,		\
-		.venकरोr = (vnd),					\
+		.vendor = (vnd),					\
 		.product = (prd),					\
-		.propbit = अणु BIT_MASK(INPUT_PROP_ACCELEROMETER) पूर्ण,	\
-	पूर्ण
+		.propbit = { BIT_MASK(INPUT_PROP_ACCELEROMETER) },	\
+	}
 
-अटल स्थिर काष्ठा input_device_id joydev_blacklist[] = अणु
-	/* Aव्योम touchpads and touchscreens */
-	अणु
+static const struct input_device_id joydev_blacklist[] = {
+	/* Avoid touchpads and touchscreens */
+	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
 				INPUT_DEVICE_ID_MATCH_KEYBIT,
-		.evbit = अणु BIT_MASK(EV_KEY) पूर्ण,
-		.keybit = अणु [BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH) पूर्ण,
-	पूर्ण,
-	/* Aव्योम tablets, digitisers and similar devices */
-	अणु
+		.evbit = { BIT_MASK(EV_KEY) },
+		.keybit = { [BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH) },
+	},
+	/* Avoid tablets, digitisers and similar devices */
+	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
 				INPUT_DEVICE_ID_MATCH_KEYBIT,
-		.evbit = अणु BIT_MASK(EV_KEY) पूर्ण,
-		.keybit = अणु [BIT_WORD(BTN_DIGI)] = BIT_MASK(BTN_DIGI) पूर्ण,
-	पूर्ण,
+		.evbit = { BIT_MASK(EV_KEY) },
+		.keybit = { [BIT_WORD(BTN_DIGI)] = BIT_MASK(BTN_DIGI) },
+	},
 	/* Disable accelerometers on composite devices */
 	ACCEL_DEV(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS3_CONTROLLER),
 	ACCEL_DEV(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS4_CONTROLLER),
 	ACCEL_DEV(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS4_CONTROLLER_2),
 	ACCEL_DEV(USB_VENDOR_ID_SONY, USB_DEVICE_ID_SONY_PS4_CONTROLLER_DONGLE),
 	ACCEL_DEV(USB_VENDOR_ID_THQ, USB_DEVICE_ID_THQ_PS3_UDRAW),
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	{ /* sentinel */ }
+};
 
-अटल bool joydev_dev_is_blacklisted(काष्ठा input_dev *dev)
-अणु
-	स्थिर काष्ठा input_device_id *id;
+static bool joydev_dev_is_blacklisted(struct input_dev *dev)
+{
+	const struct input_device_id *id;
 
-	क्रम (id = joydev_blacklist; id->flags; id++) अणु
-		अगर (input_match_device_id(dev, id)) अणु
+	for (id = joydev_blacklist; id->flags; id++) {
+		if (input_match_device_id(dev, id)) {
 			dev_dbg(&dev->dev,
 				"joydev: blacklisting '%s'\n", dev->name);
-			वापस true;
-		पूर्ण
-	पूर्ण
+			return true;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool joydev_dev_is_असलolute_mouse(काष्ठा input_dev *dev)
-अणु
+static bool joydev_dev_is_absolute_mouse(struct input_dev *dev)
+{
 	DECLARE_BITMAP(jd_scratch, KEY_CNT);
 	bool ev_match = false;
 
@@ -817,17 +816,17 @@ MODULE_LICENSE("GPL");
 
 	/*
 	 * Virtualization (VMware, etc) and remote management (HP
-	 * ILO2) solutions use असलolute coordinates क्रम their भव
-	 * poपूर्णांकing devices so that there is one-to-one relationship
-	 * between poपूर्णांकer position on the host screen and भव
+	 * ILO2) solutions use absolute coordinates for their virtual
+	 * pointing devices so that there is one-to-one relationship
+	 * between pointer position on the host screen and virtual
 	 * guest screen, and so their mice use ABS_X, ABS_Y and 3
 	 * primary button events. This clashes with what joydev
 	 * considers to be joysticks (a device with at minimum ABS_X
 	 * axis).
 	 *
-	 * Here we are trying to separate असलolute mice from
-	 * joysticks. A device is, क्रम joystick detection purposes,
-	 * considered to be an असलolute mouse अगर the following is
+	 * Here we are trying to separate absolute mice from
+	 * joysticks. A device is, for joystick detection purposes,
+	 * considered to be an absolute mouse if the following is
 	 * true:
 	 *
 	 * 1) Event types are exactly
@@ -841,230 +840,230 @@ MODULE_LICENSE("GPL");
 	 * 4) Device is not on "Amiga" bus.
 	 */
 
-	biपंचांगap_zero(jd_scratch, EV_CNT);
+	bitmap_zero(jd_scratch, EV_CNT);
 	/* VMware VMMouse, HP ILO2 */
 	__set_bit(EV_ABS, jd_scratch);
 	__set_bit(EV_KEY, jd_scratch);
 	__set_bit(EV_SYN, jd_scratch);
-	अगर (biपंचांगap_equal(jd_scratch, dev->evbit, EV_CNT))
+	if (bitmap_equal(jd_scratch, dev->evbit, EV_CNT))
 		ev_match = true;
 
 	/* HP ILO2, AMI BMC firmware */
 	__set_bit(EV_MSC, jd_scratch);
-	अगर (biपंचांगap_equal(jd_scratch, dev->evbit, EV_CNT))
+	if (bitmap_equal(jd_scratch, dev->evbit, EV_CNT))
 		ev_match = true;
 
 	/* VMware Virtual USB Mouse, QEMU USB Tablet, ATEN BMC firmware */
 	__set_bit(EV_REL, jd_scratch);
-	अगर (biपंचांगap_equal(jd_scratch, dev->evbit, EV_CNT))
+	if (bitmap_equal(jd_scratch, dev->evbit, EV_CNT))
 		ev_match = true;
 
-	अगर (!ev_match)
-		वापस false;
+	if (!ev_match)
+		return false;
 
-	biपंचांगap_zero(jd_scratch, ABS_CNT);
+	bitmap_zero(jd_scratch, ABS_CNT);
 	__set_bit(ABS_X, jd_scratch);
 	__set_bit(ABS_Y, jd_scratch);
-	अगर (!biपंचांगap_equal(dev->असलbit, jd_scratch, ABS_CNT))
-		वापस false;
+	if (!bitmap_equal(dev->absbit, jd_scratch, ABS_CNT))
+		return false;
 
-	biपंचांगap_zero(jd_scratch, KEY_CNT);
+	bitmap_zero(jd_scratch, KEY_CNT);
 	__set_bit(BTN_LEFT, jd_scratch);
 	__set_bit(BTN_RIGHT, jd_scratch);
 	__set_bit(BTN_MIDDLE, jd_scratch);
 
-	अगर (!biपंचांगap_equal(dev->keybit, jd_scratch, KEY_CNT))
-		वापस false;
+	if (!bitmap_equal(dev->keybit, jd_scratch, KEY_CNT))
+		return false;
 
 	/*
 	 * Amiga joystick (amijoy) historically uses left/middle/right
 	 * button events.
 	 */
-	अगर (dev->id.bustype == BUS_AMIGA)
-		वापस false;
+	if (dev->id.bustype == BUS_AMIGA)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool joydev_match(काष्ठा input_handler *handler, काष्ठा input_dev *dev)
-अणु
+static bool joydev_match(struct input_handler *handler, struct input_dev *dev)
+{
 	/* Disable blacklisted devices */
-	अगर (joydev_dev_is_blacklisted(dev))
-		वापस false;
+	if (joydev_dev_is_blacklisted(dev))
+		return false;
 
-	/* Aव्योम असलolute mice */
-	अगर (joydev_dev_is_असलolute_mouse(dev))
-		वापस false;
+	/* Avoid absolute mice */
+	if (joydev_dev_is_absolute_mouse(dev))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक joydev_connect(काष्ठा input_handler *handler, काष्ठा input_dev *dev,
-			  स्थिर काष्ठा input_device_id *id)
-अणु
-	काष्ठा joydev *joydev;
-	पूर्णांक i, j, t, minor, dev_no;
-	पूर्णांक error;
+static int joydev_connect(struct input_handler *handler, struct input_dev *dev,
+			  const struct input_device_id *id)
+{
+	struct joydev *joydev;
+	int i, j, t, minor, dev_no;
+	int error;
 
 	minor = input_get_new_minor(JOYDEV_MINOR_BASE, JOYDEV_MINORS, true);
-	अगर (minor < 0) अणु
+	if (minor < 0) {
 		error = minor;
 		pr_err("failed to reserve new minor: %d\n", error);
-		वापस error;
-	पूर्ण
+		return error;
+	}
 
-	joydev = kzalloc(माप(काष्ठा joydev), GFP_KERNEL);
-	अगर (!joydev) अणु
+	joydev = kzalloc(sizeof(struct joydev), GFP_KERNEL);
+	if (!joydev) {
 		error = -ENOMEM;
-		जाओ err_मुक्त_minor;
-	पूर्ण
+		goto err_free_minor;
+	}
 
 	INIT_LIST_HEAD(&joydev->client_list);
 	spin_lock_init(&joydev->client_lock);
 	mutex_init(&joydev->mutex);
-	init_रुकोqueue_head(&joydev->रुको);
+	init_waitqueue_head(&joydev->wait);
 	joydev->exist = true;
 
 	dev_no = minor;
-	/* Normalize device number अगर it falls पूर्णांकo legacy range */
-	अगर (dev_no < JOYDEV_MINOR_BASE + JOYDEV_MINORS)
+	/* Normalize device number if it falls into legacy range */
+	if (dev_no < JOYDEV_MINOR_BASE + JOYDEV_MINORS)
 		dev_no -= JOYDEV_MINOR_BASE;
 	dev_set_name(&joydev->dev, "js%d", dev_no);
 
 	joydev->handle.dev = input_get_device(dev);
 	joydev->handle.name = dev_name(&joydev->dev);
 	joydev->handle.handler = handler;
-	joydev->handle.निजी = joydev;
+	joydev->handle.private = joydev;
 
-	क्रम_each_set_bit(i, dev->असलbit, ABS_CNT) अणु
-		joydev->असलmap[i] = joydev->nअसल;
-		joydev->असलpam[joydev->nअसल] = i;
-		joydev->nअसल++;
-	पूर्ण
+	for_each_set_bit(i, dev->absbit, ABS_CNT) {
+		joydev->absmap[i] = joydev->nabs;
+		joydev->abspam[joydev->nabs] = i;
+		joydev->nabs++;
+	}
 
-	क्रम (i = BTN_JOYSTICK - BTN_MISC; i < KEY_MAX - BTN_MISC + 1; i++)
-		अगर (test_bit(i + BTN_MISC, dev->keybit)) अणु
+	for (i = BTN_JOYSTICK - BTN_MISC; i < KEY_MAX - BTN_MISC + 1; i++)
+		if (test_bit(i + BTN_MISC, dev->keybit)) {
 			joydev->keymap[i] = joydev->nkey;
 			joydev->keypam[joydev->nkey] = i + BTN_MISC;
 			joydev->nkey++;
-		पूर्ण
+		}
 
-	क्रम (i = 0; i < BTN_JOYSTICK - BTN_MISC; i++)
-		अगर (test_bit(i + BTN_MISC, dev->keybit)) अणु
+	for (i = 0; i < BTN_JOYSTICK - BTN_MISC; i++)
+		if (test_bit(i + BTN_MISC, dev->keybit)) {
 			joydev->keymap[i] = joydev->nkey;
 			joydev->keypam[joydev->nkey] = i + BTN_MISC;
 			joydev->nkey++;
-		पूर्ण
+		}
 
-	क्रम (i = 0; i < joydev->nअसल; i++) अणु
-		j = joydev->असलpam[i];
-		अगर (input_असल_get_max(dev, j) == input_असल_get_min(dev, j)) अणु
+	for (i = 0; i < joydev->nabs; i++) {
+		j = joydev->abspam[i];
+		if (input_abs_get_max(dev, j) == input_abs_get_min(dev, j)) {
 			joydev->corr[i].type = JS_CORR_NONE;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		joydev->corr[i].type = JS_CORR_BROKEN;
-		joydev->corr[i].prec = input_असल_get_fuzz(dev, j);
+		joydev->corr[i].prec = input_abs_get_fuzz(dev, j);
 
-		t = (input_असल_get_max(dev, j) + input_असल_get_min(dev, j)) / 2;
-		joydev->corr[i].coef[0] = t - input_असल_get_flat(dev, j);
-		joydev->corr[i].coef[1] = t + input_असल_get_flat(dev, j);
+		t = (input_abs_get_max(dev, j) + input_abs_get_min(dev, j)) / 2;
+		joydev->corr[i].coef[0] = t - input_abs_get_flat(dev, j);
+		joydev->corr[i].coef[1] = t + input_abs_get_flat(dev, j);
 
-		t = (input_असल_get_max(dev, j) - input_असल_get_min(dev, j)) / 2
-			- 2 * input_असल_get_flat(dev, j);
-		अगर (t) अणु
+		t = (input_abs_get_max(dev, j) - input_abs_get_min(dev, j)) / 2
+			- 2 * input_abs_get_flat(dev, j);
+		if (t) {
 			joydev->corr[i].coef[2] = (1 << 29) / t;
 			joydev->corr[i].coef[3] = (1 << 29) / t;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	joydev->dev.devt = MKDEV(INPUT_MAJOR, minor);
 	joydev->dev.class = &input_class;
 	joydev->dev.parent = &dev->dev;
-	joydev->dev.release = joydev_मुक्त;
+	joydev->dev.release = joydev_free;
 	device_initialize(&joydev->dev);
 
-	error = input_रेजिस्टर_handle(&joydev->handle);
-	अगर (error)
-		जाओ err_मुक्त_joydev;
+	error = input_register_handle(&joydev->handle);
+	if (error)
+		goto err_free_joydev;
 
 	cdev_init(&joydev->cdev, &joydev_fops);
 
 	error = cdev_device_add(&joydev->cdev, &joydev->dev);
-	अगर (error)
-		जाओ err_cleanup_joydev;
+	if (error)
+		goto err_cleanup_joydev;
 
-	वापस 0;
+	return 0;
 
  err_cleanup_joydev:
 	joydev_cleanup(joydev);
-	input_unरेजिस्टर_handle(&joydev->handle);
- err_मुक्त_joydev:
+	input_unregister_handle(&joydev->handle);
+ err_free_joydev:
 	put_device(&joydev->dev);
- err_मुक्त_minor:
-	input_मुक्त_minor(minor);
-	वापस error;
-पूर्ण
+ err_free_minor:
+	input_free_minor(minor);
+	return error;
+}
 
-अटल व्योम joydev_disconnect(काष्ठा input_handle *handle)
-अणु
-	काष्ठा joydev *joydev = handle->निजी;
+static void joydev_disconnect(struct input_handle *handle)
+{
+	struct joydev *joydev = handle->private;
 
 	cdev_device_del(&joydev->cdev, &joydev->dev);
 	joydev_cleanup(joydev);
-	input_मुक्त_minor(MINOR(joydev->dev.devt));
-	input_unरेजिस्टर_handle(handle);
+	input_free_minor(MINOR(joydev->dev.devt));
+	input_unregister_handle(handle);
 	put_device(&joydev->dev);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा input_device_id joydev_ids[] = अणु
-	अणु
+static const struct input_device_id joydev_ids[] = {
+	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
 				INPUT_DEVICE_ID_MATCH_ABSBIT,
-		.evbit = अणु BIT_MASK(EV_ABS) पूर्ण,
-		.असलbit = अणु BIT_MASK(ABS_X) पूर्ण,
-	पूर्ण,
-	अणु
+		.evbit = { BIT_MASK(EV_ABS) },
+		.absbit = { BIT_MASK(ABS_X) },
+	},
+	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
 				INPUT_DEVICE_ID_MATCH_ABSBIT,
-		.evbit = अणु BIT_MASK(EV_ABS) पूर्ण,
-		.असलbit = अणु BIT_MASK(ABS_Z) पूर्ण,
-	पूर्ण,
-	अणु
+		.evbit = { BIT_MASK(EV_ABS) },
+		.absbit = { BIT_MASK(ABS_Z) },
+	},
+	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
 				INPUT_DEVICE_ID_MATCH_ABSBIT,
-		.evbit = अणु BIT_MASK(EV_ABS) पूर्ण,
-		.असलbit = अणु BIT_MASK(ABS_WHEEL) पूर्ण,
-	पूर्ण,
-	अणु
+		.evbit = { BIT_MASK(EV_ABS) },
+		.absbit = { BIT_MASK(ABS_WHEEL) },
+	},
+	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
 				INPUT_DEVICE_ID_MATCH_ABSBIT,
-		.evbit = अणु BIT_MASK(EV_ABS) पूर्ण,
-		.असलbit = अणु BIT_MASK(ABS_THROTTLE) पूर्ण,
-	पूर्ण,
-	अणु
+		.evbit = { BIT_MASK(EV_ABS) },
+		.absbit = { BIT_MASK(ABS_THROTTLE) },
+	},
+	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
 				INPUT_DEVICE_ID_MATCH_KEYBIT,
-		.evbit = अणु BIT_MASK(EV_KEY) पूर्ण,
-		.keybit = अणु[BIT_WORD(BTN_JOYSTICK)] = BIT_MASK(BTN_JOYSTICK) पूर्ण,
-	पूर्ण,
-	अणु
+		.evbit = { BIT_MASK(EV_KEY) },
+		.keybit = {[BIT_WORD(BTN_JOYSTICK)] = BIT_MASK(BTN_JOYSTICK) },
+	},
+	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
 				INPUT_DEVICE_ID_MATCH_KEYBIT,
-		.evbit = अणु BIT_MASK(EV_KEY) पूर्ण,
-		.keybit = अणु [BIT_WORD(BTN_GAMEPAD)] = BIT_MASK(BTN_GAMEPAD) पूर्ण,
-	पूर्ण,
-	अणु
+		.evbit = { BIT_MASK(EV_KEY) },
+		.keybit = { [BIT_WORD(BTN_GAMEPAD)] = BIT_MASK(BTN_GAMEPAD) },
+	},
+	{
 		.flags = INPUT_DEVICE_ID_MATCH_EVBIT |
 				INPUT_DEVICE_ID_MATCH_KEYBIT,
-		.evbit = अणु BIT_MASK(EV_KEY) पूर्ण,
-		.keybit = अणु [BIT_WORD(BTN_TRIGGER_HAPPY)] = BIT_MASK(BTN_TRIGGER_HAPPY) पूर्ण,
-	पूर्ण,
-	अणु पूर्ण	/* Terminating entry */
-पूर्ण;
+		.evbit = { BIT_MASK(EV_KEY) },
+		.keybit = { [BIT_WORD(BTN_TRIGGER_HAPPY)] = BIT_MASK(BTN_TRIGGER_HAPPY) },
+	},
+	{ }	/* Terminating entry */
+};
 
 MODULE_DEVICE_TABLE(input, joydev_ids);
 
-अटल काष्ठा input_handler joydev_handler = अणु
+static struct input_handler joydev_handler = {
 	.event		= joydev_event,
 	.match		= joydev_match,
 	.connect	= joydev_connect,
@@ -1073,17 +1072,17 @@ MODULE_DEVICE_TABLE(input, joydev_ids);
 	.minor		= JOYDEV_MINOR_BASE,
 	.name		= "joydev",
 	.id_table	= joydev_ids,
-पूर्ण;
+};
 
-अटल पूर्णांक __init joydev_init(व्योम)
-अणु
-	वापस input_रेजिस्टर_handler(&joydev_handler);
-पूर्ण
+static int __init joydev_init(void)
+{
+	return input_register_handler(&joydev_handler);
+}
 
-अटल व्योम __निकास joydev_निकास(व्योम)
-अणु
-	input_unरेजिस्टर_handler(&joydev_handler);
-पूर्ण
+static void __exit joydev_exit(void)
+{
+	input_unregister_handler(&joydev_handler);
+}
 
 module_init(joydev_init);
-module_निकास(joydev_निकास);
+module_exit(joydev_exit);

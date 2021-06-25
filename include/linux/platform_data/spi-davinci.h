@@ -1,74 +1,73 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright 2009 Texas Instruments.
  */
 
-#अगर_अघोषित __ARCH_ARM_DAVINCI_SPI_H
-#घोषणा __ARCH_ARM_DAVINCI_SPI_H
+#ifndef __ARCH_ARM_DAVINCI_SPI_H
+#define __ARCH_ARM_DAVINCI_SPI_H
 
-#समावेश <linux/platक्रमm_data/edma.h>
+#include <linux/platform_data/edma.h>
 
-#घोषणा SPI_INTERN_CS	0xFF
+#define SPI_INTERN_CS	0xFF
 
-क्रमागत अणु
+enum {
 	SPI_VERSION_1, /* For DM355/DM365/DM6467 */
 	SPI_VERSION_2, /* For DA8xx */
-पूर्ण;
+};
 
 /**
- * davinci_spi_platक्रमm_data - Platक्रमm data क्रम SPI master device on DaVinci
+ * davinci_spi_platform_data - Platform data for SPI master device on DaVinci
  *
- * @version:	version of the SPI IP. Dअगरferent DaVinci devices have slightly
+ * @version:	version of the SPI IP. Different DaVinci devices have slightly
  *		varying versions of the same IP.
  * @num_chipselect: number of chipselects supported by this SPI master
- * @पूर्णांकr_line:	पूर्णांकerrupt line used to connect the SPI IP to the ARM पूर्णांकerrupt
+ * @intr_line:	interrupt line used to connect the SPI IP to the ARM interrupt
  *		controller withn the SoC. Possible values are 0 and 1.
- * @cshold_bug:	set this to true अगर the SPI controller on your chip requires
- *		a ग_लिखो to CSHOLD bit in between transfers (like in DM355).
- * @dma_event_q: DMA event queue to use अगर SPI_IO_TYPE_DMA is used क्रम any
+ * @cshold_bug:	set this to true if the SPI controller on your chip requires
+ *		a write to CSHOLD bit in between transfers (like in DM355).
+ * @dma_event_q: DMA event queue to use if SPI_IO_TYPE_DMA is used for any
  *		device on the bus.
  */
-काष्ठा davinci_spi_platक्रमm_data अणु
+struct davinci_spi_platform_data {
 	u8			version;
 	u8			num_chipselect;
-	u8			पूर्णांकr_line;
+	u8			intr_line;
 	u8			prescaler_limit;
 	bool			cshold_bug;
-	क्रमागत dma_event_q	dma_event_q;
-पूर्ण;
+	enum dma_event_q	dma_event_q;
+};
 
 /**
- * davinci_spi_config - Per-chip-select configuration क्रम SPI slave devices
+ * davinci_spi_config - Per-chip-select configuration for SPI slave devices
  *
  * @wdelay:	amount of delay between transmissions. Measured in number of
- *		SPI module घड़ीs.
+ *		SPI module clocks.
  * @odd_parity:	polarity of parity flag at the end of transmit data stream.
  *		0 - odd parity, 1 - even parity.
  * @parity_enable: enable transmission of parity at end of each transmit
  *		data stream.
- * @io_type:	type of IO transfer. Choose between polled, पूर्णांकerrupt and DMA.
- * @समयr_disable: disable chip-select समयrs (setup and hold)
- * @c2tdelay:	chip-select setup समय. Measured in number of SPI module घड़ीs.
- * @t2cdelay:	chip-select hold समय. Measured in number of SPI module घड़ीs.
- * @t2edelay:	transmit data finished to SPI ENAn pin inactive समय. Measured
- *		in number of SPI घड़ीs.
- * @c2edelay:	chip-select active to SPI ENAn संकेत active समय. Measured in
- *		number of SPI घड़ीs.
+ * @io_type:	type of IO transfer. Choose between polled, interrupt and DMA.
+ * @timer_disable: disable chip-select timers (setup and hold)
+ * @c2tdelay:	chip-select setup time. Measured in number of SPI module clocks.
+ * @t2cdelay:	chip-select hold time. Measured in number of SPI module clocks.
+ * @t2edelay:	transmit data finished to SPI ENAn pin inactive time. Measured
+ *		in number of SPI clocks.
+ * @c2edelay:	chip-select active to SPI ENAn signal active time. Measured in
+ *		number of SPI clocks.
  */
-काष्ठा davinci_spi_config अणु
+struct davinci_spi_config {
 	u8	wdelay;
 	u8	odd_parity;
 	u8	parity_enable;
-#घोषणा SPI_IO_TYPE_INTR	0
-#घोषणा SPI_IO_TYPE_POLL	1
-#घोषणा SPI_IO_TYPE_DMA		2
+#define SPI_IO_TYPE_INTR	0
+#define SPI_IO_TYPE_POLL	1
+#define SPI_IO_TYPE_DMA		2
 	u8	io_type;
-	u8	समयr_disable;
+	u8	timer_disable;
 	u8	c2tdelay;
 	u8	t2cdelay;
 	u8	t2edelay;
 	u8	c2edelay;
-पूर्ण;
+};
 
-#पूर्ण_अगर	/* __ARCH_ARM_DAVINCI_SPI_H */
+#endif	/* __ARCH_ARM_DAVINCI_SPI_H */

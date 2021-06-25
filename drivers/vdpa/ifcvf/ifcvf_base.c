@@ -1,62 +1,61 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Intel IFC VF NIC driver क्रम virtio dataplane offloading
+ * Intel IFC VF NIC driver for virtio dataplane offloading
  *
  * Copyright (C) 2020 Intel Corporation.
  *
- * Author: Zhu Lingshan <lingshan.zhu@पूर्णांकel.com>
+ * Author: Zhu Lingshan <lingshan.zhu@intel.com>
  *
  */
 
-#समावेश "ifcvf_base.h"
+#include "ifcvf_base.h"
 
-अटल अंतरभूत u8 अगरc_ioपढ़ो8(u8 __iomem *addr)
-अणु
-	वापस ioपढ़ो8(addr);
-पूर्ण
-अटल अंतरभूत u16 अगरc_ioपढ़ो16 (__le16 __iomem *addr)
-अणु
-	वापस ioपढ़ो16(addr);
-पूर्ण
+static inline u8 ifc_ioread8(u8 __iomem *addr)
+{
+	return ioread8(addr);
+}
+static inline u16 ifc_ioread16 (__le16 __iomem *addr)
+{
+	return ioread16(addr);
+}
 
-अटल अंतरभूत u32 अगरc_ioपढ़ो32(__le32 __iomem *addr)
-अणु
-	वापस ioपढ़ो32(addr);
-पूर्ण
+static inline u32 ifc_ioread32(__le32 __iomem *addr)
+{
+	return ioread32(addr);
+}
 
-अटल अंतरभूत व्योम अगरc_ioग_लिखो8(u8 value, u8 __iomem *addr)
-अणु
-	ioग_लिखो8(value, addr);
-पूर्ण
+static inline void ifc_iowrite8(u8 value, u8 __iomem *addr)
+{
+	iowrite8(value, addr);
+}
 
-अटल अंतरभूत व्योम अगरc_ioग_लिखो16(u16 value, __le16 __iomem *addr)
-अणु
-	ioग_लिखो16(value, addr);
-पूर्ण
+static inline void ifc_iowrite16(u16 value, __le16 __iomem *addr)
+{
+	iowrite16(value, addr);
+}
 
-अटल अंतरभूत व्योम अगरc_ioग_लिखो32(u32 value, __le32 __iomem *addr)
-अणु
-	ioग_लिखो32(value, addr);
-पूर्ण
+static inline void ifc_iowrite32(u32 value, __le32 __iomem *addr)
+{
+	iowrite32(value, addr);
+}
 
-अटल व्योम अगरc_ioग_लिखो64_twopart(u64 val,
+static void ifc_iowrite64_twopart(u64 val,
 				  __le32 __iomem *lo, __le32 __iomem *hi)
-अणु
-	अगरc_ioग_लिखो32((u32)val, lo);
-	अगरc_ioग_लिखो32(val >> 32, hi);
-पूर्ण
+{
+	ifc_iowrite32((u32)val, lo);
+	ifc_iowrite32(val >> 32, hi);
+}
 
-काष्ठा अगरcvf_adapter *vf_to_adapter(काष्ठा अगरcvf_hw *hw)
-अणु
-	वापस container_of(hw, काष्ठा अगरcvf_adapter, vf);
-पूर्ण
+struct ifcvf_adapter *vf_to_adapter(struct ifcvf_hw *hw)
+{
+	return container_of(hw, struct ifcvf_adapter, vf);
+}
 
-अटल व्योम __iomem *get_cap_addr(काष्ठा अगरcvf_hw *hw,
-				  काष्ठा virtio_pci_cap *cap)
-अणु
-	काष्ठा अगरcvf_adapter *अगरcvf;
-	काष्ठा pci_dev *pdev;
+static void __iomem *get_cap_addr(struct ifcvf_hw *hw,
+				  struct virtio_pci_cap *cap)
+{
+	struct ifcvf_adapter *ifcvf;
+	struct pci_dev *pdev;
 	u32 length, offset;
 	u8 bar;
 
@@ -64,348 +63,348 @@
 	offset = le32_to_cpu(cap->offset);
 	bar = cap->bar;
 
-	अगरcvf= vf_to_adapter(hw);
-	pdev = अगरcvf->pdev;
+	ifcvf= vf_to_adapter(hw);
+	pdev = ifcvf->pdev;
 
-	अगर (bar >= IFCVF_PCI_MAX_RESOURCE) अणु
+	if (bar >= IFCVF_PCI_MAX_RESOURCE) {
 		IFCVF_DBG(pdev,
 			  "Invalid bar number %u to get capabilities\n", bar);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	अगर (offset + length > pci_resource_len(pdev, bar)) अणु
+	if (offset + length > pci_resource_len(pdev, bar)) {
 		IFCVF_DBG(pdev,
 			  "offset(%u) + len(%u) overflows bar%u's capability\n",
 			  offset, length, bar);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस hw->base[bar] + offset;
-पूर्ण
+	return hw->base[bar] + offset;
+}
 
-अटल पूर्णांक अगरcvf_पढ़ो_config_range(काष्ठा pci_dev *dev,
-				   uपूर्णांक32_t *val, पूर्णांक size, पूर्णांक where)
-अणु
-	पूर्णांक ret, i;
+static int ifcvf_read_config_range(struct pci_dev *dev,
+				   uint32_t *val, int size, int where)
+{
+	int ret, i;
 
-	क्रम (i = 0; i < size; i += 4) अणु
-		ret = pci_पढ़ो_config_dword(dev, where + i, val + i / 4);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+	for (i = 0; i < size; i += 4) {
+		ret = pci_read_config_dword(dev, where + i, val + i / 4);
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक अगरcvf_init_hw(काष्ठा अगरcvf_hw *hw, काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा virtio_pci_cap cap;
-	u16 notअगरy_off;
-	पूर्णांक ret;
+int ifcvf_init_hw(struct ifcvf_hw *hw, struct pci_dev *pdev)
+{
+	struct virtio_pci_cap cap;
+	u16 notify_off;
+	int ret;
 	u8 pos;
 	u32 i;
 
-	ret = pci_पढ़ो_config_byte(pdev, PCI_CAPABILITY_LIST, &pos);
-	अगर (ret < 0) अणु
+	ret = pci_read_config_byte(pdev, PCI_CAPABILITY_LIST, &pos);
+	if (ret < 0) {
 		IFCVF_ERR(pdev, "Failed to read PCI capability list\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	जबतक (pos) अणु
-		ret = अगरcvf_पढ़ो_config_range(pdev, (u32 *)&cap,
-					      माप(cap), pos);
-		अगर (ret < 0) अणु
+	while (pos) {
+		ret = ifcvf_read_config_range(pdev, (u32 *)&cap,
+					      sizeof(cap), pos);
+		if (ret < 0) {
 			IFCVF_ERR(pdev,
 				  "Failed to get PCI capability at %x\n", pos);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (cap.cap_vndr != PCI_CAP_ID_VNDR)
-			जाओ next;
+		if (cap.cap_vndr != PCI_CAP_ID_VNDR)
+			goto next;
 
-		चयन (cap.cfg_type) अणु
-		हाल VIRTIO_PCI_CAP_COMMON_CFG:
+		switch (cap.cfg_type) {
+		case VIRTIO_PCI_CAP_COMMON_CFG:
 			hw->common_cfg = get_cap_addr(hw, &cap);
 			IFCVF_DBG(pdev, "hw->common_cfg = %p\n",
 				  hw->common_cfg);
-			अवरोध;
-		हाल VIRTIO_PCI_CAP_NOTIFY_CFG:
-			pci_पढ़ो_config_dword(pdev, pos + माप(cap),
-					      &hw->notअगरy_off_multiplier);
-			hw->notअगरy_bar = cap.bar;
-			hw->notअगरy_base = get_cap_addr(hw, &cap);
+			break;
+		case VIRTIO_PCI_CAP_NOTIFY_CFG:
+			pci_read_config_dword(pdev, pos + sizeof(cap),
+					      &hw->notify_off_multiplier);
+			hw->notify_bar = cap.bar;
+			hw->notify_base = get_cap_addr(hw, &cap);
 			IFCVF_DBG(pdev, "hw->notify_base = %p\n",
-				  hw->notअगरy_base);
-			अवरोध;
-		हाल VIRTIO_PCI_CAP_ISR_CFG:
+				  hw->notify_base);
+			break;
+		case VIRTIO_PCI_CAP_ISR_CFG:
 			hw->isr = get_cap_addr(hw, &cap);
 			IFCVF_DBG(pdev, "hw->isr = %p\n", hw->isr);
-			अवरोध;
-		हाल VIRTIO_PCI_CAP_DEVICE_CFG:
+			break;
+		case VIRTIO_PCI_CAP_DEVICE_CFG:
 			hw->net_cfg = get_cap_addr(hw, &cap);
 			IFCVF_DBG(pdev, "hw->net_cfg = %p\n", hw->net_cfg);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 next:
 		pos = cap.cap_next;
-	पूर्ण
+	}
 
-	अगर (hw->common_cfg == शून्य || hw->notअगरy_base == शून्य ||
-	    hw->isr == शून्य || hw->net_cfg == शून्य) अणु
+	if (hw->common_cfg == NULL || hw->notify_base == NULL ||
+	    hw->isr == NULL || hw->net_cfg == NULL) {
 		IFCVF_ERR(pdev, "Incomplete PCI capabilities\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	क्रम (i = 0; i < IFCVF_MAX_QUEUE_PAIRS * 2; i++) अणु
-		अगरc_ioग_लिखो16(i, &hw->common_cfg->queue_select);
-		notअगरy_off = अगरc_ioपढ़ो16(&hw->common_cfg->queue_notअगरy_off);
-		hw->vring[i].notअगरy_addr = hw->notअगरy_base +
-			notअगरy_off * hw->notअगरy_off_multiplier;
-	पूर्ण
+	for (i = 0; i < IFCVF_MAX_QUEUE_PAIRS * 2; i++) {
+		ifc_iowrite16(i, &hw->common_cfg->queue_select);
+		notify_off = ifc_ioread16(&hw->common_cfg->queue_notify_off);
+		hw->vring[i].notify_addr = hw->notify_base +
+			notify_off * hw->notify_off_multiplier;
+	}
 
 	hw->lm_cfg = hw->base[IFCVF_LM_BAR];
 
 	IFCVF_DBG(pdev,
 		  "PCI capability mapping: common cfg: %p, notify base: %p\n, isr cfg: %p, device cfg: %p, multiplier: %u\n",
-		  hw->common_cfg, hw->notअगरy_base, hw->isr,
-		  hw->net_cfg, hw->notअगरy_off_multiplier);
+		  hw->common_cfg, hw->notify_base, hw->isr,
+		  hw->net_cfg, hw->notify_off_multiplier);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-u8 अगरcvf_get_status(काष्ठा अगरcvf_hw *hw)
-अणु
-	वापस अगरc_ioपढ़ो8(&hw->common_cfg->device_status);
-पूर्ण
+u8 ifcvf_get_status(struct ifcvf_hw *hw)
+{
+	return ifc_ioread8(&hw->common_cfg->device_status);
+}
 
-व्योम अगरcvf_set_status(काष्ठा अगरcvf_hw *hw, u8 status)
-अणु
-	अगरc_ioग_लिखो8(status, &hw->common_cfg->device_status);
-पूर्ण
+void ifcvf_set_status(struct ifcvf_hw *hw, u8 status)
+{
+	ifc_iowrite8(status, &hw->common_cfg->device_status);
+}
 
-व्योम अगरcvf_reset(काष्ठा अगरcvf_hw *hw)
-अणु
-	hw->config_cb.callback = शून्य;
-	hw->config_cb.निजी = शून्य;
+void ifcvf_reset(struct ifcvf_hw *hw)
+{
+	hw->config_cb.callback = NULL;
+	hw->config_cb.private = NULL;
 
-	अगरcvf_set_status(hw, 0);
+	ifcvf_set_status(hw, 0);
 	/* flush set_status, make sure VF is stopped, reset */
-	अगरcvf_get_status(hw);
-पूर्ण
+	ifcvf_get_status(hw);
+}
 
-अटल व्योम अगरcvf_add_status(काष्ठा अगरcvf_hw *hw, u8 status)
-अणु
-	अगर (status != 0)
-		status |= अगरcvf_get_status(hw);
+static void ifcvf_add_status(struct ifcvf_hw *hw, u8 status)
+{
+	if (status != 0)
+		status |= ifcvf_get_status(hw);
 
-	अगरcvf_set_status(hw, status);
-	अगरcvf_get_status(hw);
-पूर्ण
+	ifcvf_set_status(hw, status);
+	ifcvf_get_status(hw);
+}
 
-u64 अगरcvf_get_hw_features(काष्ठा अगरcvf_hw *hw)
-अणु
-	काष्ठा virtio_pci_common_cfg __iomem *cfg = hw->common_cfg;
+u64 ifcvf_get_hw_features(struct ifcvf_hw *hw)
+{
+	struct virtio_pci_common_cfg __iomem *cfg = hw->common_cfg;
 	u32 features_lo, features_hi;
 	u64 features;
 
-	अगरc_ioग_लिखो32(0, &cfg->device_feature_select);
-	features_lo = अगरc_ioपढ़ो32(&cfg->device_feature);
+	ifc_iowrite32(0, &cfg->device_feature_select);
+	features_lo = ifc_ioread32(&cfg->device_feature);
 
-	अगरc_ioग_लिखो32(1, &cfg->device_feature_select);
-	features_hi = अगरc_ioपढ़ो32(&cfg->device_feature);
+	ifc_iowrite32(1, &cfg->device_feature_select);
+	features_hi = ifc_ioread32(&cfg->device_feature);
 
 	features = ((u64)features_hi << 32) | features_lo;
 
-	वापस features;
-पूर्ण
+	return features;
+}
 
-u64 अगरcvf_get_features(काष्ठा अगरcvf_hw *hw)
-अणु
-	वापस hw->hw_features;
-पूर्ण
+u64 ifcvf_get_features(struct ifcvf_hw *hw)
+{
+	return hw->hw_features;
+}
 
-पूर्णांक अगरcvf_verअगरy_min_features(काष्ठा अगरcvf_hw *hw, u64 features)
-अणु
-	काष्ठा अगरcvf_adapter *अगरcvf = vf_to_adapter(hw);
+int ifcvf_verify_min_features(struct ifcvf_hw *hw, u64 features)
+{
+	struct ifcvf_adapter *ifcvf = vf_to_adapter(hw);
 
-	अगर (!(features & BIT_ULL(VIRTIO_F_ACCESS_PLATFORM)) && features) अणु
-		IFCVF_ERR(अगरcvf->pdev, "VIRTIO_F_ACCESS_PLATFORM is not negotiated\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (!(features & BIT_ULL(VIRTIO_F_ACCESS_PLATFORM)) && features) {
+		IFCVF_ERR(ifcvf->pdev, "VIRTIO_F_ACCESS_PLATFORM is not negotiated\n");
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम अगरcvf_पढ़ो_net_config(काष्ठा अगरcvf_hw *hw, u64 offset,
-			   व्योम *dst, पूर्णांक length)
-अणु
+void ifcvf_read_net_config(struct ifcvf_hw *hw, u64 offset,
+			   void *dst, int length)
+{
 	u8 old_gen, new_gen, *p;
-	पूर्णांक i;
+	int i;
 
-	WARN_ON(offset + length > माप(काष्ठा virtio_net_config));
-	करो अणु
-		old_gen = अगरc_ioपढ़ो8(&hw->common_cfg->config_generation);
+	WARN_ON(offset + length > sizeof(struct virtio_net_config));
+	do {
+		old_gen = ifc_ioread8(&hw->common_cfg->config_generation);
 		p = dst;
-		क्रम (i = 0; i < length; i++)
-			*p++ = अगरc_ioपढ़ो8(hw->net_cfg + offset + i);
+		for (i = 0; i < length; i++)
+			*p++ = ifc_ioread8(hw->net_cfg + offset + i);
 
-		new_gen = अगरc_ioपढ़ो8(&hw->common_cfg->config_generation);
-	पूर्ण जबतक (old_gen != new_gen);
-पूर्ण
+		new_gen = ifc_ioread8(&hw->common_cfg->config_generation);
+	} while (old_gen != new_gen);
+}
 
-व्योम अगरcvf_ग_लिखो_net_config(काष्ठा अगरcvf_hw *hw, u64 offset,
-			    स्थिर व्योम *src, पूर्णांक length)
-अणु
-	स्थिर u8 *p;
-	पूर्णांक i;
+void ifcvf_write_net_config(struct ifcvf_hw *hw, u64 offset,
+			    const void *src, int length)
+{
+	const u8 *p;
+	int i;
 
 	p = src;
-	WARN_ON(offset + length > माप(काष्ठा virtio_net_config));
-	क्रम (i = 0; i < length; i++)
-		अगरc_ioग_लिखो8(*p++, hw->net_cfg + offset + i);
-पूर्ण
+	WARN_ON(offset + length > sizeof(struct virtio_net_config));
+	for (i = 0; i < length; i++)
+		ifc_iowrite8(*p++, hw->net_cfg + offset + i);
+}
 
-अटल व्योम अगरcvf_set_features(काष्ठा अगरcvf_hw *hw, u64 features)
-अणु
-	काष्ठा virtio_pci_common_cfg __iomem *cfg = hw->common_cfg;
+static void ifcvf_set_features(struct ifcvf_hw *hw, u64 features)
+{
+	struct virtio_pci_common_cfg __iomem *cfg = hw->common_cfg;
 
-	अगरc_ioग_लिखो32(0, &cfg->guest_feature_select);
-	अगरc_ioग_लिखो32((u32)features, &cfg->guest_feature);
+	ifc_iowrite32(0, &cfg->guest_feature_select);
+	ifc_iowrite32((u32)features, &cfg->guest_feature);
 
-	अगरc_ioग_लिखो32(1, &cfg->guest_feature_select);
-	अगरc_ioग_लिखो32(features >> 32, &cfg->guest_feature);
-पूर्ण
+	ifc_iowrite32(1, &cfg->guest_feature_select);
+	ifc_iowrite32(features >> 32, &cfg->guest_feature);
+}
 
-अटल पूर्णांक अगरcvf_config_features(काष्ठा अगरcvf_hw *hw)
-अणु
-	काष्ठा अगरcvf_adapter *अगरcvf;
+static int ifcvf_config_features(struct ifcvf_hw *hw)
+{
+	struct ifcvf_adapter *ifcvf;
 
-	अगरcvf = vf_to_adapter(hw);
-	अगरcvf_set_features(hw, hw->req_features);
-	अगरcvf_add_status(hw, VIRTIO_CONFIG_S_FEATURES_OK);
+	ifcvf = vf_to_adapter(hw);
+	ifcvf_set_features(hw, hw->req_features);
+	ifcvf_add_status(hw, VIRTIO_CONFIG_S_FEATURES_OK);
 
-	अगर (!(अगरcvf_get_status(hw) & VIRTIO_CONFIG_S_FEATURES_OK)) अणु
-		IFCVF_ERR(अगरcvf->pdev, "Failed to set FEATURES_OK status\n");
-		वापस -EIO;
-	पूर्ण
+	if (!(ifcvf_get_status(hw) & VIRTIO_CONFIG_S_FEATURES_OK)) {
+		IFCVF_ERR(ifcvf->pdev, "Failed to set FEATURES_OK status\n");
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-u16 अगरcvf_get_vq_state(काष्ठा अगरcvf_hw *hw, u16 qid)
-अणु
-	काष्ठा अगरcvf_lm_cfg __iomem *अगरcvf_lm;
-	व्योम __iomem *avail_idx_addr;
+u16 ifcvf_get_vq_state(struct ifcvf_hw *hw, u16 qid)
+{
+	struct ifcvf_lm_cfg __iomem *ifcvf_lm;
+	void __iomem *avail_idx_addr;
 	u16 last_avail_idx;
 	u32 q_pair_id;
 
-	अगरcvf_lm = (काष्ठा अगरcvf_lm_cfg __iomem *)hw->lm_cfg;
+	ifcvf_lm = (struct ifcvf_lm_cfg __iomem *)hw->lm_cfg;
 	q_pair_id = qid / (IFCVF_MAX_QUEUE_PAIRS * 2);
-	avail_idx_addr = &अगरcvf_lm->vring_lm_cfg[q_pair_id].idx_addr[qid % 2];
-	last_avail_idx = अगरc_ioपढ़ो16(avail_idx_addr);
+	avail_idx_addr = &ifcvf_lm->vring_lm_cfg[q_pair_id].idx_addr[qid % 2];
+	last_avail_idx = ifc_ioread16(avail_idx_addr);
 
-	वापस last_avail_idx;
-पूर्ण
+	return last_avail_idx;
+}
 
-पूर्णांक अगरcvf_set_vq_state(काष्ठा अगरcvf_hw *hw, u16 qid, u16 num)
-अणु
-	काष्ठा अगरcvf_lm_cfg __iomem *अगरcvf_lm;
-	व्योम __iomem *avail_idx_addr;
+int ifcvf_set_vq_state(struct ifcvf_hw *hw, u16 qid, u16 num)
+{
+	struct ifcvf_lm_cfg __iomem *ifcvf_lm;
+	void __iomem *avail_idx_addr;
 	u32 q_pair_id;
 
-	अगरcvf_lm = (काष्ठा अगरcvf_lm_cfg __iomem *)hw->lm_cfg;
+	ifcvf_lm = (struct ifcvf_lm_cfg __iomem *)hw->lm_cfg;
 	q_pair_id = qid / (IFCVF_MAX_QUEUE_PAIRS * 2);
-	avail_idx_addr = &अगरcvf_lm->vring_lm_cfg[q_pair_id].idx_addr[qid % 2];
+	avail_idx_addr = &ifcvf_lm->vring_lm_cfg[q_pair_id].idx_addr[qid % 2];
 	hw->vring[qid].last_avail_idx = num;
-	अगरc_ioग_लिखो16(num, avail_idx_addr);
+	ifc_iowrite16(num, avail_idx_addr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक अगरcvf_hw_enable(काष्ठा अगरcvf_hw *hw)
-अणु
-	काष्ठा virtio_pci_common_cfg __iomem *cfg;
-	काष्ठा अगरcvf_adapter *अगरcvf;
+static int ifcvf_hw_enable(struct ifcvf_hw *hw)
+{
+	struct virtio_pci_common_cfg __iomem *cfg;
+	struct ifcvf_adapter *ifcvf;
 	u32 i;
 
-	अगरcvf = vf_to_adapter(hw);
+	ifcvf = vf_to_adapter(hw);
 	cfg = hw->common_cfg;
-	अगरc_ioग_लिखो16(IFCVF_MSI_CONFIG_OFF, &cfg->msix_config);
+	ifc_iowrite16(IFCVF_MSI_CONFIG_OFF, &cfg->msix_config);
 
-	अगर (अगरc_ioपढ़ो16(&cfg->msix_config) == VIRTIO_MSI_NO_VECTOR) अणु
-		IFCVF_ERR(अगरcvf->pdev, "No msix vector for device config\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (ifc_ioread16(&cfg->msix_config) == VIRTIO_MSI_NO_VECTOR) {
+		IFCVF_ERR(ifcvf->pdev, "No msix vector for device config\n");
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < hw->nr_vring; i++) अणु
-		अगर (!hw->vring[i].पढ़ोy)
-			अवरोध;
+	for (i = 0; i < hw->nr_vring; i++) {
+		if (!hw->vring[i].ready)
+			break;
 
-		अगरc_ioग_लिखो16(i, &cfg->queue_select);
-		अगरc_ioग_लिखो64_twopart(hw->vring[i].desc, &cfg->queue_desc_lo,
+		ifc_iowrite16(i, &cfg->queue_select);
+		ifc_iowrite64_twopart(hw->vring[i].desc, &cfg->queue_desc_lo,
 				     &cfg->queue_desc_hi);
-		अगरc_ioग_लिखो64_twopart(hw->vring[i].avail, &cfg->queue_avail_lo,
+		ifc_iowrite64_twopart(hw->vring[i].avail, &cfg->queue_avail_lo,
 				      &cfg->queue_avail_hi);
-		अगरc_ioग_लिखो64_twopart(hw->vring[i].used, &cfg->queue_used_lo,
+		ifc_iowrite64_twopart(hw->vring[i].used, &cfg->queue_used_lo,
 				     &cfg->queue_used_hi);
-		अगरc_ioग_लिखो16(hw->vring[i].size, &cfg->queue_size);
-		अगरc_ioग_लिखो16(i + IFCVF_MSI_QUEUE_OFF, &cfg->queue_msix_vector);
+		ifc_iowrite16(hw->vring[i].size, &cfg->queue_size);
+		ifc_iowrite16(i + IFCVF_MSI_QUEUE_OFF, &cfg->queue_msix_vector);
 
-		अगर (अगरc_ioपढ़ो16(&cfg->queue_msix_vector) ==
-		    VIRTIO_MSI_NO_VECTOR) अणु
-			IFCVF_ERR(अगरcvf->pdev,
+		if (ifc_ioread16(&cfg->queue_msix_vector) ==
+		    VIRTIO_MSI_NO_VECTOR) {
+			IFCVF_ERR(ifcvf->pdev,
 				  "No msix vector for queue %u\n", i);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगरcvf_set_vq_state(hw, i, hw->vring[i].last_avail_idx);
-		अगरc_ioग_लिखो16(1, &cfg->queue_enable);
-	पूर्ण
+		ifcvf_set_vq_state(hw, i, hw->vring[i].last_avail_idx);
+		ifc_iowrite16(1, &cfg->queue_enable);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम अगरcvf_hw_disable(काष्ठा अगरcvf_hw *hw)
-अणु
-	काष्ठा virtio_pci_common_cfg __iomem *cfg;
+static void ifcvf_hw_disable(struct ifcvf_hw *hw)
+{
+	struct virtio_pci_common_cfg __iomem *cfg;
 	u32 i;
 
 	cfg = hw->common_cfg;
-	अगरc_ioग_लिखो16(VIRTIO_MSI_NO_VECTOR, &cfg->msix_config);
+	ifc_iowrite16(VIRTIO_MSI_NO_VECTOR, &cfg->msix_config);
 
-	क्रम (i = 0; i < hw->nr_vring; i++) अणु
-		अगरc_ioग_लिखो16(i, &cfg->queue_select);
-		अगरc_ioग_लिखो16(VIRTIO_MSI_NO_VECTOR, &cfg->queue_msix_vector);
-	पूर्ण
+	for (i = 0; i < hw->nr_vring; i++) {
+		ifc_iowrite16(i, &cfg->queue_select);
+		ifc_iowrite16(VIRTIO_MSI_NO_VECTOR, &cfg->queue_msix_vector);
+	}
 
-	अगरc_ioपढ़ो16(&cfg->queue_msix_vector);
-पूर्ण
+	ifc_ioread16(&cfg->queue_msix_vector);
+}
 
-पूर्णांक अगरcvf_start_hw(काष्ठा अगरcvf_hw *hw)
-अणु
-	अगरcvf_reset(hw);
-	अगरcvf_add_status(hw, VIRTIO_CONFIG_S_ACKNOWLEDGE);
-	अगरcvf_add_status(hw, VIRTIO_CONFIG_S_DRIVER);
+int ifcvf_start_hw(struct ifcvf_hw *hw)
+{
+	ifcvf_reset(hw);
+	ifcvf_add_status(hw, VIRTIO_CONFIG_S_ACKNOWLEDGE);
+	ifcvf_add_status(hw, VIRTIO_CONFIG_S_DRIVER);
 
-	अगर (अगरcvf_config_features(hw) < 0)
-		वापस -EINVAL;
+	if (ifcvf_config_features(hw) < 0)
+		return -EINVAL;
 
-	अगर (अगरcvf_hw_enable(hw) < 0)
-		वापस -EINVAL;
+	if (ifcvf_hw_enable(hw) < 0)
+		return -EINVAL;
 
-	अगरcvf_add_status(hw, VIRTIO_CONFIG_S_DRIVER_OK);
+	ifcvf_add_status(hw, VIRTIO_CONFIG_S_DRIVER_OK);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम अगरcvf_stop_hw(काष्ठा अगरcvf_hw *hw)
-अणु
-	अगरcvf_hw_disable(hw);
-	अगरcvf_reset(hw);
-पूर्ण
+void ifcvf_stop_hw(struct ifcvf_hw *hw)
+{
+	ifcvf_hw_disable(hw);
+	ifcvf_reset(hw);
+}
 
-व्योम अगरcvf_notअगरy_queue(काष्ठा अगरcvf_hw *hw, u16 qid)
-अणु
-	अगरc_ioग_लिखो16(qid, hw->vring[qid].notअगरy_addr);
-पूर्ण
+void ifcvf_notify_queue(struct ifcvf_hw *hw, u16 qid)
+{
+	ifc_iowrite16(qid, hw->vring[qid].notify_addr);
+}

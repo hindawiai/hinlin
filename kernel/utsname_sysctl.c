@@ -1,145 +1,144 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  Copyright (C) 2007
  *
  *  Author: Eric Biederman <ebiederm@xmision.com>
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/uts.h>
-#समावेश <linux/utsname.h>
-#समावेश <linux/sysctl.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/rwsem.h>
+#include <linux/export.h>
+#include <linux/uts.h>
+#include <linux/utsname.h>
+#include <linux/sysctl.h>
+#include <linux/wait.h>
+#include <linux/rwsem.h>
 
-#अगर_घोषित CONFIG_PROC_SYSCTL
+#ifdef CONFIG_PROC_SYSCTL
 
-अटल व्योम *get_uts(काष्ठा ctl_table *table)
-अणु
-	अक्षर *which = table->data;
-	काष्ठा uts_namespace *uts_ns;
+static void *get_uts(struct ctl_table *table)
+{
+	char *which = table->data;
+	struct uts_namespace *uts_ns;
 
 	uts_ns = current->nsproxy->uts_ns;
-	which = (which - (अक्षर *)&init_uts_ns) + (अक्षर *)uts_ns;
+	which = (which - (char *)&init_uts_ns) + (char *)uts_ns;
 
-	वापस which;
-पूर्ण
+	return which;
+}
 
 /*
- *	Special हाल of करोstring क्रम the UTS काष्ठाure. This has locks
+ *	Special case of dostring for the UTS structure. This has locks
  *	to observe. Should this be in kernel/sys.c ????
  */
-अटल पूर्णांक proc_करो_uts_string(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
-		  व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
-अणु
-	काष्ठा ctl_table uts_table;
-	पूर्णांक r;
-	अक्षर पंचांगp_data[__NEW_UTS_LEN + 1];
+static int proc_do_uts_string(struct ctl_table *table, int write,
+		  void *buffer, size_t *lenp, loff_t *ppos)
+{
+	struct ctl_table uts_table;
+	int r;
+	char tmp_data[__NEW_UTS_LEN + 1];
 
-	स_नकल(&uts_table, table, माप(uts_table));
-	uts_table.data = पंचांगp_data;
+	memcpy(&uts_table, table, sizeof(uts_table));
+	uts_table.data = tmp_data;
 
 	/*
-	 * Buffer the value in पंचांगp_data so that proc_करोstring() can be called
+	 * Buffer the value in tmp_data so that proc_dostring() can be called
 	 * without holding any locks.
-	 * We also need to पढ़ो the original value in the ग_लिखो==1 हाल to
-	 * support partial ग_लिखोs.
+	 * We also need to read the original value in the write==1 case to
+	 * support partial writes.
 	 */
-	करोwn_पढ़ो(&uts_sem);
-	स_नकल(पंचांगp_data, get_uts(table), माप(पंचांगp_data));
-	up_पढ़ो(&uts_sem);
-	r = proc_करोstring(&uts_table, ग_लिखो, buffer, lenp, ppos);
+	down_read(&uts_sem);
+	memcpy(tmp_data, get_uts(table), sizeof(tmp_data));
+	up_read(&uts_sem);
+	r = proc_dostring(&uts_table, write, buffer, lenp, ppos);
 
-	अगर (ग_लिखो) अणु
+	if (write) {
 		/*
 		 * Write back the new value.
 		 * Note that, since we dropped uts_sem, the result can
-		 * theoretically be incorrect अगर there are two parallel ग_लिखोs
+		 * theoretically be incorrect if there are two parallel writes
 		 * at non-zero offsets to the same sysctl.
 		 */
-		करोwn_ग_लिखो(&uts_sem);
-		स_नकल(get_uts(table), पंचांगp_data, माप(पंचांगp_data));
-		up_ग_लिखो(&uts_sem);
-		proc_sys_poll_notअगरy(table->poll);
-	पूर्ण
+		down_write(&uts_sem);
+		memcpy(get_uts(table), tmp_data, sizeof(tmp_data));
+		up_write(&uts_sem);
+		proc_sys_poll_notify(table->poll);
+	}
 
-	वापस r;
-पूर्ण
-#अन्यथा
-#घोषणा proc_करो_uts_string शून्य
-#पूर्ण_अगर
+	return r;
+}
+#else
+#define proc_do_uts_string NULL
+#endif
 
-अटल DEFINE_CTL_TABLE_POLL(hostname_poll);
-अटल DEFINE_CTL_TABLE_POLL(करोमुख्यname_poll);
+static DEFINE_CTL_TABLE_POLL(hostname_poll);
+static DEFINE_CTL_TABLE_POLL(domainname_poll);
 
-अटल काष्ठा ctl_table uts_kern_table[] = अणु
-	अणु
+static struct ctl_table uts_kern_table[] = {
+	{
 		.procname	= "ostype",
 		.data		= init_uts_ns.name.sysname,
-		.maxlen		= माप(init_uts_ns.name.sysname),
+		.maxlen		= sizeof(init_uts_ns.name.sysname),
 		.mode		= 0444,
-		.proc_handler	= proc_करो_uts_string,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_do_uts_string,
+	},
+	{
 		.procname	= "osrelease",
 		.data		= init_uts_ns.name.release,
-		.maxlen		= माप(init_uts_ns.name.release),
+		.maxlen		= sizeof(init_uts_ns.name.release),
 		.mode		= 0444,
-		.proc_handler	= proc_करो_uts_string,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_do_uts_string,
+	},
+	{
 		.procname	= "version",
 		.data		= init_uts_ns.name.version,
-		.maxlen		= माप(init_uts_ns.name.version),
+		.maxlen		= sizeof(init_uts_ns.name.version),
 		.mode		= 0444,
-		.proc_handler	= proc_करो_uts_string,
-	पूर्ण,
-	अणु
+		.proc_handler	= proc_do_uts_string,
+	},
+	{
 		.procname	= "hostname",
 		.data		= init_uts_ns.name.nodename,
-		.maxlen		= माप(init_uts_ns.name.nodename),
+		.maxlen		= sizeof(init_uts_ns.name.nodename),
 		.mode		= 0644,
-		.proc_handler	= proc_करो_uts_string,
+		.proc_handler	= proc_do_uts_string,
 		.poll		= &hostname_poll,
-	पूर्ण,
-	अणु
+	},
+	{
 		.procname	= "domainname",
-		.data		= init_uts_ns.name.करोमुख्यname,
-		.maxlen		= माप(init_uts_ns.name.करोमुख्यname),
+		.data		= init_uts_ns.name.domainname,
+		.maxlen		= sizeof(init_uts_ns.name.domainname),
 		.mode		= 0644,
-		.proc_handler	= proc_करो_uts_string,
-		.poll		= &करोमुख्यname_poll,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		.proc_handler	= proc_do_uts_string,
+		.poll		= &domainname_poll,
+	},
+	{}
+};
 
-अटल काष्ठा ctl_table uts_root_table[] = अणु
-	अणु
+static struct ctl_table uts_root_table[] = {
+	{
 		.procname	= "kernel",
 		.mode		= 0555,
 		.child		= uts_kern_table,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 
-#अगर_घोषित CONFIG_PROC_SYSCTL
+#ifdef CONFIG_PROC_SYSCTL
 /*
- * Notअगरy userspace about a change in a certain entry of uts_kern_table,
- * identअगरied by the parameter proc.
+ * Notify userspace about a change in a certain entry of uts_kern_table,
+ * identified by the parameter proc.
  */
-व्योम uts_proc_notअगरy(क्रमागत uts_proc proc)
-अणु
-	काष्ठा ctl_table *table = &uts_kern_table[proc];
+void uts_proc_notify(enum uts_proc proc)
+{
+	struct ctl_table *table = &uts_kern_table[proc];
 
-	proc_sys_poll_notअगरy(table->poll);
-पूर्ण
-#पूर्ण_अगर
+	proc_sys_poll_notify(table->poll);
+}
+#endif
 
-अटल पूर्णांक __init utsname_sysctl_init(व्योम)
-अणु
-	रेजिस्टर_sysctl_table(uts_root_table);
-	वापस 0;
-पूर्ण
+static int __init utsname_sysctl_init(void)
+{
+	register_sysctl_table(uts_root_table);
+	return 0;
+}
 
 device_initcall(utsname_sysctl_init);

@@ -1,422 +1,421 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * ccs811.c - Support क्रम AMS CCS811 VOC Sensor
+ * ccs811.c - Support for AMS CCS811 VOC Sensor
  *
  * Copyright (C) 2017 Narcisa Vasile <narcisaanamaria12@gmail.com>
  *
- * Datasheet: ams.com/content/करोwnload/951091/2269479/CCS811_DS000459_3-00.pdf
+ * Datasheet: ams.com/content/download/951091/2269479/CCS811_DS000459_3-00.pdf
  *
- * IIO driver क्रम AMS CCS811 (I2C address 0x5A/0x5B set by ADDR Low/High)
+ * IIO driver for AMS CCS811 (I2C address 0x5A/0x5B set by ADDR Low/High)
  *
  * TODO:
- * 1. Make the drive mode selectable क्रमm userspace
- * 2. Add support क्रम पूर्णांकerrupts
- * 3. Adjust समय to रुको क्रम data to be पढ़ोy based on selected operation mode
- * 4. Read error रेजिस्टर and put the inक्रमmation in logs
+ * 1. Make the drive mode selectable form userspace
+ * 2. Add support for interrupts
+ * 3. Adjust time to wait for data to be ready based on selected operation mode
+ * 4. Read error register and put the information in logs
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/buffer.h>
-#समावेश <linux/iio/trigger.h>
-#समावेश <linux/iio/triggered_buffer.h>
-#समावेश <linux/iio/trigger_consumer.h>
-#समावेश <linux/module.h>
+#include <linux/delay.h>
+#include <linux/gpio/consumer.h>
+#include <linux/i2c.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/buffer.h>
+#include <linux/iio/trigger.h>
+#include <linux/iio/triggered_buffer.h>
+#include <linux/iio/trigger_consumer.h>
+#include <linux/module.h>
 
-#घोषणा CCS811_STATUS		0x00
-#घोषणा CCS811_MEAS_MODE	0x01
-#घोषणा CCS811_ALG_RESULT_DATA	0x02
-#घोषणा CCS811_RAW_DATA		0x03
-#घोषणा CCS811_HW_ID		0x20
-#घोषणा CCS811_HW_ID_VALUE	0x81
-#घोषणा CCS811_HW_VERSION	0x21
-#घोषणा CCS811_HW_VERSION_VALUE	0x10
-#घोषणा CCS811_HW_VERSION_MASK	0xF0
-#घोषणा CCS811_ERR		0xE0
+#define CCS811_STATUS		0x00
+#define CCS811_MEAS_MODE	0x01
+#define CCS811_ALG_RESULT_DATA	0x02
+#define CCS811_RAW_DATA		0x03
+#define CCS811_HW_ID		0x20
+#define CCS811_HW_ID_VALUE	0x81
+#define CCS811_HW_VERSION	0x21
+#define CCS811_HW_VERSION_VALUE	0x10
+#define CCS811_HW_VERSION_MASK	0xF0
+#define CCS811_ERR		0xE0
 /* Used to transition from boot to application mode */
-#घोषणा CCS811_APP_START	0xF4
-#घोषणा CCS811_SW_RESET		0xFF
+#define CCS811_APP_START	0xF4
+#define CCS811_SW_RESET		0xFF
 
-/* Status रेजिस्टर flags */
-#घोषणा CCS811_STATUS_ERROR		BIT(0)
-#घोषणा CCS811_STATUS_DATA_READY	BIT(3)
-#घोषणा CCS811_STATUS_APP_VALID_MASK	BIT(4)
-#घोषणा CCS811_STATUS_APP_VALID_LOADED	BIT(4)
+/* Status register flags */
+#define CCS811_STATUS_ERROR		BIT(0)
+#define CCS811_STATUS_DATA_READY	BIT(3)
+#define CCS811_STATUS_APP_VALID_MASK	BIT(4)
+#define CCS811_STATUS_APP_VALID_LOADED	BIT(4)
 /*
- * Value of FW_MODE bit of STATUS रेजिस्टर describes the sensor's state:
+ * Value of FW_MODE bit of STATUS register describes the sensor's state:
  * 0: Firmware is in boot mode, this allows new firmware to be loaded
- * 1: Firmware is in application mode. CCS811 is पढ़ोy to take ADC measurements
+ * 1: Firmware is in application mode. CCS811 is ready to take ADC measurements
  */
-#घोषणा CCS811_STATUS_FW_MODE_MASK	BIT(7)
-#घोषणा CCS811_STATUS_FW_MODE_APPLICATION	BIT(7)
+#define CCS811_STATUS_FW_MODE_MASK	BIT(7)
+#define CCS811_STATUS_FW_MODE_APPLICATION	BIT(7)
 
 /* Measurement modes */
-#घोषणा CCS811_MODE_IDLE	0x00
-#घोषणा CCS811_MODE_IAQ_1SEC	0x10
-#घोषणा CCS811_MODE_IAQ_10SEC	0x20
-#घोषणा CCS811_MODE_IAQ_60SEC	0x30
-#घोषणा CCS811_MODE_RAW_DATA	0x40
+#define CCS811_MODE_IDLE	0x00
+#define CCS811_MODE_IAQ_1SEC	0x10
+#define CCS811_MODE_IAQ_10SEC	0x20
+#define CCS811_MODE_IAQ_60SEC	0x30
+#define CCS811_MODE_RAW_DATA	0x40
 
-#घोषणा CCS811_MEAS_MODE_INTERRUPT	BIT(3)
+#define CCS811_MEAS_MODE_INTERRUPT	BIT(3)
 
-#घोषणा CCS811_VOLTAGE_MASK	0x3FF
+#define CCS811_VOLTAGE_MASK	0x3FF
 
-काष्ठा ccs811_पढ़ोing अणु
+struct ccs811_reading {
 	__be16 co2;
 	__be16 voc;
 	u8 status;
 	u8 error;
 	__be16 raw_data;
-पूर्ण __attribute__((__packed__));
+} __attribute__((__packed__));
 
-काष्ठा ccs811_data अणु
-	काष्ठा i2c_client *client;
-	काष्ठा mutex lock; /* Protect पढ़ोings */
-	काष्ठा ccs811_पढ़ोing buffer;
-	काष्ठा iio_trigger *drdy_trig;
-	काष्ठा gpio_desc *wakeup_gpio;
+struct ccs811_data {
+	struct i2c_client *client;
+	struct mutex lock; /* Protect readings */
+	struct ccs811_reading buffer;
+	struct iio_trigger *drdy_trig;
+	struct gpio_desc *wakeup_gpio;
 	bool drdy_trig_on;
-	/* Ensures correct alignment of बारtamp अगर present */
-	काष्ठा अणु
+	/* Ensures correct alignment of timestamp if present */
+	struct {
 		s16 channels[2];
 		s64 ts __aligned(8);
-	पूर्ण scan;
-पूर्ण;
+	} scan;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec ccs811_channels[] = अणु
-	अणु
+static const struct iio_chan_spec ccs811_channels[] = {
+	{
 		.type = IIO_CURRENT,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				      BIT(IIO_CHAN_INFO_SCALE),
 		.scan_index = -1,
-	पूर्ण, अणु
+	}, {
 		.type = IIO_VOLTAGE,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				      BIT(IIO_CHAN_INFO_SCALE),
 		.scan_index = -1,
-	पूर्ण, अणु
+	}, {
 		.type = IIO_CONCENTRATION,
 		.channel2 = IIO_MOD_CO2,
-		.modअगरied = 1,
+		.modified = 1,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				      BIT(IIO_CHAN_INFO_SCALE),
 		.scan_index = 0,
-		.scan_type = अणु
+		.scan_type = {
 			.sign = 'u',
 			.realbits = 16,
 			.storagebits = 16,
 			.endianness = IIO_BE,
-		पूर्ण,
-	पूर्ण, अणु
+		},
+	}, {
 		.type = IIO_CONCENTRATION,
 		.channel2 = IIO_MOD_VOC,
-		.modअगरied = 1,
+		.modified = 1,
 		.info_mask_separate =  BIT(IIO_CHAN_INFO_RAW) |
 				       BIT(IIO_CHAN_INFO_SCALE),
 		.scan_index = 1,
-		.scan_type = अणु
+		.scan_type = {
 			.sign = 'u',
 			.realbits = 16,
 			.storagebits = 16,
 			.endianness = IIO_BE,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 	IIO_CHAN_SOFT_TIMESTAMP(2),
-पूर्ण;
+};
 
 /*
- * The CCS811 घातers-up in boot mode. A setup ग_लिखो to CCS811_APP_START will
+ * The CCS811 powers-up in boot mode. A setup write to CCS811_APP_START will
  * transition the sensor to application mode.
  */
-अटल पूर्णांक ccs811_start_sensor_application(काष्ठा i2c_client *client)
-अणु
-	पूर्णांक ret;
+static int ccs811_start_sensor_application(struct i2c_client *client)
+{
+	int ret;
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, CCS811_STATUS);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_read_byte_data(client, CCS811_STATUS);
+	if (ret < 0)
+		return ret;
 
-	अगर ((ret & CCS811_STATUS_FW_MODE_APPLICATION))
-		वापस 0;
+	if ((ret & CCS811_STATUS_FW_MODE_APPLICATION))
+		return 0;
 
-	अगर ((ret & CCS811_STATUS_APP_VALID_MASK) !=
+	if ((ret & CCS811_STATUS_APP_VALID_MASK) !=
 	    CCS811_STATUS_APP_VALID_LOADED)
-		वापस -EIO;
+		return -EIO;
 
-	ret = i2c_smbus_ग_लिखो_byte(client, CCS811_APP_START);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_write_byte(client, CCS811_APP_START);
+	if (ret < 0)
+		return ret;
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, CCS811_STATUS);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_read_byte_data(client, CCS811_STATUS);
+	if (ret < 0)
+		return ret;
 
-	अगर ((ret & CCS811_STATUS_FW_MODE_MASK) !=
-	    CCS811_STATUS_FW_MODE_APPLICATION) अणु
+	if ((ret & CCS811_STATUS_FW_MODE_MASK) !=
+	    CCS811_STATUS_FW_MODE_APPLICATION) {
 		dev_err(&client->dev, "Application failed to start. Sensor is still in boot mode.\n");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ccs811_setup(काष्ठा i2c_client *client)
-अणु
-	पूर्णांक ret;
+static int ccs811_setup(struct i2c_client *client)
+{
+	int ret;
 
 	ret = ccs811_start_sensor_application(client);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस i2c_smbus_ग_लिखो_byte_data(client, CCS811_MEAS_MODE,
+	return i2c_smbus_write_byte_data(client, CCS811_MEAS_MODE,
 					 CCS811_MODE_IAQ_1SEC);
-पूर्ण
+}
 
-अटल व्योम ccs811_set_wakeup(काष्ठा ccs811_data *data, bool enable)
-अणु
-	अगर (!data->wakeup_gpio)
-		वापस;
+static void ccs811_set_wakeup(struct ccs811_data *data, bool enable)
+{
+	if (!data->wakeup_gpio)
+		return;
 
 	gpiod_set_value(data->wakeup_gpio, enable);
 
-	अगर (enable)
+	if (enable)
 		usleep_range(50, 60);
-	अन्यथा
+	else
 		usleep_range(20, 30);
-पूर्ण
+}
 
-अटल पूर्णांक ccs811_get_measurement(काष्ठा ccs811_data *data)
-अणु
-	पूर्णांक ret, tries = 11;
+static int ccs811_get_measurement(struct ccs811_data *data)
+{
+	int ret, tries = 11;
 
 	ccs811_set_wakeup(data, true);
 
-	/* Maximum रुकोing समय: 1s, as measurements are made every second */
-	जबतक (tries-- > 0) अणु
-		ret = i2c_smbus_पढ़ो_byte_data(data->client, CCS811_STATUS);
-		अगर (ret < 0)
-			वापस ret;
+	/* Maximum waiting time: 1s, as measurements are made every second */
+	while (tries-- > 0) {
+		ret = i2c_smbus_read_byte_data(data->client, CCS811_STATUS);
+		if (ret < 0)
+			return ret;
 
-		अगर ((ret & CCS811_STATUS_DATA_READY) || tries == 0)
-			अवरोध;
+		if ((ret & CCS811_STATUS_DATA_READY) || tries == 0)
+			break;
 		msleep(100);
-	पूर्ण
-	अगर (!(ret & CCS811_STATUS_DATA_READY))
-		वापस -EIO;
+	}
+	if (!(ret & CCS811_STATUS_DATA_READY))
+		return -EIO;
 
-	ret = i2c_smbus_पढ़ो_i2c_block_data(data->client,
+	ret = i2c_smbus_read_i2c_block_data(data->client,
 					    CCS811_ALG_RESULT_DATA, 8,
-					    (अक्षर *)&data->buffer);
+					    (char *)&data->buffer);
 	ccs811_set_wakeup(data, false);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ccs811_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			   काष्ठा iio_chan_spec स्थिर *chan,
-			   पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा ccs811_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int ccs811_read_raw(struct iio_dev *indio_dev,
+			   struct iio_chan_spec const *chan,
+			   int *val, int *val2, long mask)
+{
+	struct ccs811_data *data = iio_priv(indio_dev);
+	int ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
 		ret = iio_device_claim_direct_mode(indio_dev);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 		mutex_lock(&data->lock);
 		ret = ccs811_get_measurement(data);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			mutex_unlock(&data->lock);
 			iio_device_release_direct_mode(indio_dev);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		चयन (chan->type) अणु
-		हाल IIO_VOLTAGE:
+		switch (chan->type) {
+		case IIO_VOLTAGE:
 			*val = be16_to_cpu(data->buffer.raw_data) &
 					   CCS811_VOLTAGE_MASK;
 			ret = IIO_VAL_INT;
-			अवरोध;
-		हाल IIO_CURRENT:
+			break;
+		case IIO_CURRENT:
 			*val = be16_to_cpu(data->buffer.raw_data) >> 10;
 			ret = IIO_VAL_INT;
-			अवरोध;
-		हाल IIO_CONCENTRATION:
-			चयन (chan->channel2) अणु
-			हाल IIO_MOD_CO2:
+			break;
+		case IIO_CONCENTRATION:
+			switch (chan->channel2) {
+			case IIO_MOD_CO2:
 				*val = be16_to_cpu(data->buffer.co2);
 				ret =  IIO_VAL_INT;
-				अवरोध;
-			हाल IIO_MOD_VOC:
+				break;
+			case IIO_MOD_VOC:
 				*val = be16_to_cpu(data->buffer.voc);
 				ret = IIO_VAL_INT;
-				अवरोध;
-			शेष:
+				break;
+			default:
 				ret = -EINVAL;
-			पूर्ण
-			अवरोध;
-		शेष:
+			}
+			break;
+		default:
 			ret = -EINVAL;
-		पूर्ण
+		}
 		mutex_unlock(&data->lock);
 		iio_device_release_direct_mode(indio_dev);
 
-		वापस ret;
+		return ret;
 
-	हाल IIO_CHAN_INFO_SCALE:
-		चयन (chan->type) अणु
-		हाल IIO_VOLTAGE:
+	case IIO_CHAN_INFO_SCALE:
+		switch (chan->type) {
+		case IIO_VOLTAGE:
 			*val = 1;
 			*val2 = 612903;
-			वापस IIO_VAL_INT_PLUS_MICRO;
-		हाल IIO_CURRENT:
+			return IIO_VAL_INT_PLUS_MICRO;
+		case IIO_CURRENT:
 			*val = 0;
 			*val2 = 1000;
-			वापस IIO_VAL_INT_PLUS_MICRO;
-		हाल IIO_CONCENTRATION:
-			चयन (chan->channel2) अणु
-			हाल IIO_MOD_CO2:
+			return IIO_VAL_INT_PLUS_MICRO;
+		case IIO_CONCENTRATION:
+			switch (chan->channel2) {
+			case IIO_MOD_CO2:
 				*val = 0;
 				*val2 = 100;
-				वापस IIO_VAL_INT_PLUS_MICRO;
-			हाल IIO_MOD_VOC:
+				return IIO_VAL_INT_PLUS_MICRO;
+			case IIO_MOD_VOC:
 				*val = 0;
 				*val2 = 100;
-				वापस IIO_VAL_INT_PLUS_न_अंकO;
-			शेष:
-				वापस -EINVAL;
-			पूर्ण
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+				return IIO_VAL_INT_PLUS_NANO;
+			default:
+				return -EINVAL;
+			}
+		default:
+			return -EINVAL;
+		}
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर काष्ठा iio_info ccs811_info = अणु
-	.पढ़ो_raw = ccs811_पढ़ो_raw,
-पूर्ण;
+static const struct iio_info ccs811_info = {
+	.read_raw = ccs811_read_raw,
+};
 
-अटल पूर्णांक ccs811_set_trigger_state(काष्ठा iio_trigger *trig,
+static int ccs811_set_trigger_state(struct iio_trigger *trig,
 				    bool state)
-अणु
-	काष्ठा iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
-	काष्ठा ccs811_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+{
+	struct iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
+	struct ccs811_data *data = iio_priv(indio_dev);
+	int ret;
 
-	ret = i2c_smbus_पढ़ो_byte_data(data->client, CCS811_MEAS_MODE);
-	अगर (ret < 0)
-		वापस ret;
+	ret = i2c_smbus_read_byte_data(data->client, CCS811_MEAS_MODE);
+	if (ret < 0)
+		return ret;
 
-	अगर (state)
+	if (state)
 		ret |= CCS811_MEAS_MODE_INTERRUPT;
-	अन्यथा
+	else
 		ret &= ~CCS811_MEAS_MODE_INTERRUPT;
 
 	data->drdy_trig_on = state;
 
-	वापस i2c_smbus_ग_लिखो_byte_data(data->client, CCS811_MEAS_MODE, ret);
-पूर्ण
+	return i2c_smbus_write_byte_data(data->client, CCS811_MEAS_MODE, ret);
+}
 
-अटल स्थिर काष्ठा iio_trigger_ops ccs811_trigger_ops = अणु
+static const struct iio_trigger_ops ccs811_trigger_ops = {
 	.set_trigger_state = ccs811_set_trigger_state,
-पूर्ण;
+};
 
-अटल irqवापस_t ccs811_trigger_handler(पूर्णांक irq, व्योम *p)
-अणु
-	काष्ठा iio_poll_func *pf = p;
-	काष्ठा iio_dev *indio_dev = pf->indio_dev;
-	काष्ठा ccs811_data *data = iio_priv(indio_dev);
-	काष्ठा i2c_client *client = data->client;
-	पूर्णांक ret;
+static irqreturn_t ccs811_trigger_handler(int irq, void *p)
+{
+	struct iio_poll_func *pf = p;
+	struct iio_dev *indio_dev = pf->indio_dev;
+	struct ccs811_data *data = iio_priv(indio_dev);
+	struct i2c_client *client = data->client;
+	int ret;
 
-	ret = i2c_smbus_पढ़ो_i2c_block_data(client, CCS811_ALG_RESULT_DATA,
-					    माप(data->scan.channels),
+	ret = i2c_smbus_read_i2c_block_data(client, CCS811_ALG_RESULT_DATA,
+					    sizeof(data->scan.channels),
 					    (u8 *)data->scan.channels);
-	अगर (ret != 4) अणु
+	if (ret != 4) {
 		dev_err(&client->dev, "cannot read sensor data\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	iio_push_to_buffers_with_बारtamp(indio_dev, &data->scan,
-					   iio_get_समय_ns(indio_dev));
+	iio_push_to_buffers_with_timestamp(indio_dev, &data->scan,
+					   iio_get_time_ns(indio_dev));
 
 err:
-	iio_trigger_notअगरy_करोne(indio_dev->trig);
+	iio_trigger_notify_done(indio_dev->trig);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल irqवापस_t ccs811_data_rdy_trigger_poll(पूर्णांक irq, व्योम *निजी)
-अणु
-	काष्ठा iio_dev *indio_dev = निजी;
-	काष्ठा ccs811_data *data = iio_priv(indio_dev);
+static irqreturn_t ccs811_data_rdy_trigger_poll(int irq, void *private)
+{
+	struct iio_dev *indio_dev = private;
+	struct ccs811_data *data = iio_priv(indio_dev);
 
-	अगर (data->drdy_trig_on)
+	if (data->drdy_trig_on)
 		iio_trigger_poll(data->drdy_trig);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक ccs811_reset(काष्ठा i2c_client *client)
-अणु
-	काष्ठा gpio_desc *reset_gpio;
-	पूर्णांक ret;
+static int ccs811_reset(struct i2c_client *client)
+{
+	struct gpio_desc *reset_gpio;
+	int ret;
 
 	reset_gpio = devm_gpiod_get_optional(&client->dev, "reset",
 					     GPIOD_OUT_LOW);
-	अगर (IS_ERR(reset_gpio))
-		वापस PTR_ERR(reset_gpio);
+	if (IS_ERR(reset_gpio))
+		return PTR_ERR(reset_gpio);
 
-	/* Try to reset using nRESET pin अगर available अन्यथा करो SW reset */
-	अगर (reset_gpio) अणु
+	/* Try to reset using nRESET pin if available else do SW reset */
+	if (reset_gpio) {
 		gpiod_set_value(reset_gpio, 1);
 		usleep_range(20, 30);
 		gpiod_set_value(reset_gpio, 0);
-	पूर्ण अन्यथा अणु
+	} else {
 		/*
 		 * As per the datasheet, this sequence of values needs to be
-		 * written to the SW_RESET रेजिस्टर क्रम triggering the soft
+		 * written to the SW_RESET register for triggering the soft
 		 * reset in the device and placing it in boot mode.
 		 */
-		अटल स्थिर u8 reset_seq[] = अणु
+		static const u8 reset_seq[] = {
 			0x11, 0xE5, 0x72, 0x8A,
-		पूर्ण;
+		};
 
-		ret = i2c_smbus_ग_लिखो_i2c_block_data(client, CCS811_SW_RESET,
-					     माप(reset_seq), reset_seq);
-		अगर (ret < 0) अणु
+		ret = i2c_smbus_write_i2c_block_data(client, CCS811_SW_RESET,
+					     sizeof(reset_seq), reset_seq);
+		if (ret < 0) {
 			dev_err(&client->dev, "Failed to reset sensor\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
 	/* tSTART delay required after reset */
 	usleep_range(1000, 2000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ccs811_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा iio_dev *indio_dev;
-	काष्ठा ccs811_data *data;
-	पूर्णांक ret;
+static int ccs811_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	struct iio_dev *indio_dev;
+	struct ccs811_data *data;
+	int ret;
 
-	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_WRITE_BYTE
+	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_WRITE_BYTE
 				     | I2C_FUNC_SMBUS_BYTE_DATA
 				     | I2C_FUNC_SMBUS_READ_I2C_BLOCK))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	data = iio_priv(indio_dev);
 	i2c_set_clientdata(client, indio_dev);
@@ -424,47 +423,47 @@ err:
 
 	data->wakeup_gpio = devm_gpiod_get_optional(&client->dev, "wakeup",
 						    GPIOD_OUT_HIGH);
-	अगर (IS_ERR(data->wakeup_gpio))
-		वापस PTR_ERR(data->wakeup_gpio);
+	if (IS_ERR(data->wakeup_gpio))
+		return PTR_ERR(data->wakeup_gpio);
 
 	ccs811_set_wakeup(data, true);
 
 	ret = ccs811_reset(client);
-	अगर (ret) अणु
+	if (ret) {
 		ccs811_set_wakeup(data, false);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* Check hardware id (should be 0x81 क्रम this family of devices) */
-	ret = i2c_smbus_पढ़ो_byte_data(client, CCS811_HW_ID);
-	अगर (ret < 0) अणु
+	/* Check hardware id (should be 0x81 for this family of devices) */
+	ret = i2c_smbus_read_byte_data(client, CCS811_HW_ID);
+	if (ret < 0) {
 		ccs811_set_wakeup(data, false);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (ret != CCS811_HW_ID_VALUE) अणु
+	if (ret != CCS811_HW_ID_VALUE) {
 		dev_err(&client->dev, "hardware id doesn't match CCS81x\n");
 		ccs811_set_wakeup(data, false);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	ret = i2c_smbus_पढ़ो_byte_data(client, CCS811_HW_VERSION);
-	अगर (ret < 0) अणु
+	ret = i2c_smbus_read_byte_data(client, CCS811_HW_VERSION);
+	if (ret < 0) {
 		ccs811_set_wakeup(data, false);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर ((ret & CCS811_HW_VERSION_MASK) != CCS811_HW_VERSION_VALUE) अणु
+	if ((ret & CCS811_HW_VERSION_MASK) != CCS811_HW_VERSION_VALUE) {
 		dev_err(&client->dev, "no CCS811 sensor\n");
 		ccs811_set_wakeup(data, false);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	ret = ccs811_setup(client);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		ccs811_set_wakeup(data, false);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ccs811_set_wakeup(data, false);
 
@@ -472,102 +471,102 @@ err:
 
 	indio_dev->name = id->name;
 	indio_dev->info = &ccs811_info;
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 
 	indio_dev->channels = ccs811_channels;
 	indio_dev->num_channels = ARRAY_SIZE(ccs811_channels);
 
-	अगर (client->irq > 0) अणु
-		ret = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
+	if (client->irq > 0) {
+		ret = devm_request_threaded_irq(&client->dev, client->irq,
 						ccs811_data_rdy_trigger_poll,
-						शून्य,
+						NULL,
 						IRQF_TRIGGER_FALLING |
 						IRQF_ONESHOT,
 						"ccs811_irq", indio_dev);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&client->dev, "irq request error %d\n", -ret);
-			जाओ err_घातeroff;
-		पूर्ण
+			goto err_poweroff;
+		}
 
 		data->drdy_trig = devm_iio_trigger_alloc(&client->dev,
 							 "%s-dev%d",
 							 indio_dev->name,
 							 indio_dev->id);
-		अगर (!data->drdy_trig) अणु
+		if (!data->drdy_trig) {
 			ret = -ENOMEM;
-			जाओ err_घातeroff;
-		पूर्ण
+			goto err_poweroff;
+		}
 
 		data->drdy_trig->ops = &ccs811_trigger_ops;
 		iio_trigger_set_drvdata(data->drdy_trig, indio_dev);
 		indio_dev->trig = data->drdy_trig;
 		iio_trigger_get(indio_dev->trig);
-		ret = iio_trigger_रेजिस्टर(data->drdy_trig);
-		अगर (ret)
-			जाओ err_घातeroff;
-	पूर्ण
+		ret = iio_trigger_register(data->drdy_trig);
+		if (ret)
+			goto err_poweroff;
+	}
 
-	ret = iio_triggered_buffer_setup(indio_dev, शून्य,
-					 ccs811_trigger_handler, शून्य);
+	ret = iio_triggered_buffer_setup(indio_dev, NULL,
+					 ccs811_trigger_handler, NULL);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&client->dev, "triggered buffer setup failed\n");
-		जाओ err_trigger_unरेजिस्टर;
-	पूर्ण
+		goto err_trigger_unregister;
+	}
 
-	ret = iio_device_रेजिस्टर(indio_dev);
-	अगर (ret < 0) अणु
+	ret = iio_device_register(indio_dev);
+	if (ret < 0) {
 		dev_err(&client->dev, "unable to register iio device\n");
-		जाओ err_buffer_cleanup;
-	पूर्ण
-	वापस 0;
+		goto err_buffer_cleanup;
+	}
+	return 0;
 
 err_buffer_cleanup:
 	iio_triggered_buffer_cleanup(indio_dev);
-err_trigger_unरेजिस्टर:
-	अगर (data->drdy_trig)
-		iio_trigger_unरेजिस्टर(data->drdy_trig);
-err_घातeroff:
-	i2c_smbus_ग_लिखो_byte_data(client, CCS811_MEAS_MODE, CCS811_MODE_IDLE);
+err_trigger_unregister:
+	if (data->drdy_trig)
+		iio_trigger_unregister(data->drdy_trig);
+err_poweroff:
+	i2c_smbus_write_byte_data(client, CCS811_MEAS_MODE, CCS811_MODE_IDLE);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ccs811_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
-	काष्ठा ccs811_data *data = iio_priv(indio_dev);
+static int ccs811_remove(struct i2c_client *client)
+{
+	struct iio_dev *indio_dev = i2c_get_clientdata(client);
+	struct ccs811_data *data = iio_priv(indio_dev);
 
-	iio_device_unरेजिस्टर(indio_dev);
+	iio_device_unregister(indio_dev);
 	iio_triggered_buffer_cleanup(indio_dev);
-	अगर (data->drdy_trig)
-		iio_trigger_unरेजिस्टर(data->drdy_trig);
+	if (data->drdy_trig)
+		iio_trigger_unregister(data->drdy_trig);
 
-	वापस i2c_smbus_ग_लिखो_byte_data(client, CCS811_MEAS_MODE,
+	return i2c_smbus_write_byte_data(client, CCS811_MEAS_MODE,
 					 CCS811_MODE_IDLE);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा i2c_device_id ccs811_id[] = अणु
-	अणु"ccs811", 0पूर्ण,
-	अणु	पूर्ण
-पूर्ण;
+static const struct i2c_device_id ccs811_id[] = {
+	{"ccs811", 0},
+	{	}
+};
 MODULE_DEVICE_TABLE(i2c, ccs811_id);
 
-अटल स्थिर काष्ठा of_device_id ccs811_dt_ids[] = अणु
-	अणु .compatible = "ams,ccs811" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id ccs811_dt_ids[] = {
+	{ .compatible = "ams,ccs811" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, ccs811_dt_ids);
 
-अटल काष्ठा i2c_driver ccs811_driver = अणु
-	.driver = अणु
+static struct i2c_driver ccs811_driver = {
+	.driver = {
 		.name = "ccs811",
 		.of_match_table = ccs811_dt_ids,
-	पूर्ण,
+	},
 	.probe = ccs811_probe,
-	.हटाओ = ccs811_हटाओ,
+	.remove = ccs811_remove,
 	.id_table = ccs811_id,
-पूर्ण;
+};
 module_i2c_driver(ccs811_driver);
 
 MODULE_AUTHOR("Narcisa Vasile <narcisaanamaria12@gmail.com>");

@@ -1,204 +1,203 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
- *		operating प्रणाली.  INET is implemented using the  BSD Socket
- *		पूर्णांकerface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite for the LINUX
+ *		operating system.  INET is implemented using the  BSD Socket
+ *		interface as the means of communication with the user level.
  *
- *		The options processing module क्रम ip.c
+ *		The options processing module for ip.c
  *
  * Authors:	A.N.Kuznetsov
  *
  */
 
-#घोषणा pr_fmt(fmt) "IPv4: " fmt
+#define pr_fmt(fmt) "IPv4: " fmt
 
-#समावेश <linux/capability.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/uaccess.h>
-#समावेश <यंत्र/unaligned.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/icmp.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/rtnetlink.h>
-#समावेश <net/sock.h>
-#समावेश <net/ip.h>
-#समावेश <net/icmp.h>
-#समावेश <net/route.h>
-#समावेश <net/cipso_ipv4.h>
-#समावेश <net/ip_fib.h>
+#include <linux/capability.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/uaccess.h>
+#include <asm/unaligned.h>
+#include <linux/skbuff.h>
+#include <linux/ip.h>
+#include <linux/icmp.h>
+#include <linux/netdevice.h>
+#include <linux/rtnetlink.h>
+#include <net/sock.h>
+#include <net/ip.h>
+#include <net/icmp.h>
+#include <net/route.h>
+#include <net/cipso_ipv4.h>
+#include <net/ip_fib.h>
 
 /*
  * Write options to IP header, record destination address to
- * source route option, address of outgoing पूर्णांकerface
- * (we should alपढ़ोy know it, so that this  function is allowed be
- * called only after routing decision) and बारtamp,
- * अगर we originate this datagram.
+ * source route option, address of outgoing interface
+ * (we should already know it, so that this  function is allowed be
+ * called only after routing decision) and timestamp,
+ * if we originate this datagram.
  *
  * daddr is real destination address, next hop is recorded in IP header.
- * saddr is address of outgoing पूर्णांकerface.
+ * saddr is address of outgoing interface.
  */
 
-व्योम ip_options_build(काष्ठा sk_buff *skb, काष्ठा ip_options *opt,
-		      __be32 daddr, काष्ठा rtable *rt, पूर्णांक is_frag)
-अणु
-	अचिन्हित अक्षर *iph = skb_network_header(skb);
+void ip_options_build(struct sk_buff *skb, struct ip_options *opt,
+		      __be32 daddr, struct rtable *rt, int is_frag)
+{
+	unsigned char *iph = skb_network_header(skb);
 
-	स_नकल(&(IPCB(skb)->opt), opt, माप(काष्ठा ip_options));
-	स_नकल(iph + माप(काष्ठा iphdr), opt->__data, opt->optlen);
+	memcpy(&(IPCB(skb)->opt), opt, sizeof(struct ip_options));
+	memcpy(iph + sizeof(struct iphdr), opt->__data, opt->optlen);
 	opt = &(IPCB(skb)->opt);
 
-	अगर (opt->srr)
-		स_नकल(iph + opt->srr + iph[opt->srr + 1] - 4, &daddr, 4);
+	if (opt->srr)
+		memcpy(iph + opt->srr + iph[opt->srr + 1] - 4, &daddr, 4);
 
-	अगर (!is_frag) अणु
-		अगर (opt->rr_needaddr)
+	if (!is_frag) {
+		if (opt->rr_needaddr)
 			ip_rt_get_source(iph + opt->rr + iph[opt->rr + 2] - 5, skb, rt);
-		अगर (opt->ts_needaddr)
+		if (opt->ts_needaddr)
 			ip_rt_get_source(iph + opt->ts + iph[opt->ts + 2] - 9, skb, rt);
-		अगर (opt->ts_needसमय) अणु
-			__be32 midसमय;
+		if (opt->ts_needtime) {
+			__be32 midtime;
 
-			midसमय = inet_current_बारtamp();
-			स_नकल(iph + opt->ts + iph[opt->ts + 2] - 5, &midसमय, 4);
-		पूर्ण
-		वापस;
-	पूर्ण
-	अगर (opt->rr) अणु
-		स_रखो(iph + opt->rr, IPOPT_NOP, iph[opt->rr + 1]);
+			midtime = inet_current_timestamp();
+			memcpy(iph + opt->ts + iph[opt->ts + 2] - 5, &midtime, 4);
+		}
+		return;
+	}
+	if (opt->rr) {
+		memset(iph + opt->rr, IPOPT_NOP, iph[opt->rr + 1]);
 		opt->rr = 0;
 		opt->rr_needaddr = 0;
-	पूर्ण
-	अगर (opt->ts) अणु
-		स_रखो(iph + opt->ts, IPOPT_NOP, iph[opt->ts + 1]);
+	}
+	if (opt->ts) {
+		memset(iph + opt->ts, IPOPT_NOP, iph[opt->ts + 1]);
 		opt->ts = 0;
-		opt->ts_needaddr = opt->ts_needसमय = 0;
-	पूर्ण
-पूर्ण
+		opt->ts_needaddr = opt->ts_needtime = 0;
+	}
+}
 
 /*
- * Provided (sopt, skb) poपूर्णांकs to received options,
- * build in करोpt compiled option set appropriate क्रम answering.
+ * Provided (sopt, skb) points to received options,
+ * build in dopt compiled option set appropriate for answering.
  * i.e. invert SRR option, copy anothers,
  * and grab room in RR/TS options.
  *
- * NOTE: करोpt cannot poपूर्णांक to skb.
+ * NOTE: dopt cannot point to skb.
  */
 
-पूर्णांक __ip_options_echo(काष्ठा net *net, काष्ठा ip_options *करोpt,
-		      काष्ठा sk_buff *skb, स्थिर काष्ठा ip_options *sopt)
-अणु
-	अचिन्हित अक्षर *sptr, *dptr;
-	पूर्णांक soffset, करोffset;
-	पूर्णांक	optlen;
+int __ip_options_echo(struct net *net, struct ip_options *dopt,
+		      struct sk_buff *skb, const struct ip_options *sopt)
+{
+	unsigned char *sptr, *dptr;
+	int soffset, doffset;
+	int	optlen;
 
-	स_रखो(करोpt, 0, माप(काष्ठा ip_options));
+	memset(dopt, 0, sizeof(struct ip_options));
 
-	अगर (sopt->optlen == 0)
-		वापस 0;
+	if (sopt->optlen == 0)
+		return 0;
 
 	sptr = skb_network_header(skb);
-	dptr = करोpt->__data;
+	dptr = dopt->__data;
 
-	अगर (sopt->rr) अणु
+	if (sopt->rr) {
 		optlen  = sptr[sopt->rr+1];
 		soffset = sptr[sopt->rr+2];
-		करोpt->rr = करोpt->optlen + माप(काष्ठा iphdr);
-		स_नकल(dptr, sptr+sopt->rr, optlen);
-		अगर (sopt->rr_needaddr && soffset <= optlen) अणु
-			अगर (soffset + 3 > optlen)
-				वापस -EINVAL;
+		dopt->rr = dopt->optlen + sizeof(struct iphdr);
+		memcpy(dptr, sptr+sopt->rr, optlen);
+		if (sopt->rr_needaddr && soffset <= optlen) {
+			if (soffset + 3 > optlen)
+				return -EINVAL;
 			dptr[2] = soffset + 4;
-			करोpt->rr_needaddr = 1;
-		पूर्ण
+			dopt->rr_needaddr = 1;
+		}
 		dptr += optlen;
-		करोpt->optlen += optlen;
-	पूर्ण
-	अगर (sopt->ts) अणु
+		dopt->optlen += optlen;
+	}
+	if (sopt->ts) {
 		optlen = sptr[sopt->ts+1];
 		soffset = sptr[sopt->ts+2];
-		करोpt->ts = करोpt->optlen + माप(काष्ठा iphdr);
-		स_नकल(dptr, sptr+sopt->ts, optlen);
-		अगर (soffset <= optlen) अणु
-			अगर (sopt->ts_needaddr) अणु
-				अगर (soffset + 3 > optlen)
-					वापस -EINVAL;
-				करोpt->ts_needaddr = 1;
+		dopt->ts = dopt->optlen + sizeof(struct iphdr);
+		memcpy(dptr, sptr+sopt->ts, optlen);
+		if (soffset <= optlen) {
+			if (sopt->ts_needaddr) {
+				if (soffset + 3 > optlen)
+					return -EINVAL;
+				dopt->ts_needaddr = 1;
 				soffset += 4;
-			पूर्ण
-			अगर (sopt->ts_needसमय) अणु
-				अगर (soffset + 3 > optlen)
-					वापस -EINVAL;
-				अगर ((dptr[3]&0xF) != IPOPT_TS_PRESPEC) अणु
-					करोpt->ts_needसमय = 1;
+			}
+			if (sopt->ts_needtime) {
+				if (soffset + 3 > optlen)
+					return -EINVAL;
+				if ((dptr[3]&0xF) != IPOPT_TS_PRESPEC) {
+					dopt->ts_needtime = 1;
 					soffset += 4;
-				पूर्ण अन्यथा अणु
-					करोpt->ts_needसमय = 0;
+				} else {
+					dopt->ts_needtime = 0;
 
-					अगर (soffset + 7 <= optlen) अणु
+					if (soffset + 7 <= optlen) {
 						__be32 addr;
 
-						स_नकल(&addr, dptr+soffset-1, 4);
-						अगर (inet_addr_type(net, addr) != RTN_UNICAST) अणु
-							करोpt->ts_needसमय = 1;
+						memcpy(&addr, dptr+soffset-1, 4);
+						if (inet_addr_type(net, addr) != RTN_UNICAST) {
+							dopt->ts_needtime = 1;
 							soffset += 8;
-						पूर्ण
-					पूर्ण
-				पूर्ण
-			पूर्ण
+						}
+					}
+				}
+			}
 			dptr[2] = soffset;
-		पूर्ण
+		}
 		dptr += optlen;
-		करोpt->optlen += optlen;
-	पूर्ण
-	अगर (sopt->srr) अणु
-		अचिन्हित अक्षर *start = sptr+sopt->srr;
+		dopt->optlen += optlen;
+	}
+	if (sopt->srr) {
+		unsigned char *start = sptr+sopt->srr;
 		__be32 faddr;
 
 		optlen  = start[1];
 		soffset = start[2];
-		करोffset = 0;
-		अगर (soffset > optlen)
+		doffset = 0;
+		if (soffset > optlen)
 			soffset = optlen + 1;
 		soffset -= 4;
-		अगर (soffset > 3) अणु
-			स_नकल(&faddr, &start[soffset-1], 4);
-			क्रम (soffset -= 4, करोffset = 4; soffset > 3; soffset -= 4, करोffset += 4)
-				स_नकल(&dptr[करोffset-1], &start[soffset-1], 4);
+		if (soffset > 3) {
+			memcpy(&faddr, &start[soffset-1], 4);
+			for (soffset -= 4, doffset = 4; soffset > 3; soffset -= 4, doffset += 4)
+				memcpy(&dptr[doffset-1], &start[soffset-1], 4);
 			/*
 			 * RFC1812 requires to fix illegal source routes.
 			 */
-			अगर (स_भेद(&ip_hdr(skb)->saddr,
+			if (memcmp(&ip_hdr(skb)->saddr,
 				   &start[soffset + 3], 4) == 0)
-				करोffset -= 4;
-		पूर्ण
-		अगर (करोffset > 3) अणु
-			करोpt->faddr = faddr;
+				doffset -= 4;
+		}
+		if (doffset > 3) {
+			dopt->faddr = faddr;
 			dptr[0] = start[0];
-			dptr[1] = करोffset+3;
+			dptr[1] = doffset+3;
 			dptr[2] = 4;
-			dptr += करोffset+3;
-			करोpt->srr = करोpt->optlen + माप(काष्ठा iphdr);
-			करोpt->optlen += करोffset+3;
-			करोpt->is_strictroute = sopt->is_strictroute;
-		पूर्ण
-	पूर्ण
-	अगर (sopt->cipso) अणु
+			dptr += doffset+3;
+			dopt->srr = dopt->optlen + sizeof(struct iphdr);
+			dopt->optlen += doffset+3;
+			dopt->is_strictroute = sopt->is_strictroute;
+		}
+	}
+	if (sopt->cipso) {
 		optlen  = sptr[sopt->cipso+1];
-		करोpt->cipso = करोpt->optlen+माप(काष्ठा iphdr);
-		स_नकल(dptr, sptr+sopt->cipso, optlen);
+		dopt->cipso = dopt->optlen+sizeof(struct iphdr);
+		memcpy(dptr, sptr+sopt->cipso, optlen);
 		dptr += optlen;
-		करोpt->optlen += optlen;
-	पूर्ण
-	जबतक (करोpt->optlen & 3) अणु
+		dopt->optlen += optlen;
+	}
+	while (dopt->optlen & 3) {
 		*dptr++ = IPOPT_END;
-		करोpt->optlen++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		dopt->optlen++;
+	}
+	return 0;
+}
 
 /*
  *	Options "fragmenting", just fill options not
@@ -206,450 +205,450 @@
  *	Simple and stupid 8), but the most efficient way.
  */
 
-व्योम ip_options_fragment(काष्ठा sk_buff *skb)
-अणु
-	अचिन्हित अक्षर *optptr = skb_network_header(skb) + माप(काष्ठा iphdr);
-	काष्ठा ip_options *opt = &(IPCB(skb)->opt);
-	पूर्णांक  l = opt->optlen;
-	पूर्णांक  optlen;
+void ip_options_fragment(struct sk_buff *skb)
+{
+	unsigned char *optptr = skb_network_header(skb) + sizeof(struct iphdr);
+	struct ip_options *opt = &(IPCB(skb)->opt);
+	int  l = opt->optlen;
+	int  optlen;
 
-	जबतक (l > 0) अणु
-		चयन (*optptr) अणु
-		हाल IPOPT_END:
-			वापस;
-		हाल IPOPT_NOOP:
+	while (l > 0) {
+		switch (*optptr) {
+		case IPOPT_END:
+			return;
+		case IPOPT_NOOP:
 			l--;
 			optptr++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		optlen = optptr[1];
-		अगर (optlen < 2 || optlen > l)
-		  वापस;
-		अगर (!IPOPT_COPIED(*optptr))
-			स_रखो(optptr, IPOPT_NOOP, optlen);
+		if (optlen < 2 || optlen > l)
+		  return;
+		if (!IPOPT_COPIED(*optptr))
+			memset(optptr, IPOPT_NOOP, optlen);
 		l -= optlen;
 		optptr += optlen;
-	पूर्ण
+	}
 	opt->ts = 0;
 	opt->rr = 0;
 	opt->rr_needaddr = 0;
 	opt->ts_needaddr = 0;
-	opt->ts_needसमय = 0;
-पूर्ण
+	opt->ts_needtime = 0;
+}
 
 /* helper used by ip_options_compile() to call fib_compute_spec_dst()
- * at most one समय.
+ * at most one time.
  */
-अटल व्योम spec_dst_fill(__be32 *spec_dst, काष्ठा sk_buff *skb)
-अणु
-	अगर (*spec_dst == htonl(INADDR_ANY))
+static void spec_dst_fill(__be32 *spec_dst, struct sk_buff *skb)
+{
+	if (*spec_dst == htonl(INADDR_ANY))
 		*spec_dst = fib_compute_spec_dst(skb);
-पूर्ण
+}
 
 /*
- * Verअगरy options and fill poपूर्णांकers in काष्ठा options.
+ * Verify options and fill pointers in struct options.
  * Caller should clear *opt, and set opt->data.
- * If opt == शून्य, then skb->data should poपूर्णांक to IP header.
+ * If opt == NULL, then skb->data should point to IP header.
  */
 
-पूर्णांक __ip_options_compile(काष्ठा net *net,
-			 काष्ठा ip_options *opt, काष्ठा sk_buff *skb,
+int __ip_options_compile(struct net *net,
+			 struct ip_options *opt, struct sk_buff *skb,
 			 __be32 *info)
-अणु
+{
 	__be32 spec_dst = htonl(INADDR_ANY);
-	अचिन्हित अक्षर *pp_ptr = शून्य;
-	काष्ठा rtable *rt = शून्य;
-	अचिन्हित अक्षर *optptr;
-	अचिन्हित अक्षर *iph;
-	पूर्णांक optlen, l;
+	unsigned char *pp_ptr = NULL;
+	struct rtable *rt = NULL;
+	unsigned char *optptr;
+	unsigned char *iph;
+	int optlen, l;
 
-	अगर (skb) अणु
+	if (skb) {
 		rt = skb_rtable(skb);
-		optptr = (अचिन्हित अक्षर *)&(ip_hdr(skb)[1]);
-	पूर्ण अन्यथा
+		optptr = (unsigned char *)&(ip_hdr(skb)[1]);
+	} else
 		optptr = opt->__data;
-	iph = optptr - माप(काष्ठा iphdr);
+	iph = optptr - sizeof(struct iphdr);
 
-	क्रम (l = opt->optlen; l > 0; ) अणु
-		चयन (*optptr) अणु
-		हाल IPOPT_END:
-			क्रम (optptr++, l--; l > 0; optptr++, l--) अणु
-				अगर (*optptr != IPOPT_END) अणु
+	for (l = opt->optlen; l > 0; ) {
+		switch (*optptr) {
+		case IPOPT_END:
+			for (optptr++, l--; l > 0; optptr++, l--) {
+				if (*optptr != IPOPT_END) {
 					*optptr = IPOPT_END;
 					opt->is_changed = 1;
-				पूर्ण
-			पूर्ण
-			जाओ eol;
-		हाल IPOPT_NOOP:
+				}
+			}
+			goto eol;
+		case IPOPT_NOOP:
 			l--;
 			optptr++;
-			जारी;
-		पूर्ण
-		अगर (unlikely(l < 2)) अणु
+			continue;
+		}
+		if (unlikely(l < 2)) {
 			pp_ptr = optptr;
-			जाओ error;
-		पूर्ण
+			goto error;
+		}
 		optlen = optptr[1];
-		अगर (optlen < 2 || optlen > l) अणु
+		if (optlen < 2 || optlen > l) {
 			pp_ptr = optptr;
-			जाओ error;
-		पूर्ण
-		चयन (*optptr) अणु
-		हाल IPOPT_SSRR:
-		हाल IPOPT_LSRR:
-			अगर (optlen < 3) अणु
+			goto error;
+		}
+		switch (*optptr) {
+		case IPOPT_SSRR:
+		case IPOPT_LSRR:
+			if (optlen < 3) {
 				pp_ptr = optptr + 1;
-				जाओ error;
-			पूर्ण
-			अगर (optptr[2] < 4) अणु
+				goto error;
+			}
+			if (optptr[2] < 4) {
 				pp_ptr = optptr + 2;
-				जाओ error;
-			पूर्ण
+				goto error;
+			}
 			/* NB: cf RFC-1812 5.2.4.1 */
-			अगर (opt->srr) अणु
+			if (opt->srr) {
 				pp_ptr = optptr;
-				जाओ error;
-			पूर्ण
-			अगर (!skb) अणु
-				अगर (optptr[2] != 4 || optlen < 7 || ((optlen-3) & 3)) अणु
+				goto error;
+			}
+			if (!skb) {
+				if (optptr[2] != 4 || optlen < 7 || ((optlen-3) & 3)) {
 					pp_ptr = optptr + 1;
-					जाओ error;
-				पूर्ण
-				स_नकल(&opt->faddr, &optptr[3], 4);
-				अगर (optlen > 7)
-					स_हटाओ(&optptr[3], &optptr[7], optlen-7);
-			पूर्ण
+					goto error;
+				}
+				memcpy(&opt->faddr, &optptr[3], 4);
+				if (optlen > 7)
+					memmove(&optptr[3], &optptr[7], optlen-7);
+			}
 			opt->is_strictroute = (optptr[0] == IPOPT_SSRR);
 			opt->srr = optptr - iph;
-			अवरोध;
-		हाल IPOPT_RR:
-			अगर (opt->rr) अणु
+			break;
+		case IPOPT_RR:
+			if (opt->rr) {
 				pp_ptr = optptr;
-				जाओ error;
-			पूर्ण
-			अगर (optlen < 3) अणु
+				goto error;
+			}
+			if (optlen < 3) {
 				pp_ptr = optptr + 1;
-				जाओ error;
-			पूर्ण
-			अगर (optptr[2] < 4) अणु
+				goto error;
+			}
+			if (optptr[2] < 4) {
 				pp_ptr = optptr + 2;
-				जाओ error;
-			पूर्ण
-			अगर (optptr[2] <= optlen) अणु
-				अगर (optptr[2]+3 > optlen) अणु
+				goto error;
+			}
+			if (optptr[2] <= optlen) {
+				if (optptr[2]+3 > optlen) {
 					pp_ptr = optptr + 2;
-					जाओ error;
-				पूर्ण
-				अगर (rt) अणु
+					goto error;
+				}
+				if (rt) {
 					spec_dst_fill(&spec_dst, skb);
-					स_नकल(&optptr[optptr[2]-1], &spec_dst, 4);
+					memcpy(&optptr[optptr[2]-1], &spec_dst, 4);
 					opt->is_changed = 1;
-				पूर्ण
+				}
 				optptr[2] += 4;
 				opt->rr_needaddr = 1;
-			पूर्ण
+			}
 			opt->rr = optptr - iph;
-			अवरोध;
-		हाल IPOPT_TIMESTAMP:
-			अगर (opt->ts) अणु
+			break;
+		case IPOPT_TIMESTAMP:
+			if (opt->ts) {
 				pp_ptr = optptr;
-				जाओ error;
-			पूर्ण
-			अगर (optlen < 4) अणु
+				goto error;
+			}
+			if (optlen < 4) {
 				pp_ptr = optptr + 1;
-				जाओ error;
-			पूर्ण
-			अगर (optptr[2] < 5) अणु
+				goto error;
+			}
+			if (optptr[2] < 5) {
 				pp_ptr = optptr + 2;
-				जाओ error;
-			पूर्ण
-			अगर (optptr[2] <= optlen) अणु
-				अचिन्हित अक्षर *समयptr = शून्य;
-				अगर (optptr[2]+3 > optlen) अणु
+				goto error;
+			}
+			if (optptr[2] <= optlen) {
+				unsigned char *timeptr = NULL;
+				if (optptr[2]+3 > optlen) {
 					pp_ptr = optptr + 2;
-					जाओ error;
-				पूर्ण
-				चयन (optptr[3]&0xF) अणु
-				हाल IPOPT_TS_TSONLY:
-					अगर (skb)
-						समयptr = &optptr[optptr[2]-1];
-					opt->ts_needसमय = 1;
+					goto error;
+				}
+				switch (optptr[3]&0xF) {
+				case IPOPT_TS_TSONLY:
+					if (skb)
+						timeptr = &optptr[optptr[2]-1];
+					opt->ts_needtime = 1;
 					optptr[2] += 4;
-					अवरोध;
-				हाल IPOPT_TS_TSANDADDR:
-					अगर (optptr[2]+7 > optlen) अणु
+					break;
+				case IPOPT_TS_TSANDADDR:
+					if (optptr[2]+7 > optlen) {
 						pp_ptr = optptr + 2;
-						जाओ error;
-					पूर्ण
-					अगर (rt)  अणु
+						goto error;
+					}
+					if (rt)  {
 						spec_dst_fill(&spec_dst, skb);
-						स_नकल(&optptr[optptr[2]-1], &spec_dst, 4);
-						समयptr = &optptr[optptr[2]+3];
-					पूर्ण
+						memcpy(&optptr[optptr[2]-1], &spec_dst, 4);
+						timeptr = &optptr[optptr[2]+3];
+					}
 					opt->ts_needaddr = 1;
-					opt->ts_needसमय = 1;
+					opt->ts_needtime = 1;
 					optptr[2] += 8;
-					अवरोध;
-				हाल IPOPT_TS_PRESPEC:
-					अगर (optptr[2]+7 > optlen) अणु
+					break;
+				case IPOPT_TS_PRESPEC:
+					if (optptr[2]+7 > optlen) {
 						pp_ptr = optptr + 2;
-						जाओ error;
-					पूर्ण
-					अणु
+						goto error;
+					}
+					{
 						__be32 addr;
-						स_नकल(&addr, &optptr[optptr[2]-1], 4);
-						अगर (inet_addr_type(net, addr) == RTN_UNICAST)
-							अवरोध;
-						अगर (skb)
-							समयptr = &optptr[optptr[2]+3];
-					पूर्ण
-					opt->ts_needसमय = 1;
+						memcpy(&addr, &optptr[optptr[2]-1], 4);
+						if (inet_addr_type(net, addr) == RTN_UNICAST)
+							break;
+						if (skb)
+							timeptr = &optptr[optptr[2]+3];
+					}
+					opt->ts_needtime = 1;
 					optptr[2] += 8;
-					अवरोध;
-				शेष:
-					अगर (!skb && !ns_capable(net->user_ns, CAP_NET_RAW)) अणु
+					break;
+				default:
+					if (!skb && !ns_capable(net->user_ns, CAP_NET_RAW)) {
 						pp_ptr = optptr + 3;
-						जाओ error;
-					पूर्ण
-					अवरोध;
-				पूर्ण
-				अगर (समयptr) अणु
-					__be32 midसमय;
+						goto error;
+					}
+					break;
+				}
+				if (timeptr) {
+					__be32 midtime;
 
-					midसमय = inet_current_बारtamp();
-					स_नकल(समयptr, &midसमय, 4);
+					midtime = inet_current_timestamp();
+					memcpy(timeptr, &midtime, 4);
 					opt->is_changed = 1;
-				पूर्ण
-			पूर्ण अन्यथा अगर ((optptr[3]&0xF) != IPOPT_TS_PRESPEC) अणु
-				अचिन्हित पूर्णांक overflow = optptr[3]>>4;
-				अगर (overflow == 15) अणु
+				}
+			} else if ((optptr[3]&0xF) != IPOPT_TS_PRESPEC) {
+				unsigned int overflow = optptr[3]>>4;
+				if (overflow == 15) {
 					pp_ptr = optptr + 3;
-					जाओ error;
-				पूर्ण
-				अगर (skb) अणु
+					goto error;
+				}
+				if (skb) {
 					optptr[3] = (optptr[3]&0xF)|((overflow+1)<<4);
 					opt->is_changed = 1;
-				पूर्ण
-			पूर्ण
+				}
+			}
 			opt->ts = optptr - iph;
-			अवरोध;
-		हाल IPOPT_RA:
-			अगर (optlen < 4) अणु
+			break;
+		case IPOPT_RA:
+			if (optlen < 4) {
 				pp_ptr = optptr + 1;
-				जाओ error;
-			पूर्ण
-			अगर (optptr[2] == 0 && optptr[3] == 0)
+				goto error;
+			}
+			if (optptr[2] == 0 && optptr[3] == 0)
 				opt->router_alert = optptr - iph;
-			अवरोध;
-		हाल IPOPT_CIPSO:
-			अगर ((!skb && !ns_capable(net->user_ns, CAP_NET_RAW)) || opt->cipso) अणु
+			break;
+		case IPOPT_CIPSO:
+			if ((!skb && !ns_capable(net->user_ns, CAP_NET_RAW)) || opt->cipso) {
 				pp_ptr = optptr;
-				जाओ error;
-			पूर्ण
+				goto error;
+			}
 			opt->cipso = optptr - iph;
-			अगर (cipso_v4_validate(skb, &optptr)) अणु
+			if (cipso_v4_validate(skb, &optptr)) {
 				pp_ptr = optptr;
-				जाओ error;
-			पूर्ण
-			अवरोध;
-		हाल IPOPT_SEC:
-		हाल IPOPT_SID:
-		शेष:
-			अगर (!skb && !ns_capable(net->user_ns, CAP_NET_RAW)) अणु
+				goto error;
+			}
+			break;
+		case IPOPT_SEC:
+		case IPOPT_SID:
+		default:
+			if (!skb && !ns_capable(net->user_ns, CAP_NET_RAW)) {
 				pp_ptr = optptr;
-				जाओ error;
-			पूर्ण
-			अवरोध;
-		पूर्ण
+				goto error;
+			}
+			break;
+		}
 		l -= optlen;
 		optptr += optlen;
-	पूर्ण
+	}
 
 eol:
-	अगर (!pp_ptr)
-		वापस 0;
+	if (!pp_ptr)
+		return 0;
 
 error:
-	अगर (info)
+	if (info)
 		*info = htonl((pp_ptr-iph)<<24);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 EXPORT_SYMBOL(__ip_options_compile);
 
-पूर्णांक ip_options_compile(काष्ठा net *net,
-		       काष्ठा ip_options *opt, काष्ठा sk_buff *skb)
-अणु
-	पूर्णांक ret;
+int ip_options_compile(struct net *net,
+		       struct ip_options *opt, struct sk_buff *skb)
+{
+	int ret;
 	__be32 info;
 
 	ret = __ip_options_compile(net, opt, skb, &info);
-	अगर (ret != 0 && skb)
+	if (ret != 0 && skb)
 		icmp_send(skb, ICMP_PARAMETERPROB, 0, info);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL(ip_options_compile);
 
 /*
- *	Unकरो all the changes करोne by ip_options_compile().
+ *	Undo all the changes done by ip_options_compile().
  */
 
-व्योम ip_options_unकरो(काष्ठा ip_options *opt)
-अणु
-	अगर (opt->srr) अणु
-		अचिन्हित अक्षर *optptr = opt->__data + opt->srr - माप(काष्ठा iphdr);
+void ip_options_undo(struct ip_options *opt)
+{
+	if (opt->srr) {
+		unsigned char *optptr = opt->__data + opt->srr - sizeof(struct iphdr);
 
-		स_हटाओ(optptr + 7, optptr + 3, optptr[1] - 7);
-		स_नकल(optptr + 3, &opt->faddr, 4);
-	पूर्ण
-	अगर (opt->rr_needaddr) अणु
-		अचिन्हित अक्षर *optptr = opt->__data + opt->rr - माप(काष्ठा iphdr);
+		memmove(optptr + 7, optptr + 3, optptr[1] - 7);
+		memcpy(optptr + 3, &opt->faddr, 4);
+	}
+	if (opt->rr_needaddr) {
+		unsigned char *optptr = opt->__data + opt->rr - sizeof(struct iphdr);
 
 		optptr[2] -= 4;
-		स_रखो(&optptr[optptr[2] - 1], 0, 4);
-	पूर्ण
-	अगर (opt->ts) अणु
-		अचिन्हित अक्षर *optptr = opt->__data + opt->ts - माप(काष्ठा iphdr);
+		memset(&optptr[optptr[2] - 1], 0, 4);
+	}
+	if (opt->ts) {
+		unsigned char *optptr = opt->__data + opt->ts - sizeof(struct iphdr);
 
-		अगर (opt->ts_needसमय) अणु
+		if (opt->ts_needtime) {
 			optptr[2] -= 4;
-			स_रखो(&optptr[optptr[2] - 1], 0, 4);
-			अगर ((optptr[3] & 0xF) == IPOPT_TS_PRESPEC)
+			memset(&optptr[optptr[2] - 1], 0, 4);
+			if ((optptr[3] & 0xF) == IPOPT_TS_PRESPEC)
 				optptr[2] -= 4;
-		पूर्ण
-		अगर (opt->ts_needaddr) अणु
+		}
+		if (opt->ts_needaddr) {
 			optptr[2] -= 4;
-			स_रखो(&optptr[optptr[2] - 1], 0, 4);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			memset(&optptr[optptr[2] - 1], 0, 4);
+		}
+	}
+}
 
-पूर्णांक ip_options_get(काष्ठा net *net, काष्ठा ip_options_rcu **optp,
-		   sockptr_t data, पूर्णांक optlen)
-अणु
-	काष्ठा ip_options_rcu *opt;
+int ip_options_get(struct net *net, struct ip_options_rcu **optp,
+		   sockptr_t data, int optlen)
+{
+	struct ip_options_rcu *opt;
 
-	opt = kzalloc(माप(काष्ठा ip_options_rcu) + ((optlen + 3) & ~3),
+	opt = kzalloc(sizeof(struct ip_options_rcu) + ((optlen + 3) & ~3),
 		       GFP_KERNEL);
-	अगर (!opt)
-		वापस -ENOMEM;
-	अगर (optlen && copy_from_sockptr(opt->opt.__data, data, optlen)) अणु
-		kमुक्त(opt);
-		वापस -EFAULT;
-	पूर्ण
+	if (!opt)
+		return -ENOMEM;
+	if (optlen && copy_from_sockptr(opt->opt.__data, data, optlen)) {
+		kfree(opt);
+		return -EFAULT;
+	}
 
-	जबतक (optlen & 3)
+	while (optlen & 3)
 		opt->opt.__data[optlen++] = IPOPT_END;
 	opt->opt.optlen = optlen;
-	अगर (optlen && ip_options_compile(net, &opt->opt, शून्य)) अणु
-		kमुक्त(opt);
-		वापस -EINVAL;
-	पूर्ण
-	kमुक्त(*optp);
+	if (optlen && ip_options_compile(net, &opt->opt, NULL)) {
+		kfree(opt);
+		return -EINVAL;
+	}
+	kfree(*optp);
 	*optp = opt;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ip_क्रमward_options(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा   ip_options *opt	= &(IPCB(skb)->opt);
-	अचिन्हित अक्षर *optptr;
-	काष्ठा rtable *rt = skb_rtable(skb);
-	अचिन्हित अक्षर *raw = skb_network_header(skb);
+void ip_forward_options(struct sk_buff *skb)
+{
+	struct   ip_options *opt	= &(IPCB(skb)->opt);
+	unsigned char *optptr;
+	struct rtable *rt = skb_rtable(skb);
+	unsigned char *raw = skb_network_header(skb);
 
-	अगर (opt->rr_needaddr) अणु
-		optptr = (अचिन्हित अक्षर *)raw + opt->rr;
+	if (opt->rr_needaddr) {
+		optptr = (unsigned char *)raw + opt->rr;
 		ip_rt_get_source(&optptr[optptr[2]-5], skb, rt);
 		opt->is_changed = 1;
-	पूर्ण
-	अगर (opt->srr_is_hit) अणु
-		पूर्णांक srrptr, srrspace;
+	}
+	if (opt->srr_is_hit) {
+		int srrptr, srrspace;
 
 		optptr = raw + opt->srr;
 
-		क्रम ( srrptr = optptr[2], srrspace = optptr[1];
+		for ( srrptr = optptr[2], srrspace = optptr[1];
 		     srrptr <= srrspace;
 		     srrptr += 4
-		     ) अणु
-			अगर (srrptr + 3 > srrspace)
-				अवरोध;
-			अगर (स_भेद(&opt->nexthop, &optptr[srrptr-1], 4) == 0)
-				अवरोध;
-		पूर्ण
-		अगर (srrptr + 3 <= srrspace) अणु
+		     ) {
+			if (srrptr + 3 > srrspace)
+				break;
+			if (memcmp(&opt->nexthop, &optptr[srrptr-1], 4) == 0)
+				break;
+		}
+		if (srrptr + 3 <= srrspace) {
 			opt->is_changed = 1;
 			ip_hdr(skb)->daddr = opt->nexthop;
 			ip_rt_get_source(&optptr[srrptr-1], skb, rt);
 			optptr[2] = srrptr+4;
-		पूर्ण अन्यथा अणु
+		} else {
 			net_crit_ratelimited("%s(): Argh! Destination lost!\n",
 					     __func__);
-		पूर्ण
-		अगर (opt->ts_needaddr) अणु
+		}
+		if (opt->ts_needaddr) {
 			optptr = raw + opt->ts;
 			ip_rt_get_source(&optptr[optptr[2]-9], skb, rt);
 			opt->is_changed = 1;
-		पूर्ण
-	पूर्ण
-	अगर (opt->is_changed) अणु
+		}
+	}
+	if (opt->is_changed) {
 		opt->is_changed = 0;
 		ip_send_check(ip_hdr(skb));
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक ip_options_rcv_srr(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
-अणु
-	काष्ठा ip_options *opt = &(IPCB(skb)->opt);
-	पूर्णांक srrspace, srrptr;
+int ip_options_rcv_srr(struct sk_buff *skb, struct net_device *dev)
+{
+	struct ip_options *opt = &(IPCB(skb)->opt);
+	int srrspace, srrptr;
 	__be32 nexthop;
-	काष्ठा iphdr *iph = ip_hdr(skb);
-	अचिन्हित अक्षर *optptr = skb_network_header(skb) + opt->srr;
-	काष्ठा rtable *rt = skb_rtable(skb);
-	काष्ठा rtable *rt2;
-	अचिन्हित दीर्घ orefdst;
-	पूर्णांक err;
+	struct iphdr *iph = ip_hdr(skb);
+	unsigned char *optptr = skb_network_header(skb) + opt->srr;
+	struct rtable *rt = skb_rtable(skb);
+	struct rtable *rt2;
+	unsigned long orefdst;
+	int err;
 
-	अगर (!rt)
-		वापस 0;
+	if (!rt)
+		return 0;
 
-	अगर (skb->pkt_type != PACKET_HOST)
-		वापस -EINVAL;
-	अगर (rt->rt_type == RTN_UNICAST) अणु
-		अगर (!opt->is_strictroute)
-			वापस 0;
+	if (skb->pkt_type != PACKET_HOST)
+		return -EINVAL;
+	if (rt->rt_type == RTN_UNICAST) {
+		if (!opt->is_strictroute)
+			return 0;
 		icmp_send(skb, ICMP_PARAMETERPROB, 0, htonl(16<<24));
-		वापस -EINVAL;
-	पूर्ण
-	अगर (rt->rt_type != RTN_LOCAL)
-		वापस -EINVAL;
+		return -EINVAL;
+	}
+	if (rt->rt_type != RTN_LOCAL)
+		return -EINVAL;
 
-	क्रम (srrptr = optptr[2], srrspace = optptr[1]; srrptr <= srrspace; srrptr += 4) अणु
-		अगर (srrptr + 3 > srrspace) अणु
+	for (srrptr = optptr[2], srrspace = optptr[1]; srrptr <= srrspace; srrptr += 4) {
+		if (srrptr + 3 > srrspace) {
 			icmp_send(skb, ICMP_PARAMETERPROB, 0, htonl((opt->srr+2)<<24));
-			वापस -EINVAL;
-		पूर्ण
-		स_नकल(&nexthop, &optptr[srrptr-1], 4);
+			return -EINVAL;
+		}
+		memcpy(&nexthop, &optptr[srrptr-1], 4);
 
 		orefdst = skb->_skb_refdst;
-		skb_dst_set(skb, शून्य);
+		skb_dst_set(skb, NULL);
 		err = ip_route_input(skb, nexthop, iph->saddr, iph->tos, dev);
 		rt2 = skb_rtable(skb);
-		अगर (err || (rt2->rt_type != RTN_UNICAST && rt2->rt_type != RTN_LOCAL)) अणु
+		if (err || (rt2->rt_type != RTN_UNICAST && rt2->rt_type != RTN_LOCAL)) {
 			skb_dst_drop(skb);
 			skb->_skb_refdst = orefdst;
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		refdst_drop(orefdst);
-		अगर (rt2->rt_type != RTN_LOCAL)
-			अवरोध;
-		/* Superfast 8) loopback क्रमward */
+		if (rt2->rt_type != RTN_LOCAL)
+			break;
+		/* Superfast 8) loopback forward */
 		iph->daddr = nexthop;
 		opt->is_changed = 1;
-	पूर्ण
-	अगर (srrptr <= srrspace) अणु
+	}
+	if (srrptr <= srrspace) {
 		opt->srr_is_hit = 1;
 		opt->nexthop = nexthop;
 		opt->is_changed = 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 EXPORT_SYMBOL(ip_options_rcv_srr);

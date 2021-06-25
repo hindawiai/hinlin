@@ -1,48 +1,47 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * IIO accel SPI driver क्रम Freescale MMA7455L 3-axis 10-bit accelerometer
+ * IIO accel SPI driver for Freescale MMA7455L 3-axis 10-bit accelerometer
  * Copyright 2015 Joachim Eastwood <manabian@gmail.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/spi/spi.h>
+#include <linux/module.h>
+#include <linux/regmap.h>
+#include <linux/spi/spi.h>
 
-#समावेश "mma7455.h"
+#include "mma7455.h"
 
-अटल पूर्णांक mma7455_spi_probe(काष्ठा spi_device *spi)
-अणु
-	स्थिर काष्ठा spi_device_id *id = spi_get_device_id(spi);
-	काष्ठा regmap *regmap;
+static int mma7455_spi_probe(struct spi_device *spi)
+{
+	const struct spi_device_id *id = spi_get_device_id(spi);
+	struct regmap *regmap;
 
 	regmap = devm_regmap_init_spi(spi, &mma7455_core_regmap);
-	अगर (IS_ERR(regmap))
-		वापस PTR_ERR(regmap);
+	if (IS_ERR(regmap))
+		return PTR_ERR(regmap);
 
-	वापस mma7455_core_probe(&spi->dev, regmap, id->name);
-पूर्ण
+	return mma7455_core_probe(&spi->dev, regmap, id->name);
+}
 
-अटल पूर्णांक mma7455_spi_हटाओ(काष्ठा spi_device *spi)
-अणु
-	वापस mma7455_core_हटाओ(&spi->dev);
-पूर्ण
+static int mma7455_spi_remove(struct spi_device *spi)
+{
+	return mma7455_core_remove(&spi->dev);
+}
 
-अटल स्थिर काष्ठा spi_device_id mma7455_spi_ids[] = अणु
-	अणु "mma7455", 0 पूर्ण,
-	अणु "mma7456", 0 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct spi_device_id mma7455_spi_ids[] = {
+	{ "mma7455", 0 },
+	{ "mma7456", 0 },
+	{ }
+};
 MODULE_DEVICE_TABLE(spi, mma7455_spi_ids);
 
-अटल काष्ठा spi_driver mma7455_spi_driver = अणु
+static struct spi_driver mma7455_spi_driver = {
 	.probe = mma7455_spi_probe,
-	.हटाओ = mma7455_spi_हटाओ,
+	.remove = mma7455_spi_remove,
 	.id_table = mma7455_spi_ids,
-	.driver = अणु
+	.driver = {
 		.name = "mma7455-spi",
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_spi_driver(mma7455_spi_driver);
 
 MODULE_AUTHOR("Joachim Eastwood <manabian@gmail.com>");

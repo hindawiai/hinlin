@@ -1,97 +1,96 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 
 /*
- * Multअगरunction core driver क्रम Zodiac Inflight Innovations RAVE
+ * Multifunction core driver for Zodiac Inflight Innovations RAVE
  * Supervisory Processor(SP) MCU that is connected via dedicated UART
  * port
  *
  * Copyright (C) 2017 Zodiac Inflight Innovations
  */
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/crc-ccitt.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/export.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/mfd/rave-sp.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/serdev.h>
-#समावेश <यंत्र/unaligned.h>
+#include <linux/atomic.h>
+#include <linux/crc-ccitt.h>
+#include <linux/delay.h>
+#include <linux/export.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/mfd/rave-sp.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/sched.h>
+#include <linux/serdev.h>
+#include <asm/unaligned.h>
 
 /*
  * UART protocol using following entities:
  *  - message to MCU => ACK response
  *  - event from MCU => event ACK
  *
- * Frame काष्ठाure:
+ * Frame structure:
  * <STX> <DATA> <CHECKSUM> <ETX>
  * Where:
- * - STX - is start of transmission अक्षरacter
+ * - STX - is start of transmission character
  * - ETX - end of transmission
  * - DATA - payload
  * - CHECKSUM - checksum calculated on <DATA>
  *
- * If <DATA> or <CHECKSUM> contain one of control अक्षरacters, then it is
- * escaped using <DLE> control code. Added <DLE> करोes not participate in
+ * If <DATA> or <CHECKSUM> contain one of control characters, then it is
+ * escaped using <DLE> control code. Added <DLE> does not participate in
  * checksum calculation.
  */
-#घोषणा RAVE_SP_STX			0x02
-#घोषणा RAVE_SP_ETX			0x03
-#घोषणा RAVE_SP_DLE			0x10
+#define RAVE_SP_STX			0x02
+#define RAVE_SP_ETX			0x03
+#define RAVE_SP_DLE			0x10
 
-#घोषणा RAVE_SP_MAX_DATA_SIZE		64
-#घोषणा RAVE_SP_CHECKSUM_8B2C		1
-#घोषणा RAVE_SP_CHECKSUM_CCITT		2
-#घोषणा RAVE_SP_CHECKSUM_SIZE		RAVE_SP_CHECKSUM_CCITT
+#define RAVE_SP_MAX_DATA_SIZE		64
+#define RAVE_SP_CHECKSUM_8B2C		1
+#define RAVE_SP_CHECKSUM_CCITT		2
+#define RAVE_SP_CHECKSUM_SIZE		RAVE_SP_CHECKSUM_CCITT
 /*
- * We करोn't store STX, ETX and unescaped bytes, so Rx is only
+ * We don't store STX, ETX and unescaped bytes, so Rx is only
  * DATA + CSUM
  */
-#घोषणा RAVE_SP_RX_BUFFER_SIZE				\
+#define RAVE_SP_RX_BUFFER_SIZE				\
 	(RAVE_SP_MAX_DATA_SIZE + RAVE_SP_CHECKSUM_SIZE)
 
-#घोषणा RAVE_SP_STX_ETX_SIZE		2
+#define RAVE_SP_STX_ETX_SIZE		2
 /*
- * For Tx we have to have space क्रम everything, STX, EXT and
+ * For Tx we have to have space for everything, STX, EXT and
  * potentially stuffed DATA + CSUM data + csum
  */
-#घोषणा RAVE_SP_TX_BUFFER_SIZE				\
+#define RAVE_SP_TX_BUFFER_SIZE				\
 	(RAVE_SP_STX_ETX_SIZE + 2 * RAVE_SP_RX_BUFFER_SIZE)
 
 /**
- * क्रमागत rave_sp_deframer_state - Possible state क्रम de-framer
+ * enum rave_sp_deframer_state - Possible state for de-framer
  *
- * @RAVE_SP_EXPECT_SOF:		 Scanning input क्रम start-of-frame marker
+ * @RAVE_SP_EXPECT_SOF:		 Scanning input for start-of-frame marker
  * @RAVE_SP_EXPECT_DATA:	 Got start of frame marker, collecting frame
- * @RAVE_SP_EXPECT_ESCAPED_DATA: Got escape अक्षरacter, collecting escaped byte
+ * @RAVE_SP_EXPECT_ESCAPED_DATA: Got escape character, collecting escaped byte
  */
-क्रमागत rave_sp_deframer_state अणु
+enum rave_sp_deframer_state {
 	RAVE_SP_EXPECT_SOF,
 	RAVE_SP_EXPECT_DATA,
 	RAVE_SP_EXPECT_ESCAPED_DATA,
-पूर्ण;
+};
 
 /**
- * काष्ठा rave_sp_deframer - Device protocol deframer
+ * struct rave_sp_deframer - Device protocol deframer
  *
  * @state:  Current state of the deframer
  * @data:   Buffer used to collect deframed data
  * @length: Number of bytes de-framed so far
  */
-काष्ठा rave_sp_deframer अणु
-	क्रमागत rave_sp_deframer_state state;
-	अचिन्हित अक्षर data[RAVE_SP_RX_BUFFER_SIZE];
-	माप_प्रकार length;
-पूर्ण;
+struct rave_sp_deframer {
+	enum rave_sp_deframer_state state;
+	unsigned char data[RAVE_SP_RX_BUFFER_SIZE];
+	size_t length;
+};
 
 /**
- * काष्ठा rave_sp_reply - Reply as per RAVE device protocol
+ * struct rave_sp_reply - Reply as per RAVE device protocol
  *
  * @length:	Expected reply length
  * @data:	Buffer to store reply payload in
@@ -99,35 +98,35 @@
  * @ackid:	Expected reply ACK ID
  * @received:   Successful reply reception completion
  */
-काष्ठा rave_sp_reply अणु
-	माप_प्रकार length;
-	व्योम  *data;
+struct rave_sp_reply {
+	size_t length;
+	void  *data;
 	u8     code;
 	u8     ackid;
-	काष्ठा completion received;
-पूर्ण;
+	struct completion received;
+};
 
 /**
- * काष्ठा rave_sp_checksum - Variant specअगरic checksum implementation details
+ * struct rave_sp_checksum - Variant specific checksum implementation details
  *
  * @length:	Calculated checksum length
  * @subroutine:	Utilized checksum algorithm implementation
  */
-काष्ठा rave_sp_checksum अणु
-	माप_प्रकार length;
-	व्योम (*subroutine)(स्थिर u8 *, माप_प्रकार, u8 *);
-पूर्ण;
+struct rave_sp_checksum {
+	size_t length;
+	void (*subroutine)(const u8 *, size_t, u8 *);
+};
 
-काष्ठा rave_sp_version अणु
+struct rave_sp_version {
 	u8     hardware;
 	__le16 major;
 	u8     minor;
 	u8     letter[2];
-पूर्ण __packed;
+} __packed;
 
-काष्ठा rave_sp_status अणु
-	काष्ठा rave_sp_version bootloader_version;
-	काष्ठा rave_sp_version firmware_version;
+struct rave_sp_status {
+	struct rave_sp_version bootloader_version;
+	struct rave_sp_version firmware_version;
 	u16 rdu_eeprom_flag;
 	u16 dds_eeprom_flag;
 	u8  pic_flag;
@@ -135,164 +134,164 @@
 	u32 etc;
 	s16 temp[2];
 	u8  backlight_current[3];
-	u8  dip_चयन;
-	u8  host_पूर्णांकerrupt;
+	u8  dip_switch;
+	u8  host_interrupt;
 	u16 voltage_28;
 	u8  i2c_device_status;
-	u8  घातer_status;
+	u8  power_status;
 	u8  general_status;
 	u8  deprecated1;
-	u8  घातer_led_status;
+	u8  power_led_status;
 	u8  deprecated2;
-	u8  periph_घातer_shutoff;
-पूर्ण __packed;
+	u8  periph_power_shutoff;
+} __packed;
 
 /**
- * काष्ठा rave_sp_variant_cmds - Variant specअगरic command routines
+ * struct rave_sp_variant_cmds - Variant specific command routines
  *
- * @translate:	Generic to variant specअगरic command mapping routine
- * @get_status: Variant specअगरic implementation of CMD_GET_STATUS
+ * @translate:	Generic to variant specific command mapping routine
+ * @get_status: Variant specific implementation of CMD_GET_STATUS
  */
-काष्ठा rave_sp_variant_cmds अणु
-	पूर्णांक (*translate)(क्रमागत rave_sp_command);
-	पूर्णांक (*get_status)(काष्ठा rave_sp *sp, काष्ठा rave_sp_status *);
-पूर्ण;
+struct rave_sp_variant_cmds {
+	int (*translate)(enum rave_sp_command);
+	int (*get_status)(struct rave_sp *sp, struct rave_sp_status *);
+};
 
 /**
- * काष्ठा rave_sp_variant - RAVE supervisory processor core variant
+ * struct rave_sp_variant - RAVE supervisory processor core variant
  *
- * @checksum:	Variant specअगरic checksum implementation
- * @cmd:	Variant specअगरic command poपूर्णांकer table
+ * @checksum:	Variant specific checksum implementation
+ * @cmd:	Variant specific command pointer table
  *
  */
-काष्ठा rave_sp_variant अणु
-	स्थिर काष्ठा rave_sp_checksum *checksum;
-	काष्ठा rave_sp_variant_cmds cmd;
-पूर्ण;
+struct rave_sp_variant {
+	const struct rave_sp_checksum *checksum;
+	struct rave_sp_variant_cmds cmd;
+};
 
 /**
- * काष्ठा rave_sp - RAVE supervisory processor core
+ * struct rave_sp - RAVE supervisory processor core
  *
- * @serdev:			Poपूर्णांकer to underlying serdev
+ * @serdev:			Pointer to underlying serdev
  * @deframer:			Stored state of the protocol deframer
  * @ackid:			ACK ID used in last reply sent to the device
  * @bus_lock:			Lock to serialize access to the device
  * @reply_lock:			Lock protecting @reply
- * @reply:			Poपूर्णांकer to memory to store reply payload
+ * @reply:			Pointer to memory to store reply payload
  *
- * @variant:			Device variant specअगरic inक्रमmation
- * @event_notअगरier_list:	Input event notअगरication chain
+ * @variant:			Device variant specific information
+ * @event_notifier_list:	Input event notification chain
  *
  * @part_number_firmware:	Firmware version
  * @part_number_bootloader:	Bootloader version
  */
-काष्ठा rave_sp अणु
-	काष्ठा serdev_device *serdev;
-	काष्ठा rave_sp_deframer deframer;
+struct rave_sp {
+	struct serdev_device *serdev;
+	struct rave_sp_deframer deframer;
 	atomic_t ackid;
-	काष्ठा mutex bus_lock;
-	काष्ठा mutex reply_lock;
-	काष्ठा rave_sp_reply *reply;
+	struct mutex bus_lock;
+	struct mutex reply_lock;
+	struct rave_sp_reply *reply;
 
-	स्थिर काष्ठा rave_sp_variant *variant;
-	काष्ठा blocking_notअगरier_head event_notअगरier_list;
+	const struct rave_sp_variant *variant;
+	struct blocking_notifier_head event_notifier_list;
 
-	स्थिर अक्षर *part_number_firmware;
-	स्थिर अक्षर *part_number_bootloader;
-पूर्ण;
+	const char *part_number_firmware;
+	const char *part_number_bootloader;
+};
 
-अटल bool rave_sp_id_is_event(u8 code)
-अणु
-	वापस (code & 0xF0) == RAVE_SP_EVNT_BASE;
-पूर्ण
+static bool rave_sp_id_is_event(u8 code)
+{
+	return (code & 0xF0) == RAVE_SP_EVNT_BASE;
+}
 
-अटल व्योम rave_sp_unरेजिस्टर_event_notअगरier(काष्ठा device *dev, व्योम *res)
-अणु
-	काष्ठा rave_sp *sp = dev_get_drvdata(dev->parent);
-	काष्ठा notअगरier_block *nb = *(काष्ठा notअगरier_block **)res;
-	काष्ठा blocking_notअगरier_head *bnh = &sp->event_notअगरier_list;
+static void rave_sp_unregister_event_notifier(struct device *dev, void *res)
+{
+	struct rave_sp *sp = dev_get_drvdata(dev->parent);
+	struct notifier_block *nb = *(struct notifier_block **)res;
+	struct blocking_notifier_head *bnh = &sp->event_notifier_list;
 
-	WARN_ON(blocking_notअगरier_chain_unरेजिस्टर(bnh, nb));
-पूर्ण
+	WARN_ON(blocking_notifier_chain_unregister(bnh, nb));
+}
 
-पूर्णांक devm_rave_sp_रेजिस्टर_event_notअगरier(काष्ठा device *dev,
-					 काष्ठा notअगरier_block *nb)
-अणु
-	काष्ठा rave_sp *sp = dev_get_drvdata(dev->parent);
-	काष्ठा notअगरier_block **rcnb;
-	पूर्णांक ret;
+int devm_rave_sp_register_event_notifier(struct device *dev,
+					 struct notifier_block *nb)
+{
+	struct rave_sp *sp = dev_get_drvdata(dev->parent);
+	struct notifier_block **rcnb;
+	int ret;
 
-	rcnb = devres_alloc(rave_sp_unरेजिस्टर_event_notअगरier,
-			    माप(*rcnb), GFP_KERNEL);
-	अगर (!rcnb)
-		वापस -ENOMEM;
+	rcnb = devres_alloc(rave_sp_unregister_event_notifier,
+			    sizeof(*rcnb), GFP_KERNEL);
+	if (!rcnb)
+		return -ENOMEM;
 
-	ret = blocking_notअगरier_chain_रेजिस्टर(&sp->event_notअगरier_list, nb);
-	अगर (!ret) अणु
+	ret = blocking_notifier_chain_register(&sp->event_notifier_list, nb);
+	if (!ret) {
 		*rcnb = nb;
 		devres_add(dev, rcnb);
-	पूर्ण अन्यथा अणु
-		devres_मुक्त(rcnb);
-	पूर्ण
+	} else {
+		devres_free(rcnb);
+	}
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(devm_rave_sp_रेजिस्टर_event_notअगरier);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(devm_rave_sp_register_event_notifier);
 
-अटल व्योम csum_8b2c(स्थिर u8 *buf, माप_प्रकार size, u8 *crc)
-अणु
+static void csum_8b2c(const u8 *buf, size_t size, u8 *crc)
+{
 	*crc = *buf++;
 	size--;
 
-	जबतक (size--)
+	while (size--)
 		*crc += *buf++;
 
 	*crc = 1 + ~(*crc);
-पूर्ण
+}
 
-अटल व्योम csum_ccitt(स्थिर u8 *buf, माप_प्रकार size, u8 *crc)
-अणु
-	स्थिर u16 calculated = crc_ccitt_false(0xffff, buf, size);
+static void csum_ccitt(const u8 *buf, size_t size, u8 *crc)
+{
+	const u16 calculated = crc_ccitt_false(0xffff, buf, size);
 
 	/*
 	 * While the rest of the wire protocol is little-endian,
 	 * CCITT-16 CRC in RDU2 device is sent out in big-endian order.
 	 */
 	put_unaligned_be16(calculated, crc);
-पूर्ण
+}
 
-अटल व्योम *stuff(अचिन्हित अक्षर *dest, स्थिर अचिन्हित अक्षर *src, माप_प्रकार n)
-अणु
-	जबतक (n--) अणु
-		स्थिर अचिन्हित अक्षर byte = *src++;
+static void *stuff(unsigned char *dest, const unsigned char *src, size_t n)
+{
+	while (n--) {
+		const unsigned char byte = *src++;
 
-		चयन (byte) अणु
-		हाल RAVE_SP_STX:
-		हाल RAVE_SP_ETX:
-		हाल RAVE_SP_DLE:
+		switch (byte) {
+		case RAVE_SP_STX:
+		case RAVE_SP_ETX:
+		case RAVE_SP_DLE:
 			*dest++ = RAVE_SP_DLE;
 			fallthrough;
-		शेष:
+		default:
 			*dest++ = byte;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस dest;
-पूर्ण
+	return dest;
+}
 
-अटल पूर्णांक rave_sp_ग_लिखो(काष्ठा rave_sp *sp, स्थिर u8 *data, u8 data_size)
-अणु
-	स्थिर माप_प्रकार checksum_length = sp->variant->checksum->length;
-	अचिन्हित अक्षर frame[RAVE_SP_TX_BUFFER_SIZE];
-	अचिन्हित अक्षर crc[RAVE_SP_CHECKSUM_SIZE];
-	अचिन्हित अक्षर *dest = frame;
-	माप_प्रकार length;
+static int rave_sp_write(struct rave_sp *sp, const u8 *data, u8 data_size)
+{
+	const size_t checksum_length = sp->variant->checksum->length;
+	unsigned char frame[RAVE_SP_TX_BUFFER_SIZE];
+	unsigned char crc[RAVE_SP_CHECKSUM_SIZE];
+	unsigned char *dest = frame;
+	size_t length;
 
-	अगर (WARN_ON(checksum_length > माप(crc)))
-		वापस -ENOMEM;
+	if (WARN_ON(checksum_length > sizeof(crc)))
+		return -ENOMEM;
 
-	अगर (WARN_ON(data_size > माप(frame)))
-		वापस -ENOMEM;
+	if (WARN_ON(data_size > sizeof(frame)))
+		return -ENOMEM;
 
 	sp->variant->checksum->subroutine(data, data_size, crc);
 
@@ -303,61 +302,61 @@ EXPORT_SYMBOL_GPL(devm_rave_sp_रेजिस्टर_event_notअगरier);
 
 	length = dest - frame;
 
-	prपूर्णांक_hex_dump_debug("rave-sp tx: ", DUMP_PREFIX_NONE,
+	print_hex_dump_debug("rave-sp tx: ", DUMP_PREFIX_NONE,
 			     16, 1, frame, length, false);
 
-	वापस serdev_device_ग_लिखो(sp->serdev, frame, length, HZ);
-पूर्ण
+	return serdev_device_write(sp->serdev, frame, length, HZ);
+}
 
-अटल u8 rave_sp_reply_code(u8 command)
-अणु
+static u8 rave_sp_reply_code(u8 command)
+{
 	/*
 	 * There isn't a single rule that describes command code ->
-	 * ACK code transक्रमmation, but, going through various
+	 * ACK code transformation, but, going through various
 	 * versions of ICDs, there appear to be three distinct groups
-	 * that can be described by simple transक्रमmation.
+	 * that can be described by simple transformation.
 	 */
-	चयन (command) अणु
-	हाल 0xA0 ... 0xBE:
+	switch (command) {
+	case 0xA0 ... 0xBE:
 		/*
 		 * Commands implemented by firmware found in RDU1 and
 		 * older devices all seem to obey the following rule
 		 */
-		वापस command + 0x20;
-	हाल 0xE0 ... 0xEF:
+		return command + 0x20;
+	case 0xE0 ... 0xEF:
 		/*
 		 * Events emitted by all versions of the firmare use
-		 * least signअगरicant bit to get an ACK code
+		 * least significant bit to get an ACK code
 		 */
-		वापस command | 0x01;
-	शेष:
+		return command | 0x01;
+	default:
 		/*
 		 * Commands implemented by firmware found in RDU2 are
 		 * similar to "old" commands, but they use slightly
-		 * dअगरferent offset
+		 * different offset
 		 */
-		वापस command + 0x40;
-	पूर्ण
-पूर्ण
+		return command + 0x40;
+	}
+}
 
-पूर्णांक rave_sp_exec(काष्ठा rave_sp *sp,
-		 व्योम *__data,  माप_प्रकार data_size,
-		 व्योम *reply_data, माप_प्रकार reply_data_size)
-अणु
-	काष्ठा rave_sp_reply reply = अणु
+int rave_sp_exec(struct rave_sp *sp,
+		 void *__data,  size_t data_size,
+		 void *reply_data, size_t reply_data_size)
+{
+	struct rave_sp_reply reply = {
 		.data     = reply_data,
 		.length   = reply_data_size,
 		.received = COMPLETION_INITIALIZER_ONSTACK(reply.received),
-	पूर्ण;
-	अचिन्हित अक्षर *data = __data;
-	पूर्णांक command, ret = 0;
+	};
+	unsigned char *data = __data;
+	int command, ret = 0;
 	u8 ackid;
 
 	command = sp->variant->cmd.translate(data[0]);
-	अगर (command < 0)
-		वापस command;
+	if (command < 0)
+		return command;
 
-	ackid       = atomic_inc_वापस(&sp->ackid);
+	ackid       = atomic_inc_return(&sp->ackid);
 	reply.ackid = ackid;
 	reply.code  = rave_sp_reply_code((u8)command),
 
@@ -370,58 +369,58 @@ EXPORT_SYMBOL_GPL(devm_rave_sp_रेजिस्टर_event_notअगरier);
 	data[0] = command;
 	data[1] = ackid;
 
-	rave_sp_ग_लिखो(sp, data, data_size);
+	rave_sp_write(sp, data, data_size);
 
-	अगर (!रुको_क्रम_completion_समयout(&reply.received, HZ)) अणु
+	if (!wait_for_completion_timeout(&reply.received, HZ)) {
 		dev_err(&sp->serdev->dev, "Command timeout\n");
 		ret = -ETIMEDOUT;
 
 		mutex_lock(&sp->reply_lock);
-		sp->reply = शून्य;
+		sp->reply = NULL;
 		mutex_unlock(&sp->reply_lock);
-	पूर्ण
+	}
 
 	mutex_unlock(&sp->bus_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(rave_sp_exec);
 
-अटल व्योम rave_sp_receive_event(काष्ठा rave_sp *sp,
-				  स्थिर अचिन्हित अक्षर *data, माप_प्रकार length)
-अणु
-	u8 cmd[] = अणु
+static void rave_sp_receive_event(struct rave_sp *sp,
+				  const unsigned char *data, size_t length)
+{
+	u8 cmd[] = {
 		[0] = rave_sp_reply_code(data[0]),
 		[1] = data[1],
-	पूर्ण;
+	};
 
-	rave_sp_ग_लिखो(sp, cmd, माप(cmd));
+	rave_sp_write(sp, cmd, sizeof(cmd));
 
-	blocking_notअगरier_call_chain(&sp->event_notअगरier_list,
+	blocking_notifier_call_chain(&sp->event_notifier_list,
 				     rave_sp_action_pack(data[0], data[2]),
-				     शून्य);
-पूर्ण
+				     NULL);
+}
 
-अटल व्योम rave_sp_receive_reply(काष्ठा rave_sp *sp,
-				  स्थिर अचिन्हित अक्षर *data, माप_प्रकार length)
-अणु
-	काष्ठा device *dev = &sp->serdev->dev;
-	काष्ठा rave_sp_reply *reply;
-	स्थिर  माप_प्रकार payload_length = length - 2;
+static void rave_sp_receive_reply(struct rave_sp *sp,
+				  const unsigned char *data, size_t length)
+{
+	struct device *dev = &sp->serdev->dev;
+	struct rave_sp_reply *reply;
+	const  size_t payload_length = length - 2;
 
 	mutex_lock(&sp->reply_lock);
 	reply = sp->reply;
 
-	अगर (reply) अणु
-		अगर (reply->code == data[0] && reply->ackid == data[1] &&
-		    payload_length >= reply->length) अणु
+	if (reply) {
+		if (reply->code == data[0] && reply->ackid == data[1] &&
+		    payload_length >= reply->length) {
 			/*
-			 * We are relying on स_नकल(dst, src, 0) to be a no-op
+			 * We are relying on memcpy(dst, src, 0) to be a no-op
 			 * when handling commands that have a no-payload reply
 			 */
-			स_नकल(reply->data, &data[2], reply->length);
+			memcpy(reply->data, &data[2], reply->length);
 			complete(&reply->received);
-			sp->reply = शून्य;
-		पूर्ण अन्यथा अणु
+			sp->reply = NULL;
+		} else {
 			dev_err(dev, "Ignoring incorrect reply\n");
 			dev_dbg(dev, "Code:   expected = 0x%08x received = 0x%08x\n",
 				reply->code, data[0]);
@@ -429,90 +428,90 @@ EXPORT_SYMBOL_GPL(rave_sp_exec);
 				reply->ackid, data[1]);
 			dev_dbg(dev, "Length: expected = %zu received = %zu\n",
 				reply->length, payload_length);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	mutex_unlock(&sp->reply_lock);
-पूर्ण
+}
 
-अटल व्योम rave_sp_receive_frame(काष्ठा rave_sp *sp,
-				  स्थिर अचिन्हित अक्षर *data,
-				  माप_प्रकार length)
-अणु
-	स्थिर माप_प्रकार checksum_length = sp->variant->checksum->length;
-	स्थिर माप_प्रकार payload_length  = length - checksum_length;
-	स्थिर u8 *crc_reported       = &data[payload_length];
-	काष्ठा device *dev           = &sp->serdev->dev;
+static void rave_sp_receive_frame(struct rave_sp *sp,
+				  const unsigned char *data,
+				  size_t length)
+{
+	const size_t checksum_length = sp->variant->checksum->length;
+	const size_t payload_length  = length - checksum_length;
+	const u8 *crc_reported       = &data[payload_length];
+	struct device *dev           = &sp->serdev->dev;
 	u8 crc_calculated[RAVE_SP_CHECKSUM_SIZE];
 
-	अगर (unlikely(checksum_length > माप(crc_calculated))) अणु
+	if (unlikely(checksum_length > sizeof(crc_calculated))) {
 		dev_warn(dev, "Checksum too long, dropping\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	prपूर्णांक_hex_dump_debug("rave-sp rx: ", DUMP_PREFIX_NONE,
+	print_hex_dump_debug("rave-sp rx: ", DUMP_PREFIX_NONE,
 			     16, 1, data, length, false);
 
-	अगर (unlikely(length <= checksum_length)) अणु
+	if (unlikely(length <= checksum_length)) {
 		dev_warn(dev, "Dropping short frame\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	sp->variant->checksum->subroutine(data, payload_length,
 					  crc_calculated);
 
-	अगर (स_भेद(crc_calculated, crc_reported, checksum_length)) अणु
+	if (memcmp(crc_calculated, crc_reported, checksum_length)) {
 		dev_warn(dev, "Dropping bad frame\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (rave_sp_id_is_event(data[0]))
+	if (rave_sp_id_is_event(data[0]))
 		rave_sp_receive_event(sp, data, length);
-	अन्यथा
+	else
 		rave_sp_receive_reply(sp, data, length);
-पूर्ण
+}
 
-अटल पूर्णांक rave_sp_receive_buf(काष्ठा serdev_device *serdev,
-			       स्थिर अचिन्हित अक्षर *buf, माप_प्रकार size)
-अणु
-	काष्ठा device *dev = &serdev->dev;
-	काष्ठा rave_sp *sp = dev_get_drvdata(dev);
-	काष्ठा rave_sp_deframer *deframer = &sp->deframer;
-	स्थिर अचिन्हित अक्षर *src = buf;
-	स्थिर अचिन्हित अक्षर *end = buf + size;
+static int rave_sp_receive_buf(struct serdev_device *serdev,
+			       const unsigned char *buf, size_t size)
+{
+	struct device *dev = &serdev->dev;
+	struct rave_sp *sp = dev_get_drvdata(dev);
+	struct rave_sp_deframer *deframer = &sp->deframer;
+	const unsigned char *src = buf;
+	const unsigned char *end = buf + size;
 
-	जबतक (src < end) अणु
-		स्थिर अचिन्हित अक्षर byte = *src++;
+	while (src < end) {
+		const unsigned char byte = *src++;
 
-		चयन (deframer->state) अणु
-		हाल RAVE_SP_EXPECT_SOF:
-			अगर (byte == RAVE_SP_STX)
+		switch (deframer->state) {
+		case RAVE_SP_EXPECT_SOF:
+			if (byte == RAVE_SP_STX)
 				deframer->state = RAVE_SP_EXPECT_DATA;
-			अवरोध;
+			break;
 
-		हाल RAVE_SP_EXPECT_DATA:
+		case RAVE_SP_EXPECT_DATA:
 			/*
 			 * Treat special byte values first
 			 */
-			चयन (byte) अणु
-			हाल RAVE_SP_ETX:
+			switch (byte) {
+			case RAVE_SP_ETX:
 				rave_sp_receive_frame(sp,
 						      deframer->data,
 						      deframer->length);
 				/*
 				 * Once we extracted a complete frame
-				 * out of a stream, we call it करोne
-				 * and proceed to bailing out जबतक
+				 * out of a stream, we call it done
+				 * and proceed to bailing out while
 				 * resetting the framer to initial
-				 * state, regardless अगर we've consumed
+				 * state, regardless if we've consumed
 				 * all of the stream or not.
 				 */
-				जाओ reset_framer;
-			हाल RAVE_SP_STX:
+				goto reset_framer;
+			case RAVE_SP_STX:
 				dev_warn(dev, "Bad frame: STX before ETX\n");
 				/*
 				 * If we encounter second "start of
-				 * the frame" marker beक्रमe seeing
+				 * the frame" marker before seeing
 				 * corresponding "end of frame", we
 				 * reset the framer and ignore both:
 				 * frame started by first SOF and
@@ -523,41 +522,41 @@ EXPORT_SYMBOL_GPL(rave_sp_exec);
 				 * after this one will have a chance
 				 * to get throught.
 				 */
-				जाओ reset_framer;
-			हाल RAVE_SP_DLE:
+				goto reset_framer;
+			case RAVE_SP_DLE:
 				deframer->state = RAVE_SP_EXPECT_ESCAPED_DATA;
 				/*
 				 * If we encounter escape sequence we
 				 * need to skip it and collect the
-				 * byte that follows. We करो it by
-				 * क्रमcing the next iteration of the
-				 * encompassing जबतक loop.
+				 * byte that follows. We do it by
+				 * forcing the next iteration of the
+				 * encompassing while loop.
 				 */
-				जारी;
-			पूर्ण
+				continue;
+			}
 			/*
 			 * For the rest of the bytes, that are not
-			 * speical snoflakes, we करो the same thing
-			 * that we करो to escaped data - collect it in
+			 * speical snoflakes, we do the same thing
+			 * that we do to escaped data - collect it in
 			 * deframer buffer
 			 */
 
 			fallthrough;
 
-		हाल RAVE_SP_EXPECT_ESCAPED_DATA:
-			अगर (deframer->length == माप(deframer->data)) अणु
+		case RAVE_SP_EXPECT_ESCAPED_DATA:
+			if (deframer->length == sizeof(deframer->data)) {
 				dev_warn(dev, "Bad frame: Too long\n");
 				/*
 				 * If the amount of data we've
-				 * accumulated क्रम current frame so
+				 * accumulated for current frame so
 				 * far starts to exceed the capacity
 				 * of deframer's buffer, there's
-				 * nothing अन्यथा we can करो but to
+				 * nothing else we can do but to
 				 * discard that data and start
 				 * assemblying a new frame again
 				 */
-				जाओ reset_framer;
-			पूर्ण
+				goto reset_framer;
+			}
 
 			deframer->data[deframer->length++] = byte;
 
@@ -566,275 +565,275 @@ EXPORT_SYMBOL_GPL(rave_sp_exec);
 			 * can go back to regular data collecting
 			 */
 			deframer->state = RAVE_SP_EXPECT_DATA;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/*
 	 * The only way to get out of the above loop and end up here
 	 * is throught consuming all of the supplied data, so here we
 	 * report that we processed it all.
 	 */
-	वापस size;
+	return size;
 
 reset_framer:
 	/*
-	 * NOTE: A number of codepaths that will drop us here will करो
-	 * so beक्रमe consuming all 'size' bytes of the data passed by
+	 * NOTE: A number of codepaths that will drop us here will do
+	 * so before consuming all 'size' bytes of the data passed by
 	 * serdev layer. We rely on the fact that serdev layer will
-	 * re-execute this handler with the reमुख्यder of the Rx bytes
+	 * re-execute this handler with the remainder of the Rx bytes
 	 * once we report actual number of bytes that we processed.
 	 */
 	deframer->state  = RAVE_SP_EXPECT_SOF;
 	deframer->length = 0;
 
-	वापस src - buf;
-पूर्ण
+	return src - buf;
+}
 
-अटल पूर्णांक rave_sp_rdu1_cmd_translate(क्रमागत rave_sp_command command)
-अणु
-	अगर (command >= RAVE_SP_CMD_STATUS &&
+static int rave_sp_rdu1_cmd_translate(enum rave_sp_command command)
+{
+	if (command >= RAVE_SP_CMD_STATUS &&
 	    command <= RAVE_SP_CMD_CONTROL_EVENTS)
-		वापस command;
+		return command;
 
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक rave_sp_rdu2_cmd_translate(क्रमागत rave_sp_command command)
-अणु
-	अगर (command >= RAVE_SP_CMD_GET_FIRMWARE_VERSION &&
+static int rave_sp_rdu2_cmd_translate(enum rave_sp_command command)
+{
+	if (command >= RAVE_SP_CMD_GET_FIRMWARE_VERSION &&
 	    command <= RAVE_SP_CMD_GET_GPIO_STATE)
-		वापस command;
+		return command;
 
-	अगर (command == RAVE_SP_CMD_REQ_COPPER_REV) अणु
+	if (command == RAVE_SP_CMD_REQ_COPPER_REV) {
 		/*
 		 * As per RDU2 ICD 3.4.47 CMD_GET_COPPER_REV code is
-		 * dअगरferent from that क्रम RDU1 and it is set to 0x28.
+		 * different from that for RDU1 and it is set to 0x28.
 		 */
-		वापस 0x28;
-	पूर्ण
+		return 0x28;
+	}
 
-	वापस rave_sp_rdu1_cmd_translate(command);
-पूर्ण
+	return rave_sp_rdu1_cmd_translate(command);
+}
 
-अटल पूर्णांक rave_sp_शेष_cmd_translate(क्रमागत rave_sp_command command)
-अणु
+static int rave_sp_default_cmd_translate(enum rave_sp_command command)
+{
 	/*
 	 * All of the following command codes were taken from "Table :
 	 * Communications Protocol Message Types" in section 3.3
 	 * "MESSAGE TYPES" of Rave PIC24 ICD.
 	 */
-	चयन (command) अणु
-	हाल RAVE_SP_CMD_GET_FIRMWARE_VERSION:
-		वापस 0x11;
-	हाल RAVE_SP_CMD_GET_BOOTLOADER_VERSION:
-		वापस 0x12;
-	हाल RAVE_SP_CMD_BOOT_SOURCE:
-		वापस 0x14;
-	हाल RAVE_SP_CMD_SW_WDT:
-		वापस 0x1C;
-	हाल RAVE_SP_CMD_PET_WDT:
-		वापस 0x1D;
-	हाल RAVE_SP_CMD_RESET:
-		वापस 0x1E;
-	हाल RAVE_SP_CMD_RESET_REASON:
-		वापस 0x1F;
-	हाल RAVE_SP_CMD_RMB_EEPROM:
-		वापस 0x20;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	switch (command) {
+	case RAVE_SP_CMD_GET_FIRMWARE_VERSION:
+		return 0x11;
+	case RAVE_SP_CMD_GET_BOOTLOADER_VERSION:
+		return 0x12;
+	case RAVE_SP_CMD_BOOT_SOURCE:
+		return 0x14;
+	case RAVE_SP_CMD_SW_WDT:
+		return 0x1C;
+	case RAVE_SP_CMD_PET_WDT:
+		return 0x1D;
+	case RAVE_SP_CMD_RESET:
+		return 0x1E;
+	case RAVE_SP_CMD_RESET_REASON:
+		return 0x1F;
+	case RAVE_SP_CMD_RMB_EEPROM:
+		return 0x20;
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल स्थिर अक्षर *devm_rave_sp_version(काष्ठा device *dev,
-					काष्ठा rave_sp_version *version)
-अणु
+static const char *devm_rave_sp_version(struct device *dev,
+					struct rave_sp_version *version)
+{
 	/*
-	 * NOTE: The क्रमmat string below uses %02d to display u16
-	 * पूर्णांकentionally क्रम the sake of backwards compatibility with
+	 * NOTE: The format string below uses %02d to display u16
+	 * intentionally for the sake of backwards compatibility with
 	 * legacy software.
 	 */
-	वापस devm_kaप्र_लिखो(dev, GFP_KERNEL, "%02d%02d%02d.%c%c\n",
+	return devm_kasprintf(dev, GFP_KERNEL, "%02d%02d%02d.%c%c\n",
 			      version->hardware,
 			      le16_to_cpu(version->major),
 			      version->minor,
 			      version->letter[0],
 			      version->letter[1]);
-पूर्ण
+}
 
-अटल पूर्णांक rave_sp_rdu1_get_status(काष्ठा rave_sp *sp,
-				   काष्ठा rave_sp_status *status)
-अणु
-	u8 cmd[] = अणु
+static int rave_sp_rdu1_get_status(struct rave_sp *sp,
+				   struct rave_sp_status *status)
+{
+	u8 cmd[] = {
 		[0] = RAVE_SP_CMD_STATUS,
 		[1] = 0
-	पूर्ण;
+	};
 
-	वापस rave_sp_exec(sp, cmd, माप(cmd), status, माप(*status));
-पूर्ण
+	return rave_sp_exec(sp, cmd, sizeof(cmd), status, sizeof(*status));
+}
 
-अटल पूर्णांक rave_sp_emulated_get_status(काष्ठा rave_sp *sp,
-				       काष्ठा rave_sp_status *status)
-अणु
-	u8 cmd[] = अणु
+static int rave_sp_emulated_get_status(struct rave_sp *sp,
+				       struct rave_sp_status *status)
+{
+	u8 cmd[] = {
 		[0] = RAVE_SP_CMD_GET_FIRMWARE_VERSION,
 		[1] = 0,
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
-	ret = rave_sp_exec(sp, cmd, माप(cmd), &status->firmware_version,
-			   माप(status->firmware_version));
-	अगर (ret)
-		वापस ret;
+	ret = rave_sp_exec(sp, cmd, sizeof(cmd), &status->firmware_version,
+			   sizeof(status->firmware_version));
+	if (ret)
+		return ret;
 
 	cmd[0] = RAVE_SP_CMD_GET_BOOTLOADER_VERSION;
-	वापस rave_sp_exec(sp, cmd, माप(cmd), &status->bootloader_version,
-			    माप(status->bootloader_version));
-पूर्ण
+	return rave_sp_exec(sp, cmd, sizeof(cmd), &status->bootloader_version,
+			    sizeof(status->bootloader_version));
+}
 
-अटल पूर्णांक rave_sp_get_status(काष्ठा rave_sp *sp)
-अणु
-	काष्ठा device *dev = &sp->serdev->dev;
-	काष्ठा rave_sp_status status;
-	स्थिर अक्षर *version;
-	पूर्णांक ret;
+static int rave_sp_get_status(struct rave_sp *sp)
+{
+	struct device *dev = &sp->serdev->dev;
+	struct rave_sp_status status;
+	const char *version;
+	int ret;
 
 	ret = sp->variant->cmd.get_status(sp, &status);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	version = devm_rave_sp_version(dev, &status.firmware_version);
-	अगर (!version)
-		वापस -ENOMEM;
+	if (!version)
+		return -ENOMEM;
 
 	sp->part_number_firmware = version;
 
 	version = devm_rave_sp_version(dev, &status.bootloader_version);
-	अगर (!version)
-		वापस -ENOMEM;
+	if (!version)
+		return -ENOMEM;
 
 	sp->part_number_bootloader = version;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा rave_sp_checksum rave_sp_checksum_8b2c = अणु
+static const struct rave_sp_checksum rave_sp_checksum_8b2c = {
 	.length     = 1,
 	.subroutine = csum_8b2c,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rave_sp_checksum rave_sp_checksum_ccitt = अणु
+static const struct rave_sp_checksum rave_sp_checksum_ccitt = {
 	.length     = 2,
 	.subroutine = csum_ccitt,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा rave_sp_variant rave_sp_legacy = अणु
+static const struct rave_sp_variant rave_sp_legacy = {
 	.checksum = &rave_sp_checksum_ccitt,
-	.cmd = अणु
-		.translate = rave_sp_शेष_cmd_translate,
+	.cmd = {
+		.translate = rave_sp_default_cmd_translate,
 		.get_status = rave_sp_emulated_get_status,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा rave_sp_variant rave_sp_rdu1 = अणु
+static const struct rave_sp_variant rave_sp_rdu1 = {
 	.checksum = &rave_sp_checksum_8b2c,
-	.cmd = अणु
+	.cmd = {
 		.translate = rave_sp_rdu1_cmd_translate,
 		.get_status = rave_sp_rdu1_get_status,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा rave_sp_variant rave_sp_rdu2 = अणु
+static const struct rave_sp_variant rave_sp_rdu2 = {
 	.checksum = &rave_sp_checksum_ccitt,
-	.cmd = अणु
+	.cmd = {
 		.translate = rave_sp_rdu2_cmd_translate,
 		.get_status = rave_sp_emulated_get_status,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा of_device_id rave_sp_dt_ids[] = अणु
-	अणु .compatible = "zii,rave-sp-niu",  .data = &rave_sp_legacy पूर्ण,
-	अणु .compatible = "zii,rave-sp-mezz", .data = &rave_sp_legacy पूर्ण,
-	अणु .compatible = "zii,rave-sp-esb",  .data = &rave_sp_legacy पूर्ण,
-	अणु .compatible = "zii,rave-sp-rdu1", .data = &rave_sp_rdu1   पूर्ण,
-	अणु .compatible = "zii,rave-sp-rdu2", .data = &rave_sp_rdu2   पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id rave_sp_dt_ids[] = {
+	{ .compatible = "zii,rave-sp-niu",  .data = &rave_sp_legacy },
+	{ .compatible = "zii,rave-sp-mezz", .data = &rave_sp_legacy },
+	{ .compatible = "zii,rave-sp-esb",  .data = &rave_sp_legacy },
+	{ .compatible = "zii,rave-sp-rdu1", .data = &rave_sp_rdu1   },
+	{ .compatible = "zii,rave-sp-rdu2", .data = &rave_sp_rdu2   },
+	{ /* sentinel */ }
+};
 
-अटल स्थिर काष्ठा serdev_device_ops rave_sp_serdev_device_ops = अणु
+static const struct serdev_device_ops rave_sp_serdev_device_ops = {
 	.receive_buf  = rave_sp_receive_buf,
-	.ग_लिखो_wakeup = serdev_device_ग_लिखो_wakeup,
-पूर्ण;
+	.write_wakeup = serdev_device_write_wakeup,
+};
 
-अटल पूर्णांक rave_sp_probe(काष्ठा serdev_device *serdev)
-अणु
-	काष्ठा device *dev = &serdev->dev;
-	स्थिर अक्षर *unknown = "unknown\n";
-	काष्ठा rave_sp *sp;
+static int rave_sp_probe(struct serdev_device *serdev)
+{
+	struct device *dev = &serdev->dev;
+	const char *unknown = "unknown\n";
+	struct rave_sp *sp;
 	u32 baud;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (of_property_पढ़ो_u32(dev->of_node, "current-speed", &baud)) अणु
+	if (of_property_read_u32(dev->of_node, "current-speed", &baud)) {
 		dev_err(dev,
 			"'current-speed' is not specified in device node\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	sp = devm_kzalloc(dev, माप(*sp), GFP_KERNEL);
-	अगर (!sp)
-		वापस -ENOMEM;
+	sp = devm_kzalloc(dev, sizeof(*sp), GFP_KERNEL);
+	if (!sp)
+		return -ENOMEM;
 
 	sp->serdev = serdev;
 	dev_set_drvdata(dev, sp);
 
 	sp->variant = of_device_get_match_data(dev);
-	अगर (!sp->variant)
-		वापस -ENODEV;
+	if (!sp->variant)
+		return -ENODEV;
 
 	mutex_init(&sp->bus_lock);
 	mutex_init(&sp->reply_lock);
-	BLOCKING_INIT_NOTIFIER_HEAD(&sp->event_notअगरier_list);
+	BLOCKING_INIT_NOTIFIER_HEAD(&sp->event_notifier_list);
 
 	serdev_device_set_client_ops(serdev, &rave_sp_serdev_device_ops);
-	ret = devm_serdev_device_खोलो(dev, serdev);
-	अगर (ret)
-		वापस ret;
+	ret = devm_serdev_device_open(dev, serdev);
+	if (ret)
+		return ret;
 
 	serdev_device_set_baudrate(serdev, baud);
 	serdev_device_set_flow_control(serdev, false);
 
 	ret = serdev_device_set_parity(serdev, SERDEV_PARITY_NONE);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "Failed to set parity\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = rave_sp_get_status(sp);
-	अगर (ret) अणु
+	if (ret) {
 		dev_warn(dev, "Failed to get firmware status: %d\n", ret);
 		sp->part_number_firmware   = unknown;
 		sp->part_number_bootloader = unknown;
-	पूर्ण
+	}
 
 	/*
-	 * Those strings alपढ़ोy have a \न embedded, so there's no
-	 * need to have one in क्रमmat string.
+	 * Those strings already have a \n embedded, so there's no
+	 * need to have one in format string.
 	 */
 	dev_info(dev, "Firmware version: %s",   sp->part_number_firmware);
 	dev_info(dev, "Bootloader version: %s", sp->part_number_bootloader);
 
-	वापस devm_of_platक्रमm_populate(dev);
-पूर्ण
+	return devm_of_platform_populate(dev);
+}
 
 MODULE_DEVICE_TABLE(of, rave_sp_dt_ids);
 
-अटल काष्ठा serdev_device_driver rave_sp_drv = अणु
+static struct serdev_device_driver rave_sp_drv = {
 	.probe			= rave_sp_probe,
-	.driver = अणु
+	.driver = {
 		.name		= "rave-sp",
 		.of_match_table	= rave_sp_dt_ids,
-	पूर्ण,
-पूर्ण;
+	},
+};
 module_serdev_device_driver(rave_sp_drv);
 
 MODULE_LICENSE("GPL");

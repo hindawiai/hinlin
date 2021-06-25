@@ -1,58 +1,57 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* 
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
  */
 
-#अगर_अघोषित __USER_H__
-#घोषणा __USER_H__
+#ifndef __USER_H__
+#define __USER_H__
 
-#समावेश <generated/यंत्र-offsets.h>
+#include <generated/asm-offsets.h>
 
 /*
  * The usual definition - copied here because the kernel provides its own,
  * fancier, type-safe, definition.  Using that one would require
- * copying too much infraकाष्ठाure क्रम my taste, so userspace files
+ * copying too much infrastructure for my taste, so userspace files
  * get less checking than kernel files.
  */
-#घोषणा ARRAY_SIZE(x) (माप(x) / माप((x)[0]))
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
-/* This is to get माप_प्रकार */
-#अगर_अघोषित __UM_HOST__
-#समावेश <linux/types.h>
-#अन्यथा
-#समावेश <मानकघोष.स>
-#पूर्ण_अगर
+/* This is to get size_t */
+#ifndef __UM_HOST__
+#include <linux/types.h>
+#else
+#include <stddef.h>
+#endif
 
-बाह्य व्योम panic(स्थिर अक्षर *fmt, ...)
-	__attribute__ ((क्रमmat (म_लिखो, 1, 2)));
+extern void panic(const char *fmt, ...)
+	__attribute__ ((format (printf, 1, 2)));
 
 /* Requires preincluding include/linux/kern_levels.h */
-#घोषणा UM_KERN_EMERG	KERN_EMERG
-#घोषणा UM_KERN_ALERT	KERN_ALERT
-#घोषणा UM_KERN_CRIT	KERN_CRIT
-#घोषणा UM_KERN_ERR	KERN_ERR
-#घोषणा UM_KERN_WARNING	KERN_WARNING
-#घोषणा UM_KERN_NOTICE	KERN_NOTICE
-#घोषणा UM_KERN_INFO	KERN_INFO
-#घोषणा UM_KERN_DEBUG	KERN_DEBUG
-#घोषणा UM_KERN_CONT	KERN_CONT
+#define UM_KERN_EMERG	KERN_EMERG
+#define UM_KERN_ALERT	KERN_ALERT
+#define UM_KERN_CRIT	KERN_CRIT
+#define UM_KERN_ERR	KERN_ERR
+#define UM_KERN_WARNING	KERN_WARNING
+#define UM_KERN_NOTICE	KERN_NOTICE
+#define UM_KERN_INFO	KERN_INFO
+#define UM_KERN_DEBUG	KERN_DEBUG
+#define UM_KERN_CONT	KERN_CONT
 
-#अगर_घोषित UML_CONFIG_PRINTK
-बाह्य पूर्णांक prपूर्णांकk(स्थिर अक्षर *fmt, ...)
-	__attribute__ ((क्रमmat (म_लिखो, 1, 2)));
-#अन्यथा
-अटल अंतरभूत पूर्णांक prपूर्णांकk(स्थिर अक्षर *fmt, ...)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#ifdef UML_CONFIG_PRINTK
+extern int printk(const char *fmt, ...)
+	__attribute__ ((format (printf, 1, 2)));
+#else
+static inline int printk(const char *fmt, ...)
+{
+	return 0;
+}
+#endif
 
-बाह्य पूर्णांक in_aton(अक्षर *str);
-बाह्य माप_प्रकार strlcpy(अक्षर *, स्थिर अक्षर *, माप_प्रकार);
-बाह्य माप_प्रकार strlcat(अक्षर *, स्थिर अक्षर *, माप_प्रकार);
+extern int in_aton(char *str);
+extern size_t strlcpy(char *, const char *, size_t);
+extern size_t strlcat(char *, const char *, size_t);
 
 /* Copied from linux/compiler-gcc.h since we can't include it directly */
-#घोषणा barrier() __यंत्र__ __अस्थिर__("": : :"memory")
+#define barrier() __asm__ __volatile__("": : :"memory")
 
-#पूर्ण_अगर
+#endif

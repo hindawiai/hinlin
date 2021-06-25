@@ -1,188 +1,187 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
   Interval Trees
   (C) 2012  Michel Lespinasse <walken@google.com>
 
 
-  include/linux/पूर्णांकerval_tree_generic.h
+  include/linux/interval_tree_generic.h
 */
 
-#समावेश <linux/rbtree_augmented.h>
+#include <linux/rbtree_augmented.h>
 
 /*
- * Template क्रम implementing पूर्णांकerval trees
+ * Template for implementing interval trees
  *
- * ITSTRUCT:   काष्ठा type of the पूर्णांकerval tree nodes
- * ITRB:       name of काष्ठा rb_node field within ITSTRUCT
- * ITTYPE:     type of the पूर्णांकerval endpoपूर्णांकs
+ * ITSTRUCT:   struct type of the interval tree nodes
+ * ITRB:       name of struct rb_node field within ITSTRUCT
+ * ITTYPE:     type of the interval endpoints
  * ITSUBTREE:  name of ITTYPE field within ITSTRUCT holding last-in-subtree
- * ITSTART(n): start endpoपूर्णांक of ITSTRUCT node n
- * ITLAST(n):  last endpoपूर्णांक of ITSTRUCT node n
+ * ITSTART(n): start endpoint of ITSTRUCT node n
+ * ITLAST(n):  last endpoint of ITSTRUCT node n
  * ITSTATIC:   'static' or empty
- * ITPREFIX:   prefix to use क्रम the अंतरभूत tree definitions
+ * ITPREFIX:   prefix to use for the inline tree definitions
  *
- * Note - beक्रमe using this, please consider अगर generic version
- * (पूर्णांकerval_tree.h) would work क्रम you...
+ * Note - before using this, please consider if generic version
+ * (interval_tree.h) would work for you...
  */
 
-#घोषणा INTERVAL_TREE_DEFINE(ITSTRUCT, ITRB, ITTYPE, ITSUBTREE,		      \
+#define INTERVAL_TREE_DEFINE(ITSTRUCT, ITRB, ITTYPE, ITSUBTREE,		      \
 			     ITSTART, ITLAST, ITSTATIC, ITPREFIX)	      \
 									      \
-/* Callbacks क्रम augmented rbtree insert and हटाओ */			      \
+/* Callbacks for augmented rbtree insert and remove */			      \
 									      \
-RB_DECLARE_CALLBACKS_MAX(अटल, ITPREFIX ## _augment,			      \
+RB_DECLARE_CALLBACKS_MAX(static, ITPREFIX ## _augment,			      \
 			 ITSTRUCT, ITRB, ITTYPE, ITSUBTREE, ITLAST)	      \
 									      \
-/* Insert / हटाओ पूर्णांकerval nodes from the tree */			      \
+/* Insert / remove interval nodes from the tree */			      \
 									      \
-ITSTATIC व्योम ITPREFIX ## _insert(ITSTRUCT *node,			      \
-				  काष्ठा rb_root_cached *root)	 	      \
-अणु									      \
-	काष्ठा rb_node **link = &root->rb_root.rb_node, *rb_parent = शून्य;    \
+ITSTATIC void ITPREFIX ## _insert(ITSTRUCT *node,			      \
+				  struct rb_root_cached *root)	 	      \
+{									      \
+	struct rb_node **link = &root->rb_root.rb_node, *rb_parent = NULL;    \
 	ITTYPE start = ITSTART(node), last = ITLAST(node);		      \
 	ITSTRUCT *parent;						      \
-	bool lefपंचांगost = true;						      \
+	bool leftmost = true;						      \
 									      \
-	जबतक (*link) अणु							      \
+	while (*link) {							      \
 		rb_parent = *link;					      \
 		parent = rb_entry(rb_parent, ITSTRUCT, ITRB);		      \
-		अगर (parent->ITSUBTREE < last)				      \
+		if (parent->ITSUBTREE < last)				      \
 			parent->ITSUBTREE = last;			      \
-		अगर (start < ITSTART(parent))				      \
+		if (start < ITSTART(parent))				      \
 			link = &parent->ITRB.rb_left;			      \
-		अन्यथा अणु							      \
+		else {							      \
 			link = &parent->ITRB.rb_right;			      \
-			lefपंचांगost = false;				      \
-		पूर्ण							      \
-	पूर्ण								      \
+			leftmost = false;				      \
+		}							      \
+	}								      \
 									      \
 	node->ITSUBTREE = last;						      \
 	rb_link_node(&node->ITRB, rb_parent, link);			      \
 	rb_insert_augmented_cached(&node->ITRB, root,			      \
-				   lefपंचांगost, &ITPREFIX ## _augment);	      \
-पूर्ण									      \
+				   leftmost, &ITPREFIX ## _augment);	      \
+}									      \
 									      \
-ITSTATIC व्योम ITPREFIX ## _हटाओ(ITSTRUCT *node,			      \
-				  काष्ठा rb_root_cached *root)		      \
-अणु									      \
+ITSTATIC void ITPREFIX ## _remove(ITSTRUCT *node,			      \
+				  struct rb_root_cached *root)		      \
+{									      \
 	rb_erase_augmented_cached(&node->ITRB, root, &ITPREFIX ## _augment);  \
-पूर्ण									      \
+}									      \
 									      \
 /*									      \
- * Iterate over पूर्णांकervals पूर्णांकersecting [start;last]			      \
+ * Iterate over intervals intersecting [start;last]			      \
  *									      \
- * Note that a node's पूर्णांकerval पूर्णांकersects [start;last] अगरf:		      \
+ * Note that a node's interval intersects [start;last] iff:		      \
  *   Cond1: ITSTART(node) <= last					      \
  * and									      \
  *   Cond2: start <= ITLAST(node)					      \
  */									      \
 									      \
-अटल ITSTRUCT *							      \
+static ITSTRUCT *							      \
 ITPREFIX ## _subtree_search(ITSTRUCT *node, ITTYPE start, ITTYPE last)	      \
-अणु									      \
-	जबतक (true) अणु							      \
+{									      \
+	while (true) {							      \
 		/*							      \
 		 * Loop invariant: start <= node->ITSUBTREE		      \
 		 * (Cond2 is satisfied by one of the subtree nodes)	      \
 		 */							      \
-		अगर (node->ITRB.rb_left) अणु				      \
+		if (node->ITRB.rb_left) {				      \
 			ITSTRUCT *left = rb_entry(node->ITRB.rb_left,	      \
 						  ITSTRUCT, ITRB);	      \
-			अगर (start <= left->ITSUBTREE) अणु			      \
+			if (start <= left->ITSUBTREE) {			      \
 				/*					      \
 				 * Some nodes in left subtree satisfy Cond2.  \
-				 * Iterate to find the lefपंचांगost such node N.  \
+				 * Iterate to find the leftmost such node N.  \
 				 * If it also satisfies Cond1, that's the     \
-				 * match we are looking क्रम. Otherwise, there \
-				 * is no matching पूर्णांकerval as nodes to the    \
+				 * match we are looking for. Otherwise, there \
+				 * is no matching interval as nodes to the    \
 				 * right of N can't satisfy Cond1 either.     \
 				 */					      \
 				node = left;				      \
-				जारी;				      \
-			पूर्ण						      \
-		पूर्ण							      \
-		अगर (ITSTART(node) <= last) अणु		/* Cond1 */	      \
-			अगर (start <= ITLAST(node))	/* Cond2 */	      \
-				वापस node;	/* node is lefपंचांगost match */  \
-			अगर (node->ITRB.rb_right) अणु			      \
+				continue;				      \
+			}						      \
+		}							      \
+		if (ITSTART(node) <= last) {		/* Cond1 */	      \
+			if (start <= ITLAST(node))	/* Cond2 */	      \
+				return node;	/* node is leftmost match */  \
+			if (node->ITRB.rb_right) {			      \
 				node = rb_entry(node->ITRB.rb_right,	      \
 						ITSTRUCT, ITRB);	      \
-				अगर (start <= node->ITSUBTREE)		      \
-					जारी;			      \
-			पूर्ण						      \
-		पूर्ण							      \
-		वापस शून्य;	/* No match */				      \
-	पूर्ण								      \
-पूर्ण									      \
+				if (start <= node->ITSUBTREE)		      \
+					continue;			      \
+			}						      \
+		}							      \
+		return NULL;	/* No match */				      \
+	}								      \
+}									      \
 									      \
 ITSTATIC ITSTRUCT *							      \
-ITPREFIX ## _iter_first(काष्ठा rb_root_cached *root,			      \
+ITPREFIX ## _iter_first(struct rb_root_cached *root,			      \
 			ITTYPE start, ITTYPE last)			      \
-अणु									      \
-	ITSTRUCT *node, *lefपंचांगost;					      \
+{									      \
+	ITSTRUCT *node, *leftmost;					      \
 									      \
-	अगर (!root->rb_root.rb_node)					      \
-		वापस शून्य;						      \
+	if (!root->rb_root.rb_node)					      \
+		return NULL;						      \
 									      \
 	/*								      \
-	 * Fastpath range पूर्णांकersection/overlap between A: [a0, a1] and	      \
+	 * Fastpath range intersection/overlap between A: [a0, a1] and	      \
 	 * B: [b0, b1] is given by:					      \
 	 *								      \
 	 *         a0 <= b1 && b0 <= a1					      \
 	 *								      \
 	 *  ... where A holds the lock range and B holds the smallest	      \
 	 * 'start' and largest 'last' in the tree. For the later, we	      \
-	 * rely on the root node, which by augmented पूर्णांकerval tree	      \
+	 * rely on the root node, which by augmented interval tree	      \
 	 * property, holds the largest value in its last-in-subtree.	      \
-	 * This allows mitigating some of the tree walk overhead क्रम	      \
-	 * क्रम non-पूर्णांकersecting ranges, मुख्यtained and consulted in O(1).     \
+	 * This allows mitigating some of the tree walk overhead for	      \
+	 * for non-intersecting ranges, maintained and consulted in O(1).     \
 	 */								      \
 	node = rb_entry(root->rb_root.rb_node, ITSTRUCT, ITRB);		      \
-	अगर (node->ITSUBTREE < start)					      \
-		वापस शून्य;						      \
+	if (node->ITSUBTREE < start)					      \
+		return NULL;						      \
 									      \
-	lefपंचांगost = rb_entry(root->rb_lefपंचांगost, ITSTRUCT, ITRB);		      \
-	अगर (ITSTART(lefपंचांगost) > last)					      \
-		वापस शून्य;						      \
+	leftmost = rb_entry(root->rb_leftmost, ITSTRUCT, ITRB);		      \
+	if (ITSTART(leftmost) > last)					      \
+		return NULL;						      \
 									      \
-	वापस ITPREFIX ## _subtree_search(node, start, last);		      \
-पूर्ण									      \
+	return ITPREFIX ## _subtree_search(node, start, last);		      \
+}									      \
 									      \
 ITSTATIC ITSTRUCT *							      \
 ITPREFIX ## _iter_next(ITSTRUCT *node, ITTYPE start, ITTYPE last)	      \
-अणु									      \
-	काष्ठा rb_node *rb = node->ITRB.rb_right, *prev;		      \
+{									      \
+	struct rb_node *rb = node->ITRB.rb_right, *prev;		      \
 									      \
-	जबतक (true) अणु							      \
+	while (true) {							      \
 		/*							      \
 		 * Loop invariants:					      \
 		 *   Cond1: ITSTART(node) <= last			      \
 		 *   rb == node->ITRB.rb_right				      \
 		 *							      \
-		 * First, search right subtree अगर suitable		      \
+		 * First, search right subtree if suitable		      \
 		 */							      \
-		अगर (rb) अणु						      \
+		if (rb) {						      \
 			ITSTRUCT *right = rb_entry(rb, ITSTRUCT, ITRB);	      \
-			अगर (start <= right->ITSUBTREE)			      \
-				वापस ITPREFIX ## _subtree_search(right,     \
+			if (start <= right->ITSUBTREE)			      \
+				return ITPREFIX ## _subtree_search(right,     \
 								start, last); \
-		पूर्ण							      \
+		}							      \
 									      \
 		/* Move up the tree until we come from a node's left child */ \
-		करो अणु							      \
+		do {							      \
 			rb = rb_parent(&node->ITRB);			      \
-			अगर (!rb)					      \
-				वापस शून्य;				      \
+			if (!rb)					      \
+				return NULL;				      \
 			prev = &node->ITRB;				      \
 			node = rb_entry(rb, ITSTRUCT, ITRB);		      \
 			rb = node->ITRB.rb_right;			      \
-		पूर्ण जबतक (prev == rb);					      \
+		} while (prev == rb);					      \
 									      \
-		/* Check अगर the node पूर्णांकersects [start;last] */		      \
-		अगर (last < ITSTART(node))		/* !Cond1 */	      \
-			वापस शून्य;					      \
-		अन्यथा अगर (start <= ITLAST(node))		/* Cond2 */	      \
-			वापस node;					      \
-	पूर्ण								      \
-पूर्ण
+		/* Check if the node intersects [start;last] */		      \
+		if (last < ITSTART(node))		/* !Cond1 */	      \
+			return NULL;					      \
+		else if (start <= ITLAST(node))		/* Cond2 */	      \
+			return node;					      \
+	}								      \
+}

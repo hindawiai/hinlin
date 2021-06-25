@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 // Copyright (c) 2018 Politecnico di Torino
-#घोषणा MAP_TYPE BPF_MAP_TYPE_QUEUE
-#समावेश "test_queue_stack_map.h"
+#define MAP_TYPE BPF_MAP_TYPE_QUEUE
+#include "test_queue_stack_map.h"

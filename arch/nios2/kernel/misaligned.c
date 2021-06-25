@@ -1,239 +1,238 @@
-<शैली गुरु>
 /*
  *  linux/arch/nios2/kernel/misaligned.c
  *
- *  basic emulation क्रम mis-aligned accesses on the NIOS II cpu
- *  modelled after the version क्रम arm in arm/alignment.c
+ *  basic emulation for mis-aligned accesses on the NIOS II cpu
+ *  modelled after the version for arm in arm/alignment.c
  *
  *  Brad Parker <brad@heeltoe.com>
  *  Copyright (C) 2010 Ambient Corporation
- *  Copyright (c) 2010 Altera Corporation, San Jose, Calअगरornia, USA.
+ *  Copyright (c) 2010 Altera Corporation, San Jose, California, USA.
  *  Copyright (c) 2010 Arrow Electronics, Inc.
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License.  See the file COPYING in the मुख्य directory of
- * this archive क्रम more details.
+ * Public License.  See the file COPYING in the main directory of
+ * this archive for more details.
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/init.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/seq_file.h>
+#include <linux/errno.h>
+#include <linux/string.h>
+#include <linux/proc_fs.h>
+#include <linux/init.h>
+#include <linux/sched.h>
+#include <linux/uaccess.h>
+#include <linux/seq_file.h>
 
-#समावेश <यंत्र/traps.h>
-#समावेश <यंत्र/unaligned.h>
+#include <asm/traps.h>
+#include <asm/unaligned.h>
 
-/* inकाष्ठाions we emulate */
-#घोषणा INST_LDHU	0x0b
-#घोषणा INST_STH	0x0d
-#घोषणा INST_LDH	0x0f
-#घोषणा INST_STW	0x15
-#घोषणा INST_LDW	0x17
+/* instructions we emulate */
+#define INST_LDHU	0x0b
+#define INST_STH	0x0d
+#define INST_LDH	0x0f
+#define INST_STW	0x15
+#define INST_LDW	0x17
 
-अटल अचिन्हित पूर्णांक ma_usermode;
-#घोषणा UM_WARN		0x01
-#घोषणा UM_FIXUP	0x02
-#घोषणा UM_SIGNAL	0x04
-#घोषणा KM_WARN		0x08
+static unsigned int ma_usermode;
+#define UM_WARN		0x01
+#define UM_FIXUP	0x02
+#define UM_SIGNAL	0x04
+#define KM_WARN		0x08
 
-/* see arch/nios2/include/यंत्र/ptrace.h */
-अटल u8 sys_stack_frame_reg_offset[] = अणु
-	/* काष्ठा pt_regs */
+/* see arch/nios2/include/asm/ptrace.h */
+static u8 sys_stack_frame_reg_offset[] = {
+	/* struct pt_regs */
 	8, 9, 10, 11, 12, 13, 14, 15, 1, 2, 3, 4, 5, 6, 7, 0,
-	/* काष्ठा चयन_stack */
+	/* struct switch_stack */
 	16, 17, 18, 19, 20, 21, 22, 23, 0, 0, 0, 0, 0, 0, 0, 0
-पूर्ण;
+};
 
-अटल पूर्णांक reg_offsets[32];
+static int reg_offsets[32];
 
-अटल अंतरभूत u32 get_reg_val(काष्ठा pt_regs *fp, पूर्णांक reg)
-अणु
+static inline u32 get_reg_val(struct pt_regs *fp, int reg)
+{
 	u8 *p = ((u8 *)fp) + reg_offsets[reg];
-	वापस *(u32 *)p;
-पूर्ण
+	return *(u32 *)p;
+}
 
-अटल अंतरभूत व्योम put_reg_val(काष्ठा pt_regs *fp, पूर्णांक reg, u32 val)
-अणु
+static inline void put_reg_val(struct pt_regs *fp, int reg, u32 val)
+{
 	u8 *p = ((u8 *)fp) + reg_offsets[reg];
 	*(u32 *)p = val;
-पूर्ण
+}
 
 /*
  * (mis)alignment handler
  */
-यंत्रlinkage व्योम handle_unaligned_c(काष्ठा pt_regs *fp, पूर्णांक cause)
-अणु
+asmlinkage void handle_unaligned_c(struct pt_regs *fp, int cause)
+{
 	u32 isn, addr, val;
-	पूर्णांक in_kernel;
+	int in_kernel;
 	u8 a, b, d0, d1, d2, d3;
 	s16 imm16;
-	अचिन्हित पूर्णांक fault;
+	unsigned int fault;
 
-	/* back up one inकाष्ठाion */
+	/* back up one instruction */
 	fp->ea -= 4;
 
-	अगर (fixup_exception(fp)) अणु
-		वापस;
-	पूर्ण
+	if (fixup_exception(fp)) {
+		return;
+	}
 
 	in_kernel = !user_mode(fp);
 
-	isn = *(अचिन्हित दीर्घ *)(fp->ea);
+	isn = *(unsigned long *)(fp->ea);
 
 	fault = 0;
 
-	/* करो fixup अगर in kernel or mode turned on */
-	अगर (in_kernel || (ma_usermode & UM_FIXUP)) अणु
-		/* decompose inकाष्ठाion */
+	/* do fixup if in kernel or mode turned on */
+	if (in_kernel || (ma_usermode & UM_FIXUP)) {
+		/* decompose instruction */
 		a = (isn >> 27) & 0x1f;
 		b = (isn >> 22) & 0x1f;
 		imm16 = (isn >> 6) & 0xffff;
 		addr = get_reg_val(fp, a) + imm16;
 
-		/* करो fixup to saved रेजिस्टरs */
-		चयन (isn & 0x3f) अणु
-		हाल INST_LDHU:
+		/* do fixup to saved registers */
+		switch (isn & 0x3f) {
+		case INST_LDHU:
 			fault |= __get_user(d0, (u8 *)(addr+0));
 			fault |= __get_user(d1, (u8 *)(addr+1));
 			val = (d1 << 8) | d0;
 			put_reg_val(fp, b, val);
-			अवरोध;
-		हाल INST_STH:
+			break;
+		case INST_STH:
 			val = get_reg_val(fp, b);
 			d1 = val >> 8;
 			d0 = val >> 0;
-			अगर (in_kernel) अणु
+			if (in_kernel) {
 				*(u8 *)(addr+0) = d0;
 				*(u8 *)(addr+1) = d1;
-			पूर्ण अन्यथा अणु
+			} else {
 				fault |= __put_user(d0, (u8 *)(addr+0));
 				fault |= __put_user(d1, (u8 *)(addr+1));
-			पूर्ण
-			अवरोध;
-		हाल INST_LDH:
+			}
+			break;
+		case INST_LDH:
 			fault |= __get_user(d0, (u8 *)(addr+0));
 			fault |= __get_user(d1, (u8 *)(addr+1));
-			val = (लघु)((d1 << 8) | d0);
+			val = (short)((d1 << 8) | d0);
 			put_reg_val(fp, b, val);
-			अवरोध;
-		हाल INST_STW:
+			break;
+		case INST_STW:
 			val = get_reg_val(fp, b);
 			d3 = val >> 24;
 			d2 = val >> 16;
 			d1 = val >> 8;
 			d0 = val >> 0;
-			अगर (in_kernel) अणु
+			if (in_kernel) {
 				*(u8 *)(addr+0) = d0;
 				*(u8 *)(addr+1) = d1;
 				*(u8 *)(addr+2) = d2;
 				*(u8 *)(addr+3) = d3;
-			पूर्ण अन्यथा अणु
+			} else {
 				fault |= __put_user(d0, (u8 *)(addr+0));
 				fault |= __put_user(d1, (u8 *)(addr+1));
 				fault |= __put_user(d2, (u8 *)(addr+2));
 				fault |= __put_user(d3, (u8 *)(addr+3));
-			पूर्ण
-			अवरोध;
-		हाल INST_LDW:
+			}
+			break;
+		case INST_LDW:
 			fault |= __get_user(d0, (u8 *)(addr+0));
 			fault |= __get_user(d1, (u8 *)(addr+1));
 			fault |= __get_user(d2, (u8 *)(addr+2));
 			fault |= __get_user(d3, (u8 *)(addr+3));
 			val = (d3 << 24) | (d2 << 16) | (d1 << 8) | d0;
 			put_reg_val(fp, b, val);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	addr = RDCTL(CTL_BADADDR);
 	cause >>= 2;
 
-	अगर (fault) अणु
-		अगर (in_kernel) अणु
+	if (fault) {
+		if (in_kernel) {
 			pr_err("fault during kernel misaligned fixup @ %#lx; addr 0x%08x; isn=0x%08x\n",
-				fp->ea, (अचिन्हित पूर्णांक)addr,
-				(अचिन्हित पूर्णांक)isn);
-		पूर्ण अन्यथा अणु
+				fp->ea, (unsigned int)addr,
+				(unsigned int)isn);
+		} else {
 			pr_err("fault during user misaligned fixup @ %#lx; isn=%08x addr=0x%08x sp=0x%08lx pid=%d\n",
 				fp->ea,
-				(अचिन्हित पूर्णांक)isn, addr, fp->sp,
+				(unsigned int)isn, addr, fp->sp,
 				current->pid);
 
-			_exception(संक_अंश, fp, SEGV_MAPERR, fp->ea);
-			वापस;
-		पूर्ण
-	पूर्ण
+			_exception(SIGSEGV, fp, SEGV_MAPERR, fp->ea);
+			return;
+		}
+	}
 
 	/*
 	 * kernel mode -
-	 *  note exception and skip bad inकाष्ठाion (वापस)
+	 *  note exception and skip bad instruction (return)
 	 */
-	अगर (in_kernel) अणु
+	if (in_kernel) {
 		fp->ea += 4;
 
-		अगर (ma_usermode & KM_WARN) अणु
+		if (ma_usermode & KM_WARN) {
 			pr_err("kernel unaligned access @ %#lx; BADADDR 0x%08x; cause=%d, isn=0x%08x\n",
 				fp->ea,
-				(अचिन्हित पूर्णांक)addr, cause,
-				(अचिन्हित पूर्णांक)isn);
+				(unsigned int)addr, cause,
+				(unsigned int)isn);
 			/* show_regs(fp); */
-		पूर्ण
+		}
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * user mode -
 	 *  possibly warn,
-	 *  possibly send SIGBUS संकेत to process
+	 *  possibly send SIGBUS signal to process
 	 */
-	अगर (ma_usermode & UM_WARN) अणु
+	if (ma_usermode & UM_WARN) {
 		pr_err("user unaligned access @ %#lx; isn=0x%08lx ea=0x%08lx ra=0x%08lx sp=0x%08lx\n",
-			(अचिन्हित दीर्घ)addr, (अचिन्हित दीर्घ)isn,
+			(unsigned long)addr, (unsigned long)isn,
 			fp->ea, fp->ra, fp->sp);
-	पूर्ण
+	}
 
-	अगर (ma_usermode & UM_SIGNAL)
+	if (ma_usermode & UM_SIGNAL)
 		_exception(SIGBUS, fp, BUS_ADRALN, fp->ea);
-	अन्यथा
-		fp->ea += 4;	/* अन्यथा advance */
-पूर्ण
+	else
+		fp->ea += 4;	/* else advance */
+}
 
-अटल व्योम __init misaligned_calc_reg_offsets(व्योम)
-अणु
-	पूर्णांक i, r, offset;
+static void __init misaligned_calc_reg_offsets(void)
+{
+	int i, r, offset;
 
-	/* pre-calc offsets of रेजिस्टरs on sys call stack frame */
+	/* pre-calc offsets of registers on sys call stack frame */
 	offset = 0;
 
-	/* काष्ठा pt_regs */
-	क्रम (i = 0; i < 16; i++) अणु
+	/* struct pt_regs */
+	for (i = 0; i < 16; i++) {
 		r = sys_stack_frame_reg_offset[i];
 		reg_offsets[r] = offset;
 		offset += 4;
-	पूर्ण
+	}
 
-	/* काष्ठा चयन_stack */
-	offset = -माप(काष्ठा चयन_stack);
-	क्रम (i = 16; i < 32; i++) अणु
+	/* struct switch_stack */
+	offset = -sizeof(struct switch_stack);
+	for (i = 16; i < 32; i++) {
 		r = sys_stack_frame_reg_offset[i];
 		reg_offsets[r] = offset;
 		offset += 4;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
-अटल पूर्णांक __init misaligned_init(व्योम)
-अणु
-	/* शेष mode - silent fix */
+static int __init misaligned_init(void)
+{
+	/* default mode - silent fix */
 	ma_usermode = UM_FIXUP | KM_WARN;
 
 	misaligned_calc_reg_offsets();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 fs_initcall(misaligned_init);

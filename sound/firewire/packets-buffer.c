@@ -1,78 +1,77 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * helpers क्रम managing a buffer क्रम many packets
+ * helpers for managing a buffer for many packets
  *
  * Copyright (c) Clemens Ladisch <clemens@ladisch.de>
  */
 
-#समावेश <linux/firewire.h>
-#समावेश <linux/export.h>
-#समावेश <linux/slab.h>
-#समावेश "packets-buffer.h"
+#include <linux/firewire.h>
+#include <linux/export.h>
+#include <linux/slab.h>
+#include "packets-buffer.h"
 
 /**
- * iso_packets_buffer_init - allocates the memory क्रम packets
- * @b: the buffer काष्ठाure to initialize
+ * iso_packets_buffer_init - allocates the memory for packets
+ * @b: the buffer structure to initialize
  * @unit: the device at the other end of the stream
  * @count: the number of packets
  * @packet_size: the (maximum) size of a packet, in bytes
  * @direction: %DMA_TO_DEVICE or %DMA_FROM_DEVICE
  */
-पूर्णांक iso_packets_buffer_init(काष्ठा iso_packets_buffer *b, काष्ठा fw_unit *unit,
-			    अचिन्हित पूर्णांक count, अचिन्हित पूर्णांक packet_size,
-			    क्रमागत dma_data_direction direction)
-अणु
-	अचिन्हित पूर्णांक packets_per_page, pages;
-	अचिन्हित पूर्णांक i, page_index, offset_in_page;
-	व्योम *p;
-	पूर्णांक err;
+int iso_packets_buffer_init(struct iso_packets_buffer *b, struct fw_unit *unit,
+			    unsigned int count, unsigned int packet_size,
+			    enum dma_data_direction direction)
+{
+	unsigned int packets_per_page, pages;
+	unsigned int i, page_index, offset_in_page;
+	void *p;
+	int err;
 
-	b->packets = kदो_स्मृति_array(count, माप(*b->packets), GFP_KERNEL);
-	अगर (!b->packets) अणु
+	b->packets = kmalloc_array(count, sizeof(*b->packets), GFP_KERNEL);
+	if (!b->packets) {
 		err = -ENOMEM;
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	packet_size = L1_CACHE_ALIGN(packet_size);
 	packets_per_page = PAGE_SIZE / packet_size;
-	अगर (WARN_ON(!packets_per_page)) अणु
+	if (WARN_ON(!packets_per_page)) {
 		err = -EINVAL;
-		जाओ err_packets;
-	पूर्ण
+		goto err_packets;
+	}
 	pages = DIV_ROUND_UP(count, packets_per_page);
 
 	err = fw_iso_buffer_init(&b->iso_buffer, fw_parent_device(unit)->card,
 				 pages, direction);
-	अगर (err < 0)
-		जाओ err_packets;
+	if (err < 0)
+		goto err_packets;
 
-	क्रम (i = 0; i < count; ++i) अणु
+	for (i = 0; i < count; ++i) {
 		page_index = i / packets_per_page;
 		p = page_address(b->iso_buffer.pages[page_index]);
 		offset_in_page = (i % packets_per_page) * packet_size;
 		b->packets[i].buffer = p + offset_in_page;
 		b->packets[i].offset = page_index * PAGE_SIZE + offset_in_page;
-	पूर्ण
+	}
 
-	वापस 0;
+	return 0;
 
 err_packets:
-	kमुक्त(b->packets);
+	kfree(b->packets);
 error:
-	वापस err;
-पूर्ण
+	return err;
+}
 EXPORT_SYMBOL(iso_packets_buffer_init);
 
 /**
- * iso_packets_buffer_destroy - मुक्तs packet buffer resources
- * @b: the buffer काष्ठाure to मुक्त
+ * iso_packets_buffer_destroy - frees packet buffer resources
+ * @b: the buffer structure to free
  * @unit: the device at the other end of the stream
  */
-व्योम iso_packets_buffer_destroy(काष्ठा iso_packets_buffer *b,
-				काष्ठा fw_unit *unit)
-अणु
+void iso_packets_buffer_destroy(struct iso_packets_buffer *b,
+				struct fw_unit *unit)
+{
 	fw_iso_buffer_destroy(&b->iso_buffer, fw_parent_device(unit)->card);
-	kमुक्त(b->packets);
-पूर्ण
+	kfree(b->packets);
+}
 EXPORT_SYMBOL(iso_packets_buffer_destroy);

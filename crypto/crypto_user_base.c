@@ -1,208 +1,207 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Crypto user configuration API.
  *
  * Copyright (C) 2011 secunet Security Networks AG
- * Copyright (C) 2011 Steffen Klनिश्चित <steffen.klनिश्चित@secunet.com>
+ * Copyright (C) 2011 Steffen Klassert <steffen.klassert@secunet.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/crypto.h>
-#समावेश <linux/cryptouser.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/security.h>
-#समावेश <net/netlink.h>
-#समावेश <net/net_namespace.h>
-#समावेश <net/sock.h>
-#समावेश <crypto/पूर्णांकernal/skcipher.h>
-#समावेश <crypto/पूर्णांकernal/rng.h>
-#समावेश <crypto/akcipher.h>
-#समावेश <crypto/kpp.h>
-#समावेश <crypto/पूर्णांकernal/cryptouser.h>
+#include <linux/module.h>
+#include <linux/crypto.h>
+#include <linux/cryptouser.h>
+#include <linux/sched.h>
+#include <linux/security.h>
+#include <net/netlink.h>
+#include <net/net_namespace.h>
+#include <net/sock.h>
+#include <crypto/internal/skcipher.h>
+#include <crypto/internal/rng.h>
+#include <crypto/akcipher.h>
+#include <crypto/kpp.h>
+#include <crypto/internal/cryptouser.h>
 
-#समावेश "internal.h"
+#include "internal.h"
 
-#घोषणा null_terminated(x)	(strnlen(x, माप(x)) < माप(x))
+#define null_terminated(x)	(strnlen(x, sizeof(x)) < sizeof(x))
 
-अटल DEFINE_MUTEX(crypto_cfg_mutex);
+static DEFINE_MUTEX(crypto_cfg_mutex);
 
-काष्ठा crypto_dump_info अणु
-	काष्ठा sk_buff *in_skb;
-	काष्ठा sk_buff *out_skb;
+struct crypto_dump_info {
+	struct sk_buff *in_skb;
+	struct sk_buff *out_skb;
 	u32 nlmsg_seq;
 	u16 nlmsg_flags;
-पूर्ण;
+};
 
-काष्ठा crypto_alg *crypto_alg_match(काष्ठा crypto_user_alg *p, पूर्णांक exact)
-अणु
-	काष्ठा crypto_alg *q, *alg = शून्य;
+struct crypto_alg *crypto_alg_match(struct crypto_user_alg *p, int exact)
+{
+	struct crypto_alg *q, *alg = NULL;
 
-	करोwn_पढ़ो(&crypto_alg_sem);
+	down_read(&crypto_alg_sem);
 
-	list_क्रम_each_entry(q, &crypto_alg_list, cra_list) अणु
-		पूर्णांक match = 0;
+	list_for_each_entry(q, &crypto_alg_list, cra_list) {
+		int match = 0;
 
-		अगर (crypto_is_larval(q))
-			जारी;
+		if (crypto_is_larval(q))
+			continue;
 
-		अगर ((q->cra_flags ^ p->cru_type) & p->cru_mask)
-			जारी;
+		if ((q->cra_flags ^ p->cru_type) & p->cru_mask)
+			continue;
 
-		अगर (म_माप(p->cru_driver_name))
-			match = !म_भेद(q->cra_driver_name,
+		if (strlen(p->cru_driver_name))
+			match = !strcmp(q->cra_driver_name,
 					p->cru_driver_name);
-		अन्यथा अगर (!exact)
-			match = !म_भेद(q->cra_name, p->cru_name);
+		else if (!exact)
+			match = !strcmp(q->cra_name, p->cru_name);
 
-		अगर (!match)
-			जारी;
+		if (!match)
+			continue;
 
-		अगर (unlikely(!crypto_mod_get(q)))
-			जारी;
+		if (unlikely(!crypto_mod_get(q)))
+			continue;
 
 		alg = q;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	up_पढ़ो(&crypto_alg_sem);
+	up_read(&crypto_alg_sem);
 
-	वापस alg;
-पूर्ण
+	return alg;
+}
 
-अटल पूर्णांक crypto_report_cipher(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
-अणु
-	काष्ठा crypto_report_cipher rcipher;
+static int crypto_report_cipher(struct sk_buff *skb, struct crypto_alg *alg)
+{
+	struct crypto_report_cipher rcipher;
 
-	स_रखो(&rcipher, 0, माप(rcipher));
+	memset(&rcipher, 0, sizeof(rcipher));
 
-	strscpy(rcipher.type, "cipher", माप(rcipher.type));
+	strscpy(rcipher.type, "cipher", sizeof(rcipher.type));
 
 	rcipher.blocksize = alg->cra_blocksize;
 	rcipher.min_keysize = alg->cra_cipher.cia_min_keysize;
 	rcipher.max_keysize = alg->cra_cipher.cia_max_keysize;
 
-	वापस nla_put(skb, CRYPTOCFGA_REPORT_CIPHER,
-		       माप(rcipher), &rcipher);
-पूर्ण
+	return nla_put(skb, CRYPTOCFGA_REPORT_CIPHER,
+		       sizeof(rcipher), &rcipher);
+}
 
-अटल पूर्णांक crypto_report_comp(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
-अणु
-	काष्ठा crypto_report_comp rcomp;
+static int crypto_report_comp(struct sk_buff *skb, struct crypto_alg *alg)
+{
+	struct crypto_report_comp rcomp;
 
-	स_रखो(&rcomp, 0, माप(rcomp));
+	memset(&rcomp, 0, sizeof(rcomp));
 
-	strscpy(rcomp.type, "compression", माप(rcomp.type));
+	strscpy(rcomp.type, "compression", sizeof(rcomp.type));
 
-	वापस nla_put(skb, CRYPTOCFGA_REPORT_COMPRESS, माप(rcomp), &rcomp);
-पूर्ण
+	return nla_put(skb, CRYPTOCFGA_REPORT_COMPRESS, sizeof(rcomp), &rcomp);
+}
 
-अटल पूर्णांक crypto_report_one(काष्ठा crypto_alg *alg,
-			     काष्ठा crypto_user_alg *ualg, काष्ठा sk_buff *skb)
-अणु
-	स_रखो(ualg, 0, माप(*ualg));
+static int crypto_report_one(struct crypto_alg *alg,
+			     struct crypto_user_alg *ualg, struct sk_buff *skb)
+{
+	memset(ualg, 0, sizeof(*ualg));
 
-	strscpy(ualg->cru_name, alg->cra_name, माप(ualg->cru_name));
+	strscpy(ualg->cru_name, alg->cra_name, sizeof(ualg->cru_name));
 	strscpy(ualg->cru_driver_name, alg->cra_driver_name,
-		माप(ualg->cru_driver_name));
+		sizeof(ualg->cru_driver_name));
 	strscpy(ualg->cru_module_name, module_name(alg->cra_module),
-		माप(ualg->cru_module_name));
+		sizeof(ualg->cru_module_name));
 
 	ualg->cru_type = 0;
 	ualg->cru_mask = 0;
 	ualg->cru_flags = alg->cra_flags;
-	ualg->cru_refcnt = refcount_पढ़ो(&alg->cra_refcnt);
+	ualg->cru_refcnt = refcount_read(&alg->cra_refcnt);
 
-	अगर (nla_put_u32(skb, CRYPTOCFGA_PRIORITY_VAL, alg->cra_priority))
-		जाओ nla_put_failure;
-	अगर (alg->cra_flags & CRYPTO_ALG_LARVAL) अणु
-		काष्ठा crypto_report_larval rl;
+	if (nla_put_u32(skb, CRYPTOCFGA_PRIORITY_VAL, alg->cra_priority))
+		goto nla_put_failure;
+	if (alg->cra_flags & CRYPTO_ALG_LARVAL) {
+		struct crypto_report_larval rl;
 
-		स_रखो(&rl, 0, माप(rl));
-		strscpy(rl.type, "larval", माप(rl.type));
-		अगर (nla_put(skb, CRYPTOCFGA_REPORT_LARVAL, माप(rl), &rl))
-			जाओ nla_put_failure;
-		जाओ out;
-	पूर्ण
+		memset(&rl, 0, sizeof(rl));
+		strscpy(rl.type, "larval", sizeof(rl.type));
+		if (nla_put(skb, CRYPTOCFGA_REPORT_LARVAL, sizeof(rl), &rl))
+			goto nla_put_failure;
+		goto out;
+	}
 
-	अगर (alg->cra_type && alg->cra_type->report) अणु
-		अगर (alg->cra_type->report(skb, alg))
-			जाओ nla_put_failure;
+	if (alg->cra_type && alg->cra_type->report) {
+		if (alg->cra_type->report(skb, alg))
+			goto nla_put_failure;
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (alg->cra_flags & (CRYPTO_ALG_TYPE_MASK | CRYPTO_ALG_LARVAL)) अणु
-	हाल CRYPTO_ALG_TYPE_CIPHER:
-		अगर (crypto_report_cipher(skb, alg))
-			जाओ nla_put_failure;
+	switch (alg->cra_flags & (CRYPTO_ALG_TYPE_MASK | CRYPTO_ALG_LARVAL)) {
+	case CRYPTO_ALG_TYPE_CIPHER:
+		if (crypto_report_cipher(skb, alg))
+			goto nla_put_failure;
 
-		अवरोध;
-	हाल CRYPTO_ALG_TYPE_COMPRESS:
-		अगर (crypto_report_comp(skb, alg))
-			जाओ nla_put_failure;
+		break;
+	case CRYPTO_ALG_TYPE_COMPRESS:
+		if (crypto_report_comp(skb, alg))
+			goto nla_put_failure;
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 out:
-	वापस 0;
+	return 0;
 
 nla_put_failure:
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
-अटल पूर्णांक crypto_report_alg(काष्ठा crypto_alg *alg,
-			     काष्ठा crypto_dump_info *info)
-अणु
-	काष्ठा sk_buff *in_skb = info->in_skb;
-	काष्ठा sk_buff *skb = info->out_skb;
-	काष्ठा nlmsghdr *nlh;
-	काष्ठा crypto_user_alg *ualg;
-	पूर्णांक err = 0;
+static int crypto_report_alg(struct crypto_alg *alg,
+			     struct crypto_dump_info *info)
+{
+	struct sk_buff *in_skb = info->in_skb;
+	struct sk_buff *skb = info->out_skb;
+	struct nlmsghdr *nlh;
+	struct crypto_user_alg *ualg;
+	int err = 0;
 
 	nlh = nlmsg_put(skb, NETLINK_CB(in_skb).portid, info->nlmsg_seq,
-			CRYPTO_MSG_GETALG, माप(*ualg), info->nlmsg_flags);
-	अगर (!nlh) अणु
+			CRYPTO_MSG_GETALG, sizeof(*ualg), info->nlmsg_flags);
+	if (!nlh) {
 		err = -EMSGSIZE;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ualg = nlmsg_data(nlh);
 
 	err = crypto_report_one(alg, ualg, skb);
-	अगर (err) अणु
+	if (err) {
 		nlmsg_cancel(skb, nlh);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	nlmsg_end(skb, nlh);
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक crypto_report(काष्ठा sk_buff *in_skb, काष्ठा nlmsghdr *in_nlh,
-			 काष्ठा nlattr **attrs)
-अणु
-	काष्ठा net *net = sock_net(in_skb->sk);
-	काष्ठा crypto_user_alg *p = nlmsg_data(in_nlh);
-	काष्ठा crypto_alg *alg;
-	काष्ठा sk_buff *skb;
-	काष्ठा crypto_dump_info info;
-	पूर्णांक err;
+static int crypto_report(struct sk_buff *in_skb, struct nlmsghdr *in_nlh,
+			 struct nlattr **attrs)
+{
+	struct net *net = sock_net(in_skb->sk);
+	struct crypto_user_alg *p = nlmsg_data(in_nlh);
+	struct crypto_alg *alg;
+	struct sk_buff *skb;
+	struct crypto_dump_info info;
+	int err;
 
-	अगर (!null_terminated(p->cru_name) || !null_terminated(p->cru_driver_name))
-		वापस -EINVAL;
+	if (!null_terminated(p->cru_name) || !null_terminated(p->cru_driver_name))
+		return -EINVAL;
 
 	alg = crypto_alg_match(p, 0);
-	अगर (!alg)
-		वापस -ENOENT;
+	if (!alg)
+		return -ENOENT;
 
 	err = -ENOMEM;
 	skb = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	अगर (!skb)
-		जाओ drop_alg;
+	if (!skb)
+		goto drop_alg;
 
 	info.in_skb = in_skb;
 	info.out_skb = skb;
@@ -214,303 +213,303 @@ out:
 drop_alg:
 	crypto_mod_put(alg);
 
-	अगर (err) अणु
-		kमुक्त_skb(skb);
-		वापस err;
-	पूर्ण
+	if (err) {
+		kfree_skb(skb);
+		return err;
+	}
 
-	वापस nlmsg_unicast(net->crypto_nlsk, skb, NETLINK_CB(in_skb).portid);
-पूर्ण
+	return nlmsg_unicast(net->crypto_nlsk, skb, NETLINK_CB(in_skb).portid);
+}
 
-अटल पूर्णांक crypto_dump_report(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
-अणु
-	स्थिर माप_प्रकार start_pos = cb->args[0];
-	माप_प्रकार pos = 0;
-	काष्ठा crypto_dump_info info;
-	काष्ठा crypto_alg *alg;
-	पूर्णांक res;
+static int crypto_dump_report(struct sk_buff *skb, struct netlink_callback *cb)
+{
+	const size_t start_pos = cb->args[0];
+	size_t pos = 0;
+	struct crypto_dump_info info;
+	struct crypto_alg *alg;
+	int res;
 
 	info.in_skb = cb->skb;
 	info.out_skb = skb;
 	info.nlmsg_seq = cb->nlh->nlmsg_seq;
 	info.nlmsg_flags = NLM_F_MULTI;
 
-	करोwn_पढ़ो(&crypto_alg_sem);
-	list_क्रम_each_entry(alg, &crypto_alg_list, cra_list) अणु
-		अगर (pos >= start_pos) अणु
+	down_read(&crypto_alg_sem);
+	list_for_each_entry(alg, &crypto_alg_list, cra_list) {
+		if (pos >= start_pos) {
 			res = crypto_report_alg(alg, &info);
-			अगर (res == -EMSGSIZE)
-				अवरोध;
-			अगर (res)
-				जाओ out;
-		पूर्ण
+			if (res == -EMSGSIZE)
+				break;
+			if (res)
+				goto out;
+		}
 		pos++;
-	पूर्ण
+	}
 	cb->args[0] = pos;
 	res = skb->len;
 out:
-	up_पढ़ो(&crypto_alg_sem);
-	वापस res;
-पूर्ण
+	up_read(&crypto_alg_sem);
+	return res;
+}
 
-अटल पूर्णांक crypto_dump_report_करोne(काष्ठा netlink_callback *cb)
-अणु
-	वापस 0;
-पूर्ण
+static int crypto_dump_report_done(struct netlink_callback *cb)
+{
+	return 0;
+}
 
-अटल पूर्णांक crypto_update_alg(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-			     काष्ठा nlattr **attrs)
-अणु
-	काष्ठा crypto_alg *alg;
-	काष्ठा crypto_user_alg *p = nlmsg_data(nlh);
-	काष्ठा nlattr *priority = attrs[CRYPTOCFGA_PRIORITY_VAL];
+static int crypto_update_alg(struct sk_buff *skb, struct nlmsghdr *nlh,
+			     struct nlattr **attrs)
+{
+	struct crypto_alg *alg;
+	struct crypto_user_alg *p = nlmsg_data(nlh);
+	struct nlattr *priority = attrs[CRYPTOCFGA_PRIORITY_VAL];
 	LIST_HEAD(list);
 
-	अगर (!netlink_capable(skb, CAP_NET_ADMIN))
-		वापस -EPERM;
+	if (!netlink_capable(skb, CAP_NET_ADMIN))
+		return -EPERM;
 
-	अगर (!null_terminated(p->cru_name) || !null_terminated(p->cru_driver_name))
-		वापस -EINVAL;
+	if (!null_terminated(p->cru_name) || !null_terminated(p->cru_driver_name))
+		return -EINVAL;
 
-	अगर (priority && !म_माप(p->cru_driver_name))
-		वापस -EINVAL;
+	if (priority && !strlen(p->cru_driver_name))
+		return -EINVAL;
 
 	alg = crypto_alg_match(p, 1);
-	अगर (!alg)
-		वापस -ENOENT;
+	if (!alg)
+		return -ENOENT;
 
-	करोwn_ग_लिखो(&crypto_alg_sem);
+	down_write(&crypto_alg_sem);
 
-	crypto_हटाओ_spawns(alg, &list, शून्य);
+	crypto_remove_spawns(alg, &list, NULL);
 
-	अगर (priority)
+	if (priority)
 		alg->cra_priority = nla_get_u32(priority);
 
-	up_ग_लिखो(&crypto_alg_sem);
+	up_write(&crypto_alg_sem);
 
 	crypto_mod_put(alg);
-	crypto_हटाओ_final(&list);
+	crypto_remove_final(&list);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक crypto_del_alg(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-			  काष्ठा nlattr **attrs)
-अणु
-	काष्ठा crypto_alg *alg;
-	काष्ठा crypto_user_alg *p = nlmsg_data(nlh);
-	पूर्णांक err;
+static int crypto_del_alg(struct sk_buff *skb, struct nlmsghdr *nlh,
+			  struct nlattr **attrs)
+{
+	struct crypto_alg *alg;
+	struct crypto_user_alg *p = nlmsg_data(nlh);
+	int err;
 
-	अगर (!netlink_capable(skb, CAP_NET_ADMIN))
-		वापस -EPERM;
+	if (!netlink_capable(skb, CAP_NET_ADMIN))
+		return -EPERM;
 
-	अगर (!null_terminated(p->cru_name) || !null_terminated(p->cru_driver_name))
-		वापस -EINVAL;
+	if (!null_terminated(p->cru_name) || !null_terminated(p->cru_driver_name))
+		return -EINVAL;
 
 	alg = crypto_alg_match(p, 1);
-	अगर (!alg)
-		वापस -ENOENT;
+	if (!alg)
+		return -ENOENT;
 
-	/* We can not unरेजिस्टर core algorithms such as aes-generic.
+	/* We can not unregister core algorithms such as aes-generic.
 	 * We would loose the reference in the crypto_alg_list to this algorithm
-	 * अगर we try to unरेजिस्टर. Unरेजिस्टरing such an algorithm without
+	 * if we try to unregister. Unregistering such an algorithm without
 	 * removing the module is not possible, so we restrict to crypto
-	 * instances that are build from ढाँचाs. */
+	 * instances that are build from templates. */
 	err = -EINVAL;
-	अगर (!(alg->cra_flags & CRYPTO_ALG_INSTANCE))
-		जाओ drop_alg;
+	if (!(alg->cra_flags & CRYPTO_ALG_INSTANCE))
+		goto drop_alg;
 
 	err = -EBUSY;
-	अगर (refcount_पढ़ो(&alg->cra_refcnt) > 2)
-		जाओ drop_alg;
+	if (refcount_read(&alg->cra_refcnt) > 2)
+		goto drop_alg;
 
-	crypto_unरेजिस्टर_instance((काष्ठा crypto_instance *)alg);
+	crypto_unregister_instance((struct crypto_instance *)alg);
 	err = 0;
 
 drop_alg:
 	crypto_mod_put(alg);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक crypto_add_alg(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-			  काष्ठा nlattr **attrs)
-अणु
-	पूर्णांक exact = 0;
-	स्थिर अक्षर *name;
-	काष्ठा crypto_alg *alg;
-	काष्ठा crypto_user_alg *p = nlmsg_data(nlh);
-	काष्ठा nlattr *priority = attrs[CRYPTOCFGA_PRIORITY_VAL];
+static int crypto_add_alg(struct sk_buff *skb, struct nlmsghdr *nlh,
+			  struct nlattr **attrs)
+{
+	int exact = 0;
+	const char *name;
+	struct crypto_alg *alg;
+	struct crypto_user_alg *p = nlmsg_data(nlh);
+	struct nlattr *priority = attrs[CRYPTOCFGA_PRIORITY_VAL];
 
-	अगर (!netlink_capable(skb, CAP_NET_ADMIN))
-		वापस -EPERM;
+	if (!netlink_capable(skb, CAP_NET_ADMIN))
+		return -EPERM;
 
-	अगर (!null_terminated(p->cru_name) || !null_terminated(p->cru_driver_name))
-		वापस -EINVAL;
+	if (!null_terminated(p->cru_name) || !null_terminated(p->cru_driver_name))
+		return -EINVAL;
 
-	अगर (म_माप(p->cru_driver_name))
+	if (strlen(p->cru_driver_name))
 		exact = 1;
 
-	अगर (priority && !exact)
-		वापस -EINVAL;
+	if (priority && !exact)
+		return -EINVAL;
 
 	alg = crypto_alg_match(p, exact);
-	अगर (alg) अणु
+	if (alg) {
 		crypto_mod_put(alg);
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 
-	अगर (म_माप(p->cru_driver_name))
+	if (strlen(p->cru_driver_name))
 		name = p->cru_driver_name;
-	अन्यथा
+	else
 		name = p->cru_name;
 
 	alg = crypto_alg_mod_lookup(name, p->cru_type, p->cru_mask);
-	अगर (IS_ERR(alg))
-		वापस PTR_ERR(alg);
+	if (IS_ERR(alg))
+		return PTR_ERR(alg);
 
-	करोwn_ग_लिखो(&crypto_alg_sem);
+	down_write(&crypto_alg_sem);
 
-	अगर (priority)
+	if (priority)
 		alg->cra_priority = nla_get_u32(priority);
 
-	up_ग_लिखो(&crypto_alg_sem);
+	up_write(&crypto_alg_sem);
 
 	crypto_mod_put(alg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक crypto_del_rng(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-			  काष्ठा nlattr **attrs)
-अणु
-	अगर (!netlink_capable(skb, CAP_NET_ADMIN))
-		वापस -EPERM;
-	वापस crypto_del_शेष_rng();
-पूर्ण
+static int crypto_del_rng(struct sk_buff *skb, struct nlmsghdr *nlh,
+			  struct nlattr **attrs)
+{
+	if (!netlink_capable(skb, CAP_NET_ADMIN))
+		return -EPERM;
+	return crypto_del_default_rng();
+}
 
-#घोषणा MSGSIZE(type) माप(काष्ठा type)
+#define MSGSIZE(type) sizeof(struct type)
 
-अटल स्थिर पूर्णांक crypto_msg_min[CRYPTO_NR_MSGTYPES] = अणु
+static const int crypto_msg_min[CRYPTO_NR_MSGTYPES] = {
 	[CRYPTO_MSG_NEWALG	- CRYPTO_MSG_BASE] = MSGSIZE(crypto_user_alg),
 	[CRYPTO_MSG_DELALG	- CRYPTO_MSG_BASE] = MSGSIZE(crypto_user_alg),
 	[CRYPTO_MSG_UPDATEALG	- CRYPTO_MSG_BASE] = MSGSIZE(crypto_user_alg),
 	[CRYPTO_MSG_GETALG	- CRYPTO_MSG_BASE] = MSGSIZE(crypto_user_alg),
 	[CRYPTO_MSG_DELRNG	- CRYPTO_MSG_BASE] = 0,
 	[CRYPTO_MSG_GETSTAT	- CRYPTO_MSG_BASE] = MSGSIZE(crypto_user_alg),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा nla_policy crypto_policy[CRYPTOCFGA_MAX+1] = अणु
-	[CRYPTOCFGA_PRIORITY_VAL]   = अणु .type = NLA_U32पूर्ण,
-पूर्ण;
+static const struct nla_policy crypto_policy[CRYPTOCFGA_MAX+1] = {
+	[CRYPTOCFGA_PRIORITY_VAL]   = { .type = NLA_U32},
+};
 
-#अघोषित MSGSIZE
+#undef MSGSIZE
 
-अटल स्थिर काष्ठा crypto_link अणु
-	पूर्णांक (*करोit)(काष्ठा sk_buff *, काष्ठा nlmsghdr *, काष्ठा nlattr **);
-	पूर्णांक (*dump)(काष्ठा sk_buff *, काष्ठा netlink_callback *);
-	पूर्णांक (*करोne)(काष्ठा netlink_callback *);
-पूर्ण crypto_dispatch[CRYPTO_NR_MSGTYPES] = अणु
-	[CRYPTO_MSG_NEWALG	- CRYPTO_MSG_BASE] = अणु .करोit = crypto_add_algपूर्ण,
-	[CRYPTO_MSG_DELALG	- CRYPTO_MSG_BASE] = अणु .करोit = crypto_del_algपूर्ण,
-	[CRYPTO_MSG_UPDATEALG	- CRYPTO_MSG_BASE] = अणु .करोit = crypto_update_algपूर्ण,
-	[CRYPTO_MSG_GETALG	- CRYPTO_MSG_BASE] = अणु .करोit = crypto_report,
+static const struct crypto_link {
+	int (*doit)(struct sk_buff *, struct nlmsghdr *, struct nlattr **);
+	int (*dump)(struct sk_buff *, struct netlink_callback *);
+	int (*done)(struct netlink_callback *);
+} crypto_dispatch[CRYPTO_NR_MSGTYPES] = {
+	[CRYPTO_MSG_NEWALG	- CRYPTO_MSG_BASE] = { .doit = crypto_add_alg},
+	[CRYPTO_MSG_DELALG	- CRYPTO_MSG_BASE] = { .doit = crypto_del_alg},
+	[CRYPTO_MSG_UPDATEALG	- CRYPTO_MSG_BASE] = { .doit = crypto_update_alg},
+	[CRYPTO_MSG_GETALG	- CRYPTO_MSG_BASE] = { .doit = crypto_report,
 						       .dump = crypto_dump_report,
-						       .करोne = crypto_dump_report_करोneपूर्ण,
-	[CRYPTO_MSG_DELRNG	- CRYPTO_MSG_BASE] = अणु .करोit = crypto_del_rng पूर्ण,
-	[CRYPTO_MSG_GETSTAT	- CRYPTO_MSG_BASE] = अणु .करोit = crypto_reportstatपूर्ण,
-पूर्ण;
+						       .done = crypto_dump_report_done},
+	[CRYPTO_MSG_DELRNG	- CRYPTO_MSG_BASE] = { .doit = crypto_del_rng },
+	[CRYPTO_MSG_GETSTAT	- CRYPTO_MSG_BASE] = { .doit = crypto_reportstat},
+};
 
-अटल पूर्णांक crypto_user_rcv_msg(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
-			       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा net *net = sock_net(skb->sk);
-	काष्ठा nlattr *attrs[CRYPTOCFGA_MAX+1];
-	स्थिर काष्ठा crypto_link *link;
-	पूर्णांक type, err;
+static int crypto_user_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh,
+			       struct netlink_ext_ack *extack)
+{
+	struct net *net = sock_net(skb->sk);
+	struct nlattr *attrs[CRYPTOCFGA_MAX+1];
+	const struct crypto_link *link;
+	int type, err;
 
 	type = nlh->nlmsg_type;
-	अगर (type > CRYPTO_MSG_MAX)
-		वापस -EINVAL;
+	if (type > CRYPTO_MSG_MAX)
+		return -EINVAL;
 
 	type -= CRYPTO_MSG_BASE;
 	link = &crypto_dispatch[type];
 
-	अगर ((type == (CRYPTO_MSG_GETALG - CRYPTO_MSG_BASE) &&
-	    (nlh->nlmsg_flags & NLM_F_DUMP))) अणु
-		काष्ठा crypto_alg *alg;
-		अचिन्हित दीर्घ dump_alloc = 0;
+	if ((type == (CRYPTO_MSG_GETALG - CRYPTO_MSG_BASE) &&
+	    (nlh->nlmsg_flags & NLM_F_DUMP))) {
+		struct crypto_alg *alg;
+		unsigned long dump_alloc = 0;
 
-		अगर (link->dump == शून्य)
-			वापस -EINVAL;
+		if (link->dump == NULL)
+			return -EINVAL;
 
-		करोwn_पढ़ो(&crypto_alg_sem);
-		list_क्रम_each_entry(alg, &crypto_alg_list, cra_list)
+		down_read(&crypto_alg_sem);
+		list_for_each_entry(alg, &crypto_alg_list, cra_list)
 			dump_alloc += CRYPTO_REPORT_MAXSIZE;
-		up_पढ़ो(&crypto_alg_sem);
+		up_read(&crypto_alg_sem);
 
-		अणु
-			काष्ठा netlink_dump_control c = अणु
+		{
+			struct netlink_dump_control c = {
 				.dump = link->dump,
-				.करोne = link->करोne,
+				.done = link->done,
 				.min_dump_alloc = min(dump_alloc, 65535UL),
-			पूर्ण;
+			};
 			err = netlink_dump_start(net->crypto_nlsk, skb, nlh, &c);
-		पूर्ण
+		}
 
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	err = nlmsg_parse_deprecated(nlh, crypto_msg_min[type], attrs,
 				     CRYPTOCFGA_MAX, crypto_policy, extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (link->करोit == शून्य)
-		वापस -EINVAL;
+	if (link->doit == NULL)
+		return -EINVAL;
 
-	वापस link->करोit(skb, nlh, attrs);
-पूर्ण
+	return link->doit(skb, nlh, attrs);
+}
 
-अटल व्योम crypto_netlink_rcv(काष्ठा sk_buff *skb)
-अणु
+static void crypto_netlink_rcv(struct sk_buff *skb)
+{
 	mutex_lock(&crypto_cfg_mutex);
 	netlink_rcv_skb(skb, &crypto_user_rcv_msg);
 	mutex_unlock(&crypto_cfg_mutex);
-पूर्ण
+}
 
-अटल पूर्णांक __net_init crypto_netlink_init(काष्ठा net *net)
-अणु
-	काष्ठा netlink_kernel_cfg cfg = अणु
+static int __net_init crypto_netlink_init(struct net *net)
+{
+	struct netlink_kernel_cfg cfg = {
 		.input	= crypto_netlink_rcv,
-	पूर्ण;
+	};
 
 	net->crypto_nlsk = netlink_kernel_create(net, NETLINK_CRYPTO, &cfg);
-	वापस net->crypto_nlsk == शून्य ? -ENOMEM : 0;
-पूर्ण
+	return net->crypto_nlsk == NULL ? -ENOMEM : 0;
+}
 
-अटल व्योम __net_निकास crypto_netlink_निकास(काष्ठा net *net)
-अणु
+static void __net_exit crypto_netlink_exit(struct net *net)
+{
 	netlink_kernel_release(net->crypto_nlsk);
-	net->crypto_nlsk = शून्य;
-पूर्ण
+	net->crypto_nlsk = NULL;
+}
 
-अटल काष्ठा pernet_operations crypto_netlink_net_ops = अणु
+static struct pernet_operations crypto_netlink_net_ops = {
 	.init = crypto_netlink_init,
-	.निकास = crypto_netlink_निकास,
-पूर्ण;
+	.exit = crypto_netlink_exit,
+};
 
-अटल पूर्णांक __init crypto_user_init(व्योम)
-अणु
-	वापस रेजिस्टर_pernet_subsys(&crypto_netlink_net_ops);
-पूर्ण
+static int __init crypto_user_init(void)
+{
+	return register_pernet_subsys(&crypto_netlink_net_ops);
+}
 
-अटल व्योम __निकास crypto_user_निकास(व्योम)
-अणु
-	unरेजिस्टर_pernet_subsys(&crypto_netlink_net_ops);
-पूर्ण
+static void __exit crypto_user_exit(void)
+{
+	unregister_pernet_subsys(&crypto_netlink_net_ops);
+}
 
 module_init(crypto_user_init);
-module_निकास(crypto_user_निकास);
+module_exit(crypto_user_exit);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Steffen Klassert <steffen.klassert@secunet.com>");
 MODULE_DESCRIPTION("Crypto userspace configuration API");

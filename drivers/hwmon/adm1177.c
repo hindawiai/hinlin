@@ -1,285 +1,284 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * ADM1177 Hot Swap Controller and Digital Power Monitor with Soft Start Pin
  *
  * Copyright 2015-2019 Analog Devices Inc.
  */
 
-#समावेश <linux/bits.h>
-#समावेश <linux/device.h>
-#समावेश <linux/hwmon.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/init.h>
-#समावेश <linux/module.h>
-#समावेश <linux/regulator/consumer.h>
+#include <linux/bits.h>
+#include <linux/device.h>
+#include <linux/hwmon.h>
+#include <linux/i2c.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/regulator/consumer.h>
 
 /*  Command Byte Operations */
-#घोषणा ADM1177_CMD_V_CONT	BIT(0)
-#घोषणा ADM1177_CMD_I_CONT	BIT(2)
-#घोषणा ADM1177_CMD_VRANGE	BIT(4)
+#define ADM1177_CMD_V_CONT	BIT(0)
+#define ADM1177_CMD_I_CONT	BIT(2)
+#define ADM1177_CMD_VRANGE	BIT(4)
 
 /* Extended Register */
-#घोषणा ADM1177_REG_ALERT_TH	2
+#define ADM1177_REG_ALERT_TH	2
 
-#घोषणा ADM1177_BITS		12
+#define ADM1177_BITS		12
 
 /**
- * काष्ठा adm1177_state - driver instance specअगरic data
- * @client:		poपूर्णांकer to i2c client
- * @reg:		regulator info क्रम the घातer supply of the device
+ * struct adm1177_state - driver instance specific data
+ * @client:		pointer to i2c client
+ * @reg:		regulator info for the power supply of the device
  * @r_sense_uohm:	current sense resistor value
- * @alert_threshold_ua:	current limit क्रम shutकरोwn
- * @vrange_high:	पूर्णांकernal voltage भागider
+ * @alert_threshold_ua:	current limit for shutdown
+ * @vrange_high:	internal voltage divider
  */
-काष्ठा adm1177_state अणु
-	काष्ठा i2c_client	*client;
-	काष्ठा regulator	*reg;
+struct adm1177_state {
+	struct i2c_client	*client;
+	struct regulator	*reg;
 	u32			r_sense_uohm;
 	u32			alert_threshold_ua;
 	bool			vrange_high;
-पूर्ण;
+};
 
-अटल पूर्णांक adm1177_पढ़ो_raw(काष्ठा adm1177_state *st, u8 num, u8 *data)
-अणु
-	वापस i2c_master_recv(st->client, data, num);
-पूर्ण
+static int adm1177_read_raw(struct adm1177_state *st, u8 num, u8 *data)
+{
+	return i2c_master_recv(st->client, data, num);
+}
 
-अटल पूर्णांक adm1177_ग_लिखो_cmd(काष्ठा adm1177_state *st, u8 cmd)
-अणु
-	वापस i2c_smbus_ग_लिखो_byte(st->client, cmd);
-पूर्ण
+static int adm1177_write_cmd(struct adm1177_state *st, u8 cmd)
+{
+	return i2c_smbus_write_byte(st->client, cmd);
+}
 
-अटल पूर्णांक adm1177_ग_लिखो_alert_thr(काष्ठा adm1177_state *st,
+static int adm1177_write_alert_thr(struct adm1177_state *st,
 				   u32 alert_threshold_ua)
-अणु
+{
 	u64 val;
-	पूर्णांक ret;
+	int ret;
 
 	val = 0xFFULL * alert_threshold_ua * st->r_sense_uohm;
-	val = भाग_u64(val, 105840000U);
-	val = भाग_u64(val, 1000U);
-	अगर (val > 0xFF)
+	val = div_u64(val, 105840000U);
+	val = div_u64(val, 1000U);
+	if (val > 0xFF)
 		val = 0xFF;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(st->client, ADM1177_REG_ALERT_TH,
+	ret = i2c_smbus_write_byte_data(st->client, ADM1177_REG_ALERT_TH,
 					val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	st->alert_threshold_ua = alert_threshold_ua;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक adm1177_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
-			u32 attr, पूर्णांक channel, दीर्घ *val)
-अणु
-	काष्ठा adm1177_state *st = dev_get_drvdata(dev);
+static int adm1177_read(struct device *dev, enum hwmon_sensor_types type,
+			u32 attr, int channel, long *val)
+{
+	struct adm1177_state *st = dev_get_drvdata(dev);
 	u8 data[3];
-	दीर्घ dummy;
-	पूर्णांक ret;
+	long dummy;
+	int ret;
 
-	चयन (type) अणु
-	हाल hwmon_curr:
-		चयन (attr) अणु
-		हाल hwmon_curr_input:
-			ret = adm1177_पढ़ो_raw(st, 3, data);
-			अगर (ret < 0)
-				वापस ret;
+	switch (type) {
+	case hwmon_curr:
+		switch (attr) {
+		case hwmon_curr_input:
+			ret = adm1177_read_raw(st, 3, data);
+			if (ret < 0)
+				return ret;
 			dummy = (data[1] << 4) | (data[2] & 0xF);
 			/*
 			 * convert to milliamperes
 			 * ((105.84mV / 4096) x raw) / senseResistor(ohm)
 			 */
-			*val = भाग_u64((105840000ull * dummy),
+			*val = div_u64((105840000ull * dummy),
 				       4096 * st->r_sense_uohm);
-			वापस 0;
-		हाल hwmon_curr_max_alarm:
+			return 0;
+		case hwmon_curr_max_alarm:
 			*val = st->alert_threshold_ua;
-			वापस 0;
-		शेष:
-			वापस -EOPNOTSUPP;
-		पूर्ण
-	हाल hwmon_in:
-		ret = adm1177_पढ़ो_raw(st, 3, data);
-		अगर (ret < 0)
-			वापस ret;
+			return 0;
+		default:
+			return -EOPNOTSUPP;
+		}
+	case hwmon_in:
+		ret = adm1177_read_raw(st, 3, data);
+		if (ret < 0)
+			return ret;
 		dummy = (data[0] << 4) | (data[2] >> 4);
 		/*
 		 * convert to millivolts based on resistor devision
 		 * (V_fullscale / 4096) * raw
 		 */
-		अगर (st->vrange_high)
+		if (st->vrange_high)
 			dummy *= 26350;
-		अन्यथा
+		else
 			dummy *= 6650;
 
 		*val = DIV_ROUND_CLOSEST(dummy, 4096);
-		वापस 0;
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+		return 0;
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल पूर्णांक adm1177_ग_लिखो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
-			 u32 attr, पूर्णांक channel, दीर्घ val)
-अणु
-	काष्ठा adm1177_state *st = dev_get_drvdata(dev);
+static int adm1177_write(struct device *dev, enum hwmon_sensor_types type,
+			 u32 attr, int channel, long val)
+{
+	struct adm1177_state *st = dev_get_drvdata(dev);
 
-	चयन (type) अणु
-	हाल hwmon_curr:
-		चयन (attr) अणु
-		हाल hwmon_curr_max_alarm:
-			adm1177_ग_लिखो_alert_thr(st, val);
-			वापस 0;
-		शेष:
-			वापस -EOPNOTSUPP;
-		पूर्ण
-	शेष:
-		वापस -EOPNOTSUPP;
-	पूर्ण
-पूर्ण
+	switch (type) {
+	case hwmon_curr:
+		switch (attr) {
+		case hwmon_curr_max_alarm:
+			adm1177_write_alert_thr(st, val);
+			return 0;
+		default:
+			return -EOPNOTSUPP;
+		}
+	default:
+		return -EOPNOTSUPP;
+	}
+}
 
-अटल umode_t adm1177_is_visible(स्थिर व्योम *data,
-				  क्रमागत hwmon_sensor_types type,
-				  u32 attr, पूर्णांक channel)
-अणु
-	स्थिर काष्ठा adm1177_state *st = data;
+static umode_t adm1177_is_visible(const void *data,
+				  enum hwmon_sensor_types type,
+				  u32 attr, int channel)
+{
+	const struct adm1177_state *st = data;
 
-	चयन (type) अणु
-	हाल hwmon_in:
-		चयन (attr) अणु
-		हाल hwmon_in_input:
-			वापस 0444;
-		पूर्ण
-		अवरोध;
-	हाल hwmon_curr:
-		चयन (attr) अणु
-		हाल hwmon_curr_input:
-			अगर (st->r_sense_uohm)
-				वापस 0444;
-			वापस 0;
-		हाल hwmon_curr_max_alarm:
-			अगर (st->r_sense_uohm)
-				वापस 0644;
-			वापस 0;
-		पूर्ण
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	switch (type) {
+	case hwmon_in:
+		switch (attr) {
+		case hwmon_in_input:
+			return 0444;
+		}
+		break;
+	case hwmon_curr:
+		switch (attr) {
+		case hwmon_curr_input:
+			if (st->r_sense_uohm)
+				return 0444;
+			return 0;
+		case hwmon_curr_max_alarm:
+			if (st->r_sense_uohm)
+				return 0644;
+			return 0;
+		}
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा hwmon_channel_info *adm1177_info[] = अणु
+static const struct hwmon_channel_info *adm1177_info[] = {
 	HWMON_CHANNEL_INFO(curr,
 			   HWMON_C_INPUT | HWMON_C_MAX_ALARM),
 	HWMON_CHANNEL_INFO(in,
 			   HWMON_I_INPUT),
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा hwmon_ops adm1177_hwmon_ops = अणु
+static const struct hwmon_ops adm1177_hwmon_ops = {
 	.is_visible = adm1177_is_visible,
-	.पढ़ो = adm1177_पढ़ो,
-	.ग_लिखो = adm1177_ग_लिखो,
-पूर्ण;
+	.read = adm1177_read,
+	.write = adm1177_write,
+};
 
-अटल स्थिर काष्ठा hwmon_chip_info adm1177_chip_info = अणु
+static const struct hwmon_chip_info adm1177_chip_info = {
 	.ops = &adm1177_hwmon_ops,
 	.info = adm1177_info,
-पूर्ण;
+};
 
-अटल व्योम adm1177_हटाओ(व्योम *data)
-अणु
-	काष्ठा adm1177_state *st = data;
+static void adm1177_remove(void *data)
+{
+	struct adm1177_state *st = data;
 
 	regulator_disable(st->reg);
-पूर्ण
+}
 
-अटल पूर्णांक adm1177_probe(काष्ठा i2c_client *client)
-अणु
-	काष्ठा device *dev = &client->dev;
-	काष्ठा device *hwmon_dev;
-	काष्ठा adm1177_state *st;
+static int adm1177_probe(struct i2c_client *client)
+{
+	struct device *dev = &client->dev;
+	struct device *hwmon_dev;
+	struct adm1177_state *st;
 	u32 alert_threshold_ua;
-	पूर्णांक ret;
+	int ret;
 
-	st = devm_kzalloc(dev, माप(*st), GFP_KERNEL);
-	अगर (!st)
-		वापस -ENOMEM;
+	st = devm_kzalloc(dev, sizeof(*st), GFP_KERNEL);
+	if (!st)
+		return -ENOMEM;
 
 	st->client = client;
 
 	st->reg = devm_regulator_get_optional(&client->dev, "vref");
-	अगर (IS_ERR(st->reg)) अणु
-		अगर (PTR_ERR(st->reg) == -EPROBE_DEFER)
-			वापस -EPROBE_DEFER;
+	if (IS_ERR(st->reg)) {
+		if (PTR_ERR(st->reg) == -EPROBE_DEFER)
+			return -EPROBE_DEFER;
 
-		st->reg = शून्य;
-	पूर्ण अन्यथा अणु
+		st->reg = NULL;
+	} else {
 		ret = regulator_enable(st->reg);
-		अगर (ret)
-			वापस ret;
-		ret = devm_add_action_or_reset(&client->dev, adm1177_हटाओ,
+		if (ret)
+			return ret;
+		ret = devm_add_action_or_reset(&client->dev, adm1177_remove,
 					       st);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (device_property_पढ़ो_u32(dev, "shunt-resistor-micro-ohms",
+	if (device_property_read_u32(dev, "shunt-resistor-micro-ohms",
 				     &st->r_sense_uohm))
 		st->r_sense_uohm = 0;
-	अगर (device_property_पढ़ो_u32(dev, "adi,shutdown-threshold-microamp",
-				     &alert_threshold_ua)) अणु
-		अगर (st->r_sense_uohm)
+	if (device_property_read_u32(dev, "adi,shutdown-threshold-microamp",
+				     &alert_threshold_ua)) {
+		if (st->r_sense_uohm)
 			/*
-			 * set maximum शेष value from datasheet based on
+			 * set maximum default value from datasheet based on
 			 * shunt-resistor
 			 */
-			alert_threshold_ua = भाग_u64(105840000000,
+			alert_threshold_ua = div_u64(105840000000,
 						     st->r_sense_uohm);
-		अन्यथा
+		else
 			alert_threshold_ua = 0;
-	पूर्ण
-	st->vrange_high = device_property_पढ़ो_bool(dev,
+	}
+	st->vrange_high = device_property_read_bool(dev,
 						    "adi,vrange-high-enable");
-	अगर (alert_threshold_ua && st->r_sense_uohm)
-		adm1177_ग_लिखो_alert_thr(st, alert_threshold_ua);
+	if (alert_threshold_ua && st->r_sense_uohm)
+		adm1177_write_alert_thr(st, alert_threshold_ua);
 
-	ret = adm1177_ग_लिखो_cmd(st, ADM1177_CMD_V_CONT |
+	ret = adm1177_write_cmd(st, ADM1177_CMD_V_CONT |
 				    ADM1177_CMD_I_CONT |
 				    (st->vrange_high ? 0 : ADM1177_CMD_VRANGE));
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	hwmon_dev =
-		devm_hwmon_device_रेजिस्टर_with_info(dev, client->name, st,
-						     &adm1177_chip_info, शून्य);
-	वापस PTR_ERR_OR_ZERO(hwmon_dev);
-पूर्ण
+		devm_hwmon_device_register_with_info(dev, client->name, st,
+						     &adm1177_chip_info, NULL);
+	return PTR_ERR_OR_ZERO(hwmon_dev);
+}
 
-अटल स्थिर काष्ठा i2c_device_id adm1177_id[] = अणु
-	अणु"adm1177", 0पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id adm1177_id[] = {
+	{"adm1177", 0},
+	{}
+};
 MODULE_DEVICE_TABLE(i2c, adm1177_id);
 
-अटल स्थिर काष्ठा of_device_id adm1177_dt_ids[] = अणु
-	अणु .compatible = "adi,adm1177" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id adm1177_dt_ids[] = {
+	{ .compatible = "adi,adm1177" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, adm1177_dt_ids);
 
-अटल काष्ठा i2c_driver adm1177_driver = अणु
+static struct i2c_driver adm1177_driver = {
 	.class = I2C_CLASS_HWMON,
-	.driver = अणु
+	.driver = {
 		.name = "adm1177",
 		.of_match_table = adm1177_dt_ids,
-	पूर्ण,
+	},
 	.probe_new = adm1177_probe,
 	.id_table = adm1177_id,
-पूर्ण;
+};
 module_i2c_driver(adm1177_driver);
 
 MODULE_AUTHOR("Beniamin Bia <beniamin.bia@analog.com>");

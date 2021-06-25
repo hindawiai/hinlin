@@ -1,70 +1,69 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __ASM_S390_PCI_H
-#घोषणा __ASM_S390_PCI_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __ASM_S390_PCI_H
+#define __ASM_S390_PCI_H
 
-#समावेश <linux/pci.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/iommu.h>
-#समावेश <linux/pci_hotplug.h>
-#समावेश <यंत्र-generic/pci.h>
-#समावेश <यंत्र/pci_clp.h>
-#समावेश <यंत्र/pci_debug.h>
-#समावेश <यंत्र/sclp.h>
+#include <linux/pci.h>
+#include <linux/mutex.h>
+#include <linux/iommu.h>
+#include <linux/pci_hotplug.h>
+#include <asm-generic/pci.h>
+#include <asm/pci_clp.h>
+#include <asm/pci_debug.h>
+#include <asm/sclp.h>
 
-#घोषणा PCIBIOS_MIN_IO		0x1000
-#घोषणा PCIBIOS_MIN_MEM		0x10000000
+#define PCIBIOS_MIN_IO		0x1000
+#define PCIBIOS_MIN_MEM		0x10000000
 
-#घोषणा pcibios_assign_all_busses()	(0)
+#define pcibios_assign_all_busses()	(0)
 
-व्योम __iomem *pci_iomap(काष्ठा pci_dev *, पूर्णांक, अचिन्हित दीर्घ);
-व्योम pci_iounmap(काष्ठा pci_dev *, व्योम __iomem *);
-पूर्णांक pci_करोमुख्य_nr(काष्ठा pci_bus *);
-पूर्णांक pci_proc_करोमुख्य(काष्ठा pci_bus *);
+void __iomem *pci_iomap(struct pci_dev *, int, unsigned long);
+void pci_iounmap(struct pci_dev *, void __iomem *);
+int pci_domain_nr(struct pci_bus *);
+int pci_proc_domain(struct pci_bus *);
 
-#घोषणा ZPCI_BUS_NR			0	/* शेष bus number */
+#define ZPCI_BUS_NR			0	/* default bus number */
 
-#घोषणा ZPCI_NR_DMA_SPACES		1
-#घोषणा ZPCI_NR_DEVICES			CONFIG_PCI_NR_FUNCTIONS
-#घोषणा ZPCI_DOMAIN_BITMAP_SIZE		(1 << 16)
+#define ZPCI_NR_DMA_SPACES		1
+#define ZPCI_NR_DEVICES			CONFIG_PCI_NR_FUNCTIONS
+#define ZPCI_DOMAIN_BITMAP_SIZE		(1 << 16)
 
-#अगर_घोषित PCI
-#अगर (ZPCI_NR_DEVICES > ZPCI_DOMAIN_BITMAP_SIZE)
+#ifdef PCI
+#if (ZPCI_NR_DEVICES > ZPCI_DOMAIN_BITMAP_SIZE)
 # error ZPCI_NR_DEVICES can not be bigger than ZPCI_DOMAIN_BITMAP_SIZE
-#पूर्ण_अगर
-#पूर्ण_अगर /* PCI */
+#endif
+#endif /* PCI */
 
 /* PCI Function Controls */
-#घोषणा ZPCI_FC_FN_ENABLED		0x80
-#घोषणा ZPCI_FC_ERROR			0x40
-#घोषणा ZPCI_FC_BLOCKED			0x20
-#घोषणा ZPCI_FC_DMA_ENABLED		0x10
+#define ZPCI_FC_FN_ENABLED		0x80
+#define ZPCI_FC_ERROR			0x40
+#define ZPCI_FC_BLOCKED			0x20
+#define ZPCI_FC_DMA_ENABLED		0x10
 
-#घोषणा ZPCI_FMB_DMA_COUNTER_VALID	(1 << 23)
+#define ZPCI_FMB_DMA_COUNTER_VALID	(1 << 23)
 
-काष्ठा zpci_fmb_fmt0 अणु
+struct zpci_fmb_fmt0 {
 	u64 dma_rbytes;
 	u64 dma_wbytes;
-पूर्ण;
+};
 
-काष्ठा zpci_fmb_fmt1 अणु
+struct zpci_fmb_fmt1 {
 	u64 rx_bytes;
 	u64 rx_packets;
 	u64 tx_bytes;
 	u64 tx_packets;
-पूर्ण;
+};
 
-काष्ठा zpci_fmb_fmt2 अणु
+struct zpci_fmb_fmt2 {
 	u64 consumed_work_units;
 	u64 max_work_units;
-पूर्ण;
+};
 
-काष्ठा zpci_fmb_fmt3 अणु
+struct zpci_fmb_fmt3 {
 	u64 tx_bytes;
-पूर्ण;
+};
 
-काष्ठा zpci_fmb अणु
-	u32 क्रमmat	: 8;
+struct zpci_fmb {
+	u32 format	: 8;
 	u32 fmt_ind	: 24;
 	u32 samples;
 	u64 last_update;
@@ -73,58 +72,58 @@
 	u64 st_ops;
 	u64 stb_ops;
 	u64 rpcit_ops;
-	/* क्रमmat specअगरic counters */
-	जोड़ अणु
-		काष्ठा zpci_fmb_fmt0 fmt0;
-		काष्ठा zpci_fmb_fmt1 fmt1;
-		काष्ठा zpci_fmb_fmt2 fmt2;
-		काष्ठा zpci_fmb_fmt3 fmt3;
-	पूर्ण;
-पूर्ण __packed __aligned(128);
+	/* format specific counters */
+	union {
+		struct zpci_fmb_fmt0 fmt0;
+		struct zpci_fmb_fmt1 fmt1;
+		struct zpci_fmb_fmt2 fmt2;
+		struct zpci_fmb_fmt3 fmt3;
+	};
+} __packed __aligned(128);
 
-क्रमागत zpci_state अणु
+enum zpci_state {
 	ZPCI_FN_STATE_STANDBY = 0,
 	ZPCI_FN_STATE_CONFIGURED = 1,
 	ZPCI_FN_STATE_RESERVED = 2,
-पूर्ण;
+};
 
-काष्ठा zpci_bar_काष्ठा अणु
-	काष्ठा resource *res;		/* bus resource */
-	व्योम __iomem	*mio_wb;
-	व्योम __iomem	*mio_wt;
+struct zpci_bar_struct {
+	struct resource *res;		/* bus resource */
+	void __iomem	*mio_wb;
+	void __iomem	*mio_wt;
 	u32		val;		/* bar start & 3 flag bits */
-	u16		map_idx;	/* index पूर्णांकo bar mapping array */
+	u16		map_idx;	/* index into bar mapping array */
 	u8		size;		/* order 2 exponent */
-पूर्ण;
+};
 
-काष्ठा s390_करोमुख्य;
+struct s390_domain;
 
-#घोषणा ZPCI_FUNCTIONS_PER_BUS 256
-काष्ठा zpci_bus अणु
-	काष्ठा kref		kref;
-	काष्ठा pci_bus		*bus;
-	काष्ठा zpci_dev		*function[ZPCI_FUNCTIONS_PER_BUS];
-	काष्ठा list_head	resources;
-	काष्ठा list_head	bus_next;
-	काष्ठा resource		bus_resource;
-	पूर्णांक			pchid;
-	पूर्णांक			करोमुख्य_nr;
-	bool			multअगरunction;
-	क्रमागत pci_bus_speed	max_bus_speed;
-पूर्ण;
+#define ZPCI_FUNCTIONS_PER_BUS 256
+struct zpci_bus {
+	struct kref		kref;
+	struct pci_bus		*bus;
+	struct zpci_dev		*function[ZPCI_FUNCTIONS_PER_BUS];
+	struct list_head	resources;
+	struct list_head	bus_next;
+	struct resource		bus_resource;
+	int			pchid;
+	int			domain_nr;
+	bool			multifunction;
+	enum pci_bus_speed	max_bus_speed;
+};
 
 /* Private data per function */
-काष्ठा zpci_dev अणु
-	काष्ठा zpci_bus *zbus;
-	काष्ठा list_head entry;		/* list of all zpci_devices, needed क्रम hotplug, etc. */
-	काष्ठा list_head bus_next;
-	काष्ठा kref kref;
-	काष्ठा hotplug_slot hotplug_slot;
+struct zpci_dev {
+	struct zpci_bus *zbus;
+	struct list_head entry;		/* list of all zpci_devices, needed for hotplug, etc. */
+	struct list_head bus_next;
+	struct kref kref;
+	struct hotplug_slot hotplug_slot;
 
-	क्रमागत zpci_state state;
+	enum zpci_state state;
 	u32		fid;		/* function ID, used by sclp */
 	u32		fh;		/* function handle, used by insn's */
-	u16		vfn;		/* भव function number */
+	u16		vfn;		/* virtual function number */
 	u16		pchid;		/* physical channel ID */
 	u8		pfgid;		/* function group ID */
 	u8		pft;		/* pci function type */
@@ -135,46 +134,46 @@
 	u8		is_physfn	: 1;
 	u8		util_str_avail	: 1;
 	u8		reserved	: 3;
-	अचिन्हित पूर्णांक	devfn;		/* DEVFN part of the RID*/
+	unsigned int	devfn;		/* DEVFN part of the RID*/
 
-	काष्ठा mutex lock;
-	u8 pfip[CLP_PFIP_NR_SEGMENTS];	/* pci function पूर्णांकernal path */
+	struct mutex lock;
+	u8 pfip[CLP_PFIP_NR_SEGMENTS];	/* pci function internal path */
 	u32 uid;			/* user defined id */
 	u8 util_str[CLP_UTIL_STR_LEN];	/* utility string */
 
 	/* IRQ stuff */
 	u64		msi_addr;	/* MSI address */
-	अचिन्हित पूर्णांक	max_msi;	/* maximum number of MSI's */
-	अचिन्हित पूर्णांक	msi_first_bit;
-	अचिन्हित पूर्णांक	msi_nr_irqs;
-	काष्ठा airq_iv *aibv;		/* adapter पूर्णांकerrupt bit vector */
-	अचिन्हित दीर्घ	aisb;		/* number of the summary bit */
+	unsigned int	max_msi;	/* maximum number of MSI's */
+	unsigned int	msi_first_bit;
+	unsigned int	msi_nr_irqs;
+	struct airq_iv *aibv;		/* adapter interrupt bit vector */
+	unsigned long	aisb;		/* number of the summary bit */
 
 	/* DMA stuff */
-	अचिन्हित दीर्घ	*dma_table;
+	unsigned long	*dma_table;
 	spinlock_t	dma_table_lock;
-	पूर्णांक		tlb_refresh;
+	int		tlb_refresh;
 
-	spinlock_t	iommu_biपंचांगap_lock;
-	अचिन्हित दीर्घ	*iommu_biपंचांगap;
-	अचिन्हित दीर्घ	*lazy_biपंचांगap;
-	अचिन्हित दीर्घ	iommu_size;
-	अचिन्हित दीर्घ	iommu_pages;
-	अचिन्हित पूर्णांक	next_bit;
+	spinlock_t	iommu_bitmap_lock;
+	unsigned long	*iommu_bitmap;
+	unsigned long	*lazy_bitmap;
+	unsigned long	iommu_size;
+	unsigned long	iommu_pages;
+	unsigned int	next_bit;
 
-	काष्ठा iommu_device iommu_dev;  /* IOMMU core handle */
+	struct iommu_device iommu_dev;  /* IOMMU core handle */
 
-	अक्षर res_name[16];
+	char res_name[16];
 	bool mio_capable;
-	काष्ठा zpci_bar_काष्ठा bars[PCI_STD_NUM_BARS];
+	struct zpci_bar_struct bars[PCI_STD_NUM_BARS];
 
 	u64		start_dma;	/* Start of available DMA addresses */
 	u64		end_dma;	/* End of available DMA addresses */
 	u64		dma_mask;	/* DMA address space mask */
 
 	/* Function measurement block */
-	काष्ठा zpci_fmb *fmb;
-	u16		fmb_update;	/* update पूर्णांकerval */
+	struct zpci_fmb *fmb;
+	u16		fmb_update;	/* update interval */
 	u16		fmb_length;
 	/* software counters */
 	atomic64_t allocated_pages;
@@ -182,126 +181,126 @@
 	atomic64_t unmapped_pages;
 
 	u8		version;
-	क्रमागत pci_bus_speed max_bus_speed;
+	enum pci_bus_speed max_bus_speed;
 
-	काष्ठा dentry	*debugfs_dev;
+	struct dentry	*debugfs_dev;
 
-	काष्ठा s390_करोमुख्य *s390_करोमुख्य; /* s390 IOMMU करोमुख्य data */
-पूर्ण;
+	struct s390_domain *s390_domain; /* s390 IOMMU domain data */
+};
 
-अटल अंतरभूत bool zdev_enabled(काष्ठा zpci_dev *zdev)
-अणु
-	वापस (zdev->fh & (1UL << 31)) ? true : false;
-पूर्ण
+static inline bool zdev_enabled(struct zpci_dev *zdev)
+{
+	return (zdev->fh & (1UL << 31)) ? true : false;
+}
 
-बाह्य स्थिर काष्ठा attribute_group *zpci_attr_groups[];
-बाह्य अचिन्हित पूर्णांक s390_pci_क्रमce_भग्नing __initdata;
-बाह्य अचिन्हित पूर्णांक s390_pci_no_rid;
+extern const struct attribute_group *zpci_attr_groups[];
+extern unsigned int s390_pci_force_floating __initdata;
+extern unsigned int s390_pci_no_rid;
 
 /* -----------------------------------------------------------------------------
   Prototypes
 ----------------------------------------------------------------------------- */
 /* Base stuff */
-काष्ठा zpci_dev *zpci_create_device(u32 fid, u32 fh, क्रमागत zpci_state state);
-पूर्णांक zpci_enable_device(काष्ठा zpci_dev *);
-पूर्णांक zpci_disable_device(काष्ठा zpci_dev *);
-पूर्णांक zpci_scan_configured_device(काष्ठा zpci_dev *zdev, u32 fh);
-पूर्णांक zpci_deconfigure_device(काष्ठा zpci_dev *zdev);
+struct zpci_dev *zpci_create_device(u32 fid, u32 fh, enum zpci_state state);
+int zpci_enable_device(struct zpci_dev *);
+int zpci_disable_device(struct zpci_dev *);
+int zpci_scan_configured_device(struct zpci_dev *zdev, u32 fh);
+int zpci_deconfigure_device(struct zpci_dev *zdev);
 
-पूर्णांक zpci_रेजिस्टर_ioat(काष्ठा zpci_dev *, u8, u64, u64, u64);
-पूर्णांक zpci_unरेजिस्टर_ioat(काष्ठा zpci_dev *, u8);
-व्योम zpci_हटाओ_reserved_devices(व्योम);
+int zpci_register_ioat(struct zpci_dev *, u8, u64, u64, u64);
+int zpci_unregister_ioat(struct zpci_dev *, u8);
+void zpci_remove_reserved_devices(void);
 
 /* CLP */
-पूर्णांक clp_setup_ग_लिखोback_mio(व्योम);
-पूर्णांक clp_scan_pci_devices(व्योम);
-पूर्णांक clp_query_pci_fn(काष्ठा zpci_dev *zdev);
-पूर्णांक clp_enable_fh(काष्ठा zpci_dev *, u8);
-पूर्णांक clp_disable_fh(काष्ठा zpci_dev *);
-पूर्णांक clp_get_state(u32 fid, क्रमागत zpci_state *state);
+int clp_setup_writeback_mio(void);
+int clp_scan_pci_devices(void);
+int clp_query_pci_fn(struct zpci_dev *zdev);
+int clp_enable_fh(struct zpci_dev *, u8);
+int clp_disable_fh(struct zpci_dev *);
+int clp_get_state(u32 fid, enum zpci_state *state);
 
 /* UID */
-व्योम update_uid_checking(bool new);
+void update_uid_checking(bool new);
 
 /* IOMMU Interface */
-पूर्णांक zpci_init_iommu(काष्ठा zpci_dev *zdev);
-व्योम zpci_destroy_iommu(काष्ठा zpci_dev *zdev);
+int zpci_init_iommu(struct zpci_dev *zdev);
+void zpci_destroy_iommu(struct zpci_dev *zdev);
 
-#अगर_घोषित CONFIG_PCI
-अटल अंतरभूत bool zpci_use_mio(काष्ठा zpci_dev *zdev)
-अणु
-	वापस अटल_branch_likely(&have_mio) && zdev->mio_capable;
-पूर्ण
+#ifdef CONFIG_PCI
+static inline bool zpci_use_mio(struct zpci_dev *zdev)
+{
+	return static_branch_likely(&have_mio) && zdev->mio_capable;
+}
 
 /* Error handling and recovery */
-व्योम zpci_event_error(व्योम *);
-व्योम zpci_event_availability(व्योम *);
-bool zpci_is_enabled(व्योम);
-#अन्यथा /* CONFIG_PCI */
-अटल अंतरभूत व्योम zpci_event_error(व्योम *e) अणुपूर्ण
-अटल अंतरभूत व्योम zpci_event_availability(व्योम *e) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_PCI */
+void zpci_event_error(void *);
+void zpci_event_availability(void *);
+bool zpci_is_enabled(void);
+#else /* CONFIG_PCI */
+static inline void zpci_event_error(void *e) {}
+static inline void zpci_event_availability(void *e) {}
+#endif /* CONFIG_PCI */
 
-#अगर_घोषित CONFIG_HOTPLUG_PCI_S390
-पूर्णांक zpci_init_slot(काष्ठा zpci_dev *);
-व्योम zpci_निकास_slot(काष्ठा zpci_dev *);
-#अन्यथा /* CONFIG_HOTPLUG_PCI_S390 */
-अटल अंतरभूत पूर्णांक zpci_init_slot(काष्ठा zpci_dev *zdev)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत व्योम zpci_निकास_slot(काष्ठा zpci_dev *zdev) अणुपूर्ण
-#पूर्ण_अगर /* CONFIG_HOTPLUG_PCI_S390 */
+#ifdef CONFIG_HOTPLUG_PCI_S390
+int zpci_init_slot(struct zpci_dev *);
+void zpci_exit_slot(struct zpci_dev *);
+#else /* CONFIG_HOTPLUG_PCI_S390 */
+static inline int zpci_init_slot(struct zpci_dev *zdev)
+{
+	return 0;
+}
+static inline void zpci_exit_slot(struct zpci_dev *zdev) {}
+#endif /* CONFIG_HOTPLUG_PCI_S390 */
 
 /* Helpers */
-अटल अंतरभूत काष्ठा zpci_dev *to_zpci(काष्ठा pci_dev *pdev)
-अणु
-	काष्ठा zpci_bus *zbus = pdev->sysdata;
+static inline struct zpci_dev *to_zpci(struct pci_dev *pdev)
+{
+	struct zpci_bus *zbus = pdev->sysdata;
 
-	वापस zbus->function[pdev->devfn];
-पूर्ण
+	return zbus->function[pdev->devfn];
+}
 
-अटल अंतरभूत काष्ठा zpci_dev *to_zpci_dev(काष्ठा device *dev)
-अणु
-	वापस to_zpci(to_pci_dev(dev));
-पूर्ण
+static inline struct zpci_dev *to_zpci_dev(struct device *dev)
+{
+	return to_zpci(to_pci_dev(dev));
+}
 
-काष्ठा zpci_dev *get_zdev_by_fid(u32);
+struct zpci_dev *get_zdev_by_fid(u32);
 
 /* DMA */
-पूर्णांक zpci_dma_init(व्योम);
-व्योम zpci_dma_निकास(व्योम);
+int zpci_dma_init(void);
+void zpci_dma_exit(void);
 
-पूर्णांक __init zpci_irq_init(व्योम);
-व्योम __init zpci_irq_निकास(व्योम);
+int __init zpci_irq_init(void);
+void __init zpci_irq_exit(void);
 
 /* FMB */
-पूर्णांक zpci_fmb_enable_device(काष्ठा zpci_dev *);
-पूर्णांक zpci_fmb_disable_device(काष्ठा zpci_dev *);
+int zpci_fmb_enable_device(struct zpci_dev *);
+int zpci_fmb_disable_device(struct zpci_dev *);
 
 /* Debug */
-पूर्णांक zpci_debug_init(व्योम);
-व्योम zpci_debug_निकास(व्योम);
-व्योम zpci_debug_init_device(काष्ठा zpci_dev *, स्थिर अक्षर *);
-व्योम zpci_debug_निकास_device(काष्ठा zpci_dev *);
+int zpci_debug_init(void);
+void zpci_debug_exit(void);
+void zpci_debug_init_device(struct zpci_dev *, const char *);
+void zpci_debug_exit_device(struct zpci_dev *);
 
 /* Error reporting */
-पूर्णांक zpci_report_error(काष्ठा pci_dev *, काष्ठा zpci_report_error_header *);
+int zpci_report_error(struct pci_dev *, struct zpci_report_error_header *);
 
-#अगर_घोषित CONFIG_NUMA
+#ifdef CONFIG_NUMA
 
 /* Returns the node based on PCI bus */
-अटल अंतरभूत पूर्णांक __pcibus_to_node(स्थिर काष्ठा pci_bus *bus)
-अणु
-	वापस NUMA_NO_NODE;
-पूर्ण
+static inline int __pcibus_to_node(const struct pci_bus *bus)
+{
+	return NUMA_NO_NODE;
+}
 
-अटल अंतरभूत स्थिर काष्ठा cpumask *
-cpumask_of_pcibus(स्थिर काष्ठा pci_bus *bus)
-अणु
-	वापस cpu_online_mask;
-पूर्ण
+static inline const struct cpumask *
+cpumask_of_pcibus(const struct pci_bus *bus)
+{
+	return cpu_online_mask;
+}
 
-#पूर्ण_अगर /* CONFIG_NUMA */
+#endif /* CONFIG_NUMA */
 
-#पूर्ण_अगर
+#endif

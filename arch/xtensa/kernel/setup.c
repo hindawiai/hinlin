@@ -1,10 +1,9 @@
-<शैली गुरु>
 /*
  * arch/xtensa/kernel/setup.c
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  *
  * Copyright (C) 1995  Linus Torvalds
  * Copyright (C) 2001 - 2005  Tensilica Inc.
@@ -16,342 +15,342 @@
  * Marc Gauthier<marc@tensilica.com> <marc@alumni.uwaterloo.ca>
  */
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/proc_fs.h>
-#समावेश <linux/screen_info.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_fdt.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/mm.h>
+#include <linux/proc_fs.h>
+#include <linux/screen_info.h>
+#include <linux/kernel.h>
+#include <linux/percpu.h>
+#include <linux/cpu.h>
+#include <linux/of.h>
+#include <linux/of_fdt.h>
 
-#अगर defined(CONFIG_VGA_CONSOLE) || defined(CONFIG_DUMMY_CONSOLE)
+#if defined(CONFIG_VGA_CONSOLE) || defined(CONFIG_DUMMY_CONSOLE)
 # include <linux/console.h>
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_PROC_FS
+#ifdef CONFIG_PROC_FS
 # include <linux/seq_file.h>
-#पूर्ण_अगर
+#endif
 
-#समावेश <यंत्र/bootparam.h>
-#समावेश <यंत्र/kasan.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/processor.h>
-#समावेश <यंत्र/समयx.h>
-#समावेश <यंत्र/platक्रमm.h>
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/setup.h>
-#समावेश <यंत्र/param.h>
-#समावेश <यंत्र/smp.h>
-#समावेश <यंत्र/sysस्मृति.स>
+#include <asm/bootparam.h>
+#include <asm/kasan.h>
+#include <asm/mmu_context.h>
+#include <asm/processor.h>
+#include <asm/timex.h>
+#include <asm/platform.h>
+#include <asm/page.h>
+#include <asm/setup.h>
+#include <asm/param.h>
+#include <asm/smp.h>
+#include <asm/sysmem.h>
 
-#अगर defined(CONFIG_VGA_CONSOLE) || defined(CONFIG_DUMMY_CONSOLE)
-काष्ठा screen_info screen_info = अणु
+#if defined(CONFIG_VGA_CONSOLE) || defined(CONFIG_DUMMY_CONSOLE)
+struct screen_info screen_info = {
 	.orig_x = 0,
 	.orig_y = 24,
 	.orig_video_cols = 80,
 	.orig_video_lines = 24,
 	.orig_video_isVGA = 1,
-	.orig_video_poपूर्णांकs = 16,
-पूर्ण;
-#पूर्ण_अगर
+	.orig_video_points = 16,
+};
+#endif
 
-#अगर_घोषित CONFIG_BLK_DEV_INITRD
-बाह्य अचिन्हित दीर्घ initrd_start;
-बाह्य अचिन्हित दीर्घ initrd_end;
-बाह्य पूर्णांक initrd_below_start_ok;
-#पूर्ण_अगर
+#ifdef CONFIG_BLK_DEV_INITRD
+extern unsigned long initrd_start;
+extern unsigned long initrd_end;
+extern int initrd_below_start_ok;
+#endif
 
-#अगर_घोषित CONFIG_OF
-व्योम *dtb_start = __dtb_start;
-#पूर्ण_अगर
+#ifdef CONFIG_OF
+void *dtb_start = __dtb_start;
+#endif
 
-बाह्य अचिन्हित दीर्घ loops_per_jअगरfy;
+extern unsigned long loops_per_jiffy;
 
-/* Command line specअगरied as configuration option. */
+/* Command line specified as configuration option. */
 
-अटल अक्षर __initdata command_line[COMMAND_LINE_SIZE];
+static char __initdata command_line[COMMAND_LINE_SIZE];
 
-#अगर_घोषित CONFIG_CMDLINE_BOOL
-अटल अक्षर शेष_command_line[COMMAND_LINE_SIZE] __initdata = CONFIG_CMDLINE;
-#पूर्ण_अगर
+#ifdef CONFIG_CMDLINE_BOOL
+static char default_command_line[COMMAND_LINE_SIZE] __initdata = CONFIG_CMDLINE;
+#endif
 
-#अगर_घोषित CONFIG_PARSE_BOOTPARAM
+#ifdef CONFIG_PARSE_BOOTPARAM
 /*
  * Boot parameter parsing.
  *
  * The Xtensa port uses a list of variable-sized tags to pass data to
- * the kernel. The first tag must be a BP_TAG_FIRST tag क्रम the list
+ * the kernel. The first tag must be a BP_TAG_FIRST tag for the list
  * to be recognised. The list is terminated with a zero-sized
  * BP_TAG_LAST tag.
  */
 
-प्रकार काष्ठा tagtable अणु
+typedef struct tagtable {
 	u32 tag;
-	पूर्णांक (*parse)(स्थिर bp_tag_t*);
-पूर्ण tagtable_t;
+	int (*parse)(const bp_tag_t*);
+} tagtable_t;
 
-#घोषणा __tagtable(tag, fn) अटल tagtable_t __tagtable_##fn 		\
-	__section(".taglist") __attribute__((used)) = अणु tag, fn पूर्ण
+#define __tagtable(tag, fn) static tagtable_t __tagtable_##fn 		\
+	__section(".taglist") __attribute__((used)) = { tag, fn }
 
 /* parse current tag */
 
-अटल पूर्णांक __init parse_tag_mem(स्थिर bp_tag_t *tag)
-अणु
-	काष्ठा bp_meminfo *mi = (काष्ठा bp_meminfo *)(tag->data);
+static int __init parse_tag_mem(const bp_tag_t *tag)
+{
+	struct bp_meminfo *mi = (struct bp_meminfo *)(tag->data);
 
-	अगर (mi->type != MEMORY_TYPE_CONVENTIONAL)
-		वापस -1;
+	if (mi->type != MEMORY_TYPE_CONVENTIONAL)
+		return -1;
 
-	वापस memblock_add(mi->start, mi->end - mi->start);
-पूर्ण
+	return memblock_add(mi->start, mi->end - mi->start);
+}
 
 __tagtable(BP_TAG_MEMORY, parse_tag_mem);
 
-#अगर_घोषित CONFIG_BLK_DEV_INITRD
+#ifdef CONFIG_BLK_DEV_INITRD
 
-अटल पूर्णांक __init parse_tag_initrd(स्थिर bp_tag_t* tag)
-अणु
-	काष्ठा bp_meminfo *mi = (काष्ठा bp_meminfo *)(tag->data);
+static int __init parse_tag_initrd(const bp_tag_t* tag)
+{
+	struct bp_meminfo *mi = (struct bp_meminfo *)(tag->data);
 
-	initrd_start = (अचिन्हित दीर्घ)__va(mi->start);
-	initrd_end = (अचिन्हित दीर्घ)__va(mi->end);
+	initrd_start = (unsigned long)__va(mi->start);
+	initrd_end = (unsigned long)__va(mi->end);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 __tagtable(BP_TAG_INITRD, parse_tag_initrd);
 
-#पूर्ण_अगर /* CONFIG_BLK_DEV_INITRD */
+#endif /* CONFIG_BLK_DEV_INITRD */
 
-#अगर_घोषित CONFIG_OF
+#ifdef CONFIG_OF
 
-अटल पूर्णांक __init parse_tag_fdt(स्थिर bp_tag_t *tag)
-अणु
+static int __init parse_tag_fdt(const bp_tag_t *tag)
+{
 	dtb_start = __va(tag->data[0]);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 __tagtable(BP_TAG_FDT, parse_tag_fdt);
 
-#पूर्ण_अगर /* CONFIG_OF */
+#endif /* CONFIG_OF */
 
-अटल पूर्णांक __init parse_tag_cmdline(स्थिर bp_tag_t* tag)
-अणु
-	strlcpy(command_line, (अक्षर *)(tag->data), COMMAND_LINE_SIZE);
-	वापस 0;
-पूर्ण
+static int __init parse_tag_cmdline(const bp_tag_t* tag)
+{
+	strlcpy(command_line, (char *)(tag->data), COMMAND_LINE_SIZE);
+	return 0;
+}
 
 __tagtable(BP_TAG_COMMAND_LINE, parse_tag_cmdline);
 
-अटल पूर्णांक __init parse_bootparam(स्थिर bp_tag_t* tag)
-अणु
-	बाह्य tagtable_t __tagtable_begin, __tagtable_end;
+static int __init parse_bootparam(const bp_tag_t* tag)
+{
+	extern tagtable_t __tagtable_begin, __tagtable_end;
 	tagtable_t *t;
 
 	/* Boot parameters must start with a BP_TAG_FIRST tag. */
 
-	अगर (tag->id != BP_TAG_FIRST) अणु
+	if (tag->id != BP_TAG_FIRST) {
 		pr_warn("Invalid boot parameters!\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	tag = (bp_tag_t*)((अचिन्हित दीर्घ)tag + माप(bp_tag_t) + tag->size);
+	tag = (bp_tag_t*)((unsigned long)tag + sizeof(bp_tag_t) + tag->size);
 
 	/* Parse all tags. */
 
-	जबतक (tag != शून्य && tag->id != BP_TAG_LAST) अणु
-		क्रम (t = &__tagtable_begin; t < &__tagtable_end; t++) अणु
-			अगर (tag->id == t->tag) अणु
+	while (tag != NULL && tag->id != BP_TAG_LAST) {
+		for (t = &__tagtable_begin; t < &__tagtable_end; t++) {
+			if (tag->id == t->tag) {
 				t->parse(tag);
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (t == &__tagtable_end)
+				break;
+			}
+		}
+		if (t == &__tagtable_end)
 			pr_warn("Ignoring tag 0x%08x\n", tag->id);
-		tag = (bp_tag_t*)((अचिन्हित दीर्घ)(tag + 1) + tag->size);
-	पूर्ण
+		tag = (bp_tag_t*)((unsigned long)(tag + 1) + tag->size);
+	}
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक __init parse_bootparam(स्थिर bp_tag_t *tag)
-अणु
+	return 0;
+}
+#else
+static int __init parse_bootparam(const bp_tag_t *tag)
+{
 	pr_info("Ignoring boot parameters at %p\n", tag);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_OF
+#ifdef CONFIG_OF
 
-#अगर !XCHAL_HAVE_PTP_MMU || XCHAL_HAVE_SPANNING_WAY
-अचिन्हित दीर्घ xtensa_kio_paddr = XCHAL_KIO_DEFAULT_PADDR;
+#if !XCHAL_HAVE_PTP_MMU || XCHAL_HAVE_SPANNING_WAY
+unsigned long xtensa_kio_paddr = XCHAL_KIO_DEFAULT_PADDR;
 EXPORT_SYMBOL(xtensa_kio_paddr);
 
-अटल पूर्णांक __init xtensa_dt_io_area(अचिन्हित दीर्घ node, स्थिर अक्षर *uname,
-		पूर्णांक depth, व्योम *data)
-अणु
-	स्थिर __be32 *ranges;
-	पूर्णांक len;
+static int __init xtensa_dt_io_area(unsigned long node, const char *uname,
+		int depth, void *data)
+{
+	const __be32 *ranges;
+	int len;
 
-	अगर (depth > 1)
-		वापस 0;
+	if (depth > 1)
+		return 0;
 
-	अगर (!of_flat_dt_is_compatible(node, "simple-bus"))
-		वापस 0;
+	if (!of_flat_dt_is_compatible(node, "simple-bus"))
+		return 0;
 
 	ranges = of_get_flat_dt_prop(node, "ranges", &len);
-	अगर (!ranges)
-		वापस 1;
-	अगर (len == 0)
-		वापस 1;
+	if (!ranges)
+		return 1;
+	if (len == 0)
+		return 1;
 
-	xtensa_kio_paddr = of_पढ़ो_uदीर्घ(ranges+1, 1);
-	/* round करोwn to nearest 256MB boundary */
+	xtensa_kio_paddr = of_read_ulong(ranges+1, 1);
+	/* round down to nearest 256MB boundary */
 	xtensa_kio_paddr &= 0xf0000000;
 
 	init_kio();
 
-	वापस 1;
-पूर्ण
-#अन्यथा
-अटल पूर्णांक __init xtensa_dt_io_area(अचिन्हित दीर्घ node, स्थिर अक्षर *uname,
-		पूर्णांक depth, व्योम *data)
-अणु
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर
+	return 1;
+}
+#else
+static int __init xtensa_dt_io_area(unsigned long node, const char *uname,
+		int depth, void *data)
+{
+	return 1;
+}
+#endif
 
-व्योम __init early_init_devtree(व्योम *params)
-अणु
+void __init early_init_devtree(void *params)
+{
 	early_init_dt_scan(params);
-	of_scan_flat_dt(xtensa_dt_io_area, शून्य);
+	of_scan_flat_dt(xtensa_dt_io_area, NULL);
 
-	अगर (!command_line[0])
+	if (!command_line[0])
 		strlcpy(command_line, boot_command_line, COMMAND_LINE_SIZE);
-पूर्ण
+}
 
-#पूर्ण_अगर /* CONFIG_OF */
+#endif /* CONFIG_OF */
 
 /*
  * Initialize architecture. (Early stage)
  */
 
-व्योम __init init_arch(bp_tag_t *bp_start)
-अणु
+void __init init_arch(bp_tag_t *bp_start)
+{
 	/* Initialize MMU. */
 
 	init_mmu();
 
-	/* Initialize initial KASAN shaकरोw map */
+	/* Initialize initial KASAN shadow map */
 
 	kasan_early_init();
 
 	/* Parse boot parameters */
 
-	अगर (bp_start)
+	if (bp_start)
 		parse_bootparam(bp_start);
 
-#अगर_घोषित CONFIG_OF
+#ifdef CONFIG_OF
 	early_init_devtree(dtb_start);
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_CMDLINE_BOOL
-	अगर (!command_line[0])
-		strlcpy(command_line, शेष_command_line, COMMAND_LINE_SIZE);
-#पूर्ण_अगर
+#ifdef CONFIG_CMDLINE_BOOL
+	if (!command_line[0])
+		strlcpy(command_line, default_command_line, COMMAND_LINE_SIZE);
+#endif
 
-	/* Early hook क्रम platक्रमms */
+	/* Early hook for platforms */
 
-	platक्रमm_init(bp_start);
-पूर्ण
+	platform_init(bp_start);
+}
 
 /*
- * Initialize प्रणाली. Setup memory and reserve regions.
+ * Initialize system. Setup memory and reserve regions.
  */
 
-बाह्य अक्षर _end[];
-बाह्य अक्षर _stext[];
-बाह्य अक्षर _WinकरोwVectors_text_start;
-बाह्य अक्षर _WinकरोwVectors_text_end;
-बाह्य अक्षर _DebugInterruptVector_text_start;
-बाह्य अक्षर _DebugInterruptVector_text_end;
-बाह्य अक्षर _KernelExceptionVector_text_start;
-बाह्य अक्षर _KernelExceptionVector_text_end;
-बाह्य अक्षर _UserExceptionVector_text_start;
-बाह्य अक्षर _UserExceptionVector_text_end;
-बाह्य अक्षर _DoubleExceptionVector_text_start;
-बाह्य अक्षर _DoubleExceptionVector_text_end;
-बाह्य अक्षर _exception_text_start;
-बाह्य अक्षर _exception_text_end;
-#अगर XCHAL_EXCM_LEVEL >= 2
-बाह्य अक्षर _Level2InterruptVector_text_start;
-बाह्य अक्षर _Level2InterruptVector_text_end;
-#पूर्ण_अगर
-#अगर XCHAL_EXCM_LEVEL >= 3
-बाह्य अक्षर _Level3InterruptVector_text_start;
-बाह्य अक्षर _Level3InterruptVector_text_end;
-#पूर्ण_अगर
-#अगर XCHAL_EXCM_LEVEL >= 4
-बाह्य अक्षर _Level4InterruptVector_text_start;
-बाह्य अक्षर _Level4InterruptVector_text_end;
-#पूर्ण_अगर
-#अगर XCHAL_EXCM_LEVEL >= 5
-बाह्य अक्षर _Level5InterruptVector_text_start;
-बाह्य अक्षर _Level5InterruptVector_text_end;
-#पूर्ण_अगर
-#अगर XCHAL_EXCM_LEVEL >= 6
-बाह्य अक्षर _Level6InterruptVector_text_start;
-बाह्य अक्षर _Level6InterruptVector_text_end;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_SMP
-बाह्य अक्षर _SecondaryResetVector_text_start;
-बाह्य अक्षर _SecondaryResetVector_text_end;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_XIP_KERNEL
-बाह्य अक्षर _xip_start[];
-बाह्य अक्षर _xip_end[];
-#पूर्ण_अगर
+extern char _end[];
+extern char _stext[];
+extern char _WindowVectors_text_start;
+extern char _WindowVectors_text_end;
+extern char _DebugInterruptVector_text_start;
+extern char _DebugInterruptVector_text_end;
+extern char _KernelExceptionVector_text_start;
+extern char _KernelExceptionVector_text_end;
+extern char _UserExceptionVector_text_start;
+extern char _UserExceptionVector_text_end;
+extern char _DoubleExceptionVector_text_start;
+extern char _DoubleExceptionVector_text_end;
+extern char _exception_text_start;
+extern char _exception_text_end;
+#if XCHAL_EXCM_LEVEL >= 2
+extern char _Level2InterruptVector_text_start;
+extern char _Level2InterruptVector_text_end;
+#endif
+#if XCHAL_EXCM_LEVEL >= 3
+extern char _Level3InterruptVector_text_start;
+extern char _Level3InterruptVector_text_end;
+#endif
+#if XCHAL_EXCM_LEVEL >= 4
+extern char _Level4InterruptVector_text_start;
+extern char _Level4InterruptVector_text_end;
+#endif
+#if XCHAL_EXCM_LEVEL >= 5
+extern char _Level5InterruptVector_text_start;
+extern char _Level5InterruptVector_text_end;
+#endif
+#if XCHAL_EXCM_LEVEL >= 6
+extern char _Level6InterruptVector_text_start;
+extern char _Level6InterruptVector_text_end;
+#endif
+#ifdef CONFIG_SMP
+extern char _SecondaryResetVector_text_start;
+extern char _SecondaryResetVector_text_end;
+#endif
+#ifdef CONFIG_XIP_KERNEL
+extern char _xip_start[];
+extern char _xip_end[];
+#endif
 
-अटल अंतरभूत पूर्णांक __init_memblock mem_reserve(अचिन्हित दीर्घ start,
-					      अचिन्हित दीर्घ end)
-अणु
-	वापस memblock_reserve(start, end - start);
-पूर्ण
+static inline int __init_memblock mem_reserve(unsigned long start,
+					      unsigned long end)
+{
+	return memblock_reserve(start, end - start);
+}
 
-व्योम __init setup_arch(अक्षर **cmdline_p)
-अणु
+void __init setup_arch(char **cmdline_p)
+{
 	pr_info("config ID: %08x:%08x\n",
 		xtensa_get_sr(SREG_EPC), xtensa_get_sr(SREG_EXCSAVE));
-	अगर (xtensa_get_sr(SREG_EPC) != XCHAL_HW_CONFIGID0 ||
+	if (xtensa_get_sr(SREG_EPC) != XCHAL_HW_CONFIGID0 ||
 	    xtensa_get_sr(SREG_EXCSAVE) != XCHAL_HW_CONFIGID1)
 		pr_info("built for config ID: %08x:%08x\n",
 			XCHAL_HW_CONFIGID0, XCHAL_HW_CONFIGID1);
 
 	*cmdline_p = command_line;
-	platक्रमm_setup(cmdline_p);
+	platform_setup(cmdline_p);
 	strlcpy(boot_command_line, *cmdline_p, COMMAND_LINE_SIZE);
 
 	/* Reserve some memory regions */
 
-#अगर_घोषित CONFIG_BLK_DEV_INITRD
-	अगर (initrd_start < initrd_end &&
+#ifdef CONFIG_BLK_DEV_INITRD
+	if (initrd_start < initrd_end &&
 	    !mem_reserve(__pa(initrd_start), __pa(initrd_end)))
 		initrd_below_start_ok = 1;
-	अन्यथा
+	else
 		initrd_start = 0;
-#पूर्ण_अगर
+#endif
 
 	mem_reserve(__pa(_stext), __pa(_end));
-#अगर_घोषित CONFIG_XIP_KERNEL
+#ifdef CONFIG_XIP_KERNEL
 	mem_reserve(__pa(_xip_start), __pa(_xip_end));
-#पूर्ण_अगर
+#endif
 
-#अगर_घोषित CONFIG_VECTORS_ADDR
-	mem_reserve(__pa(&_WinकरोwVectors_text_start),
-		    __pa(&_WinकरोwVectors_text_end));
+#ifdef CONFIG_VECTORS_ADDR
+	mem_reserve(__pa(&_WindowVectors_text_start),
+		    __pa(&_WindowVectors_text_end));
 
 	mem_reserve(__pa(&_DebugInterruptVector_text_start),
 		    __pa(&_DebugInterruptVector_text_end));
@@ -367,74 +366,74 @@ EXPORT_SYMBOL(xtensa_kio_paddr);
 
 	mem_reserve(__pa(&_exception_text_start),
 		    __pa(&_exception_text_end));
-#अगर XCHAL_EXCM_LEVEL >= 2
+#if XCHAL_EXCM_LEVEL >= 2
 	mem_reserve(__pa(&_Level2InterruptVector_text_start),
 		    __pa(&_Level2InterruptVector_text_end));
-#पूर्ण_अगर
-#अगर XCHAL_EXCM_LEVEL >= 3
+#endif
+#if XCHAL_EXCM_LEVEL >= 3
 	mem_reserve(__pa(&_Level3InterruptVector_text_start),
 		    __pa(&_Level3InterruptVector_text_end));
-#पूर्ण_अगर
-#अगर XCHAL_EXCM_LEVEL >= 4
+#endif
+#if XCHAL_EXCM_LEVEL >= 4
 	mem_reserve(__pa(&_Level4InterruptVector_text_start),
 		    __pa(&_Level4InterruptVector_text_end));
-#पूर्ण_अगर
-#अगर XCHAL_EXCM_LEVEL >= 5
+#endif
+#if XCHAL_EXCM_LEVEL >= 5
 	mem_reserve(__pa(&_Level5InterruptVector_text_start),
 		    __pa(&_Level5InterruptVector_text_end));
-#पूर्ण_अगर
-#अगर XCHAL_EXCM_LEVEL >= 6
+#endif
+#if XCHAL_EXCM_LEVEL >= 6
 	mem_reserve(__pa(&_Level6InterruptVector_text_start),
 		    __pa(&_Level6InterruptVector_text_end));
-#पूर्ण_अगर
+#endif
 
-#पूर्ण_अगर /* CONFIG_VECTORS_ADDR */
+#endif /* CONFIG_VECTORS_ADDR */
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	mem_reserve(__pa(&_SecondaryResetVector_text_start),
 		    __pa(&_SecondaryResetVector_text_end));
-#पूर्ण_अगर
+#endif
 	parse_early_param();
-	booपंचांगem_init();
+	bootmem_init();
 	kasan_init();
 	unflatten_and_copy_device_tree();
 
-#अगर_घोषित CONFIG_SMP
+#ifdef CONFIG_SMP
 	smp_init_cpus();
-#पूर्ण_अगर
+#endif
 
 	paging_init();
 	zones_init();
 
-#अगर_घोषित CONFIG_VT
-# अगर defined(CONFIG_VGA_CONSOLE)
-	conचयनp = &vga_con;
-# endअगर
-#पूर्ण_अगर
-पूर्ण
+#ifdef CONFIG_VT
+# if defined(CONFIG_VGA_CONSOLE)
+	conswitchp = &vga_con;
+# endif
+#endif
+}
 
-अटल DEFINE_PER_CPU(काष्ठा cpu, cpu_data);
+static DEFINE_PER_CPU(struct cpu, cpu_data);
 
-अटल पूर्णांक __init topology_init(व्योम)
-अणु
-	पूर्णांक i;
+static int __init topology_init(void)
+{
+	int i;
 
-	क्रम_each_possible_cpu(i) अणु
-		काष्ठा cpu *cpu = &per_cpu(cpu_data, i);
+	for_each_possible_cpu(i) {
+		struct cpu *cpu = &per_cpu(cpu_data, i);
 		cpu->hotpluggable = !!i;
-		रेजिस्टर_cpu(cpu, i);
-	पूर्ण
+		register_cpu(cpu, i);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 subsys_initcall(topology_init);
 
-व्योम cpu_reset(व्योम)
-अणु
-#अगर XCHAL_HAVE_PTP_MMU && IS_ENABLED(CONFIG_MMU)
+void cpu_reset(void)
+{
+#if XCHAL_HAVE_PTP_MMU && IS_ENABLED(CONFIG_MMU)
 	local_irq_disable();
 	/*
-	 * We have full MMU: all स्वतःload ways, ways 7, 8 and 9 of DTLB must
+	 * We have full MMU: all autoload ways, ways 7, 8 and 9 of DTLB must
 	 * be flushed.
 	 * Way 4 is not currently used by linux.
 	 * Ways 5 and 6 shall not be touched on MMUv2 as they are hardwired.
@@ -443,54 +442,54 @@ subsys_initcall(topology_init);
 	 */
 	local_flush_tlb_all();
 	invalidate_page_directory();
-#अगर XCHAL_HAVE_SPANNING_WAY
+#if XCHAL_HAVE_SPANNING_WAY
 	/* MMU v3 */
-	अणु
-		अचिन्हित दीर्घ vaddr = (अचिन्हित दीर्घ)cpu_reset;
-		अचिन्हित दीर्घ paddr = __pa(vaddr);
-		अचिन्हित दीर्घ पंचांगpaddr = vaddr + SZ_512M;
-		अचिन्हित दीर्घ पंचांगp0, पंचांगp1, पंचांगp2, पंचांगp3;
+	{
+		unsigned long vaddr = (unsigned long)cpu_reset;
+		unsigned long paddr = __pa(vaddr);
+		unsigned long tmpaddr = vaddr + SZ_512M;
+		unsigned long tmp0, tmp1, tmp2, tmp3;
 
 		/*
-		 * Find a place क्रम the temporary mapping. It must not be
+		 * Find a place for the temporary mapping. It must not be
 		 * in the same 512MB region with vaddr or paddr, otherwise
 		 * there may be multihit exception either on entry to the
 		 * temporary mapping, or on entry to the identity mapping.
 		 * (512MB is the biggest page size supported by TLB.)
 		 */
-		जबतक (((पंचांगpaddr ^ paddr) & -SZ_512M) == 0)
-			पंचांगpaddr += SZ_512M;
+		while (((tmpaddr ^ paddr) & -SZ_512M) == 0)
+			tmpaddr += SZ_512M;
 
 		/* Invalidate mapping in the selected temporary area */
-		अगर (itlb_probe(पंचांगpaddr) & BIT(ITLB_HIT_BIT))
-			invalidate_itlb_entry(itlb_probe(पंचांगpaddr));
-		अगर (itlb_probe(पंचांगpaddr + PAGE_SIZE) & BIT(ITLB_HIT_BIT))
-			invalidate_itlb_entry(itlb_probe(पंचांगpaddr + PAGE_SIZE));
+		if (itlb_probe(tmpaddr) & BIT(ITLB_HIT_BIT))
+			invalidate_itlb_entry(itlb_probe(tmpaddr));
+		if (itlb_probe(tmpaddr + PAGE_SIZE) & BIT(ITLB_HIT_BIT))
+			invalidate_itlb_entry(itlb_probe(tmpaddr + PAGE_SIZE));
 
 		/*
 		 * Map two consecutive pages starting at the physical address
 		 * of this function to the temporary mapping area.
 		 */
-		ग_लिखो_itlb_entry(__pte((paddr & PAGE_MASK) |
+		write_itlb_entry(__pte((paddr & PAGE_MASK) |
 				       _PAGE_HW_VALID |
 				       _PAGE_HW_EXEC |
 				       _PAGE_CA_BYPASS),
-				 पंचांगpaddr & PAGE_MASK);
-		ग_लिखो_itlb_entry(__pte(((paddr & PAGE_MASK) + PAGE_SIZE) |
+				 tmpaddr & PAGE_MASK);
+		write_itlb_entry(__pte(((paddr & PAGE_MASK) + PAGE_SIZE) |
 				       _PAGE_HW_VALID |
 				       _PAGE_HW_EXEC |
 				       _PAGE_CA_BYPASS),
-				 (पंचांगpaddr & PAGE_MASK) + PAGE_SIZE);
+				 (tmpaddr & PAGE_MASK) + PAGE_SIZE);
 
 		/* Reinitialize TLB */
-		__यंत्र__ __अस्थिर__ ("movi	%0, 1f\n\t"
+		__asm__ __volatile__ ("movi	%0, 1f\n\t"
 				      "movi	%3, 2f\n\t"
 				      "add	%0, %0, %4\n\t"
 				      "add	%3, %3, %5\n\t"
 				      "jx	%0\n"
 				      /*
 				       * No literal, data or stack access
-				       * below this poपूर्णांक
+				       * below this point
 				       */
 				      "1:\n\t"
 				      /* Initialize *tlbcfg */
@@ -529,27 +528,27 @@ subsys_initcall(topology_init);
 				      "iitlb	%0\n\t"
 				      "add	%0, %0, %8\n\t"
 				      "iitlb	%0"
-				      : "=&a"(पंचांगp0), "=&a"(पंचांगp1), "=&a"(पंचांगp2),
-					"=&a"(पंचांगp3)
-				      : "a"(पंचांगpaddr - vaddr),
+				      : "=&a"(tmp0), "=&a"(tmp1), "=&a"(tmp2),
+					"=&a"(tmp3)
+				      : "a"(tmpaddr - vaddr),
 					"a"(paddr - vaddr),
 					"a"(SZ_128M), "a"(SZ_512M),
 					"a"(PAGE_SIZE),
-					"a"((पंचांगpaddr + SZ_512M) & PAGE_MASK)
+					"a"((tmpaddr + SZ_512M) & PAGE_MASK)
 				      : "memory");
-	पूर्ण
-#पूर्ण_अगर
-#पूर्ण_अगर
-	__यंत्र__ __अस्थिर__ ("movi	a2, 0\n\t"
+	}
+#endif
+#endif
+	__asm__ __volatile__ ("movi	a2, 0\n\t"
 			      "wsr	a2, icountlevel\n\t"
 			      "movi	a2, 0\n\t"
 			      "wsr	a2, icount\n\t"
-#अगर XCHAL_NUM_IBREAK > 0
+#if XCHAL_NUM_IBREAK > 0
 			      "wsr	a2, ibreakenable\n\t"
-#पूर्ण_अगर
-#अगर XCHAL_HAVE_LOOPS
+#endif
+#if XCHAL_HAVE_LOOPS
 			      "wsr	a2, lcount\n\t"
-#पूर्ण_अगर
+#endif
 			      "movi	a2, 0x1f\n\t"
 			      "wsr	a2, ps\n\t"
 			      "isync\n\t"
@@ -557,37 +556,37 @@ subsys_initcall(topology_init);
 			      :
 			      : "a" (XCHAL_RESET_VECTOR_VADDR)
 			      : "a2");
-	क्रम (;;)
+	for (;;)
 		;
-पूर्ण
+}
 
-व्योम machine_restart(अक्षर * cmd)
-अणु
-	platक्रमm_restart();
-पूर्ण
+void machine_restart(char * cmd)
+{
+	platform_restart();
+}
 
-व्योम machine_halt(व्योम)
-अणु
-	platक्रमm_halt();
-	जबतक (1);
-पूर्ण
+void machine_halt(void)
+{
+	platform_halt();
+	while (1);
+}
 
-व्योम machine_घातer_off(व्योम)
-अणु
-	platक्रमm_घातer_off();
-	जबतक (1);
-पूर्ण
-#अगर_घोषित CONFIG_PROC_FS
+void machine_power_off(void)
+{
+	platform_power_off();
+	while (1);
+}
+#ifdef CONFIG_PROC_FS
 
 /*
- * Display some core inक्रमmation through /proc/cpuinfo.
+ * Display some core information through /proc/cpuinfo.
  */
 
-अटल पूर्णांक
-c_show(काष्ठा seq_file *f, व्योम *slot)
-अणु
+static int
+c_show(struct seq_file *f, void *slot)
+{
 	/* high-level stuff */
-	seq_म_लिखो(f, "CPU count\t: %u\n"
+	seq_printf(f, "CPU count\t: %u\n"
 		      "CPU list\t: %*pbl\n"
 		      "vendor_id\t: Tensilica\n"
 		      "model\t\t: Xtensa " XCHAL_HW_VERSION_NAME "\n"
@@ -604,64 +603,64 @@ c_show(काष्ठा seq_file *f, व्योम *slot)
 		      XCHAL_HAVE_BE ?  "big" : "little",
 		      ccount_freq/1000000,
 		      (ccount_freq/10000) % 100,
-		      loops_per_jअगरfy/(500000/HZ),
-		      (loops_per_jअगरfy/(5000/HZ)) % 100);
-	seq_माला_दो(f, "flags\t\t: "
-#अगर XCHAL_HAVE_NMI
+		      loops_per_jiffy/(500000/HZ),
+		      (loops_per_jiffy/(5000/HZ)) % 100);
+	seq_puts(f, "flags\t\t: "
+#if XCHAL_HAVE_NMI
 		     "nmi "
-#पूर्ण_अगर
-#अगर XCHAL_HAVE_DEBUG
+#endif
+#if XCHAL_HAVE_DEBUG
 		     "debug "
-# अगर XCHAL_HAVE_OCD
+# if XCHAL_HAVE_OCD
 		     "ocd "
-# endअगर
-#पूर्ण_अगर
-#अगर XCHAL_HAVE_DENSITY
+# endif
+#endif
+#if XCHAL_HAVE_DENSITY
 	    	     "density "
-#पूर्ण_अगर
-#अगर XCHAL_HAVE_BOOLEANS
+#endif
+#if XCHAL_HAVE_BOOLEANS
 		     "boolean "
-#पूर्ण_अगर
-#अगर XCHAL_HAVE_LOOPS
+#endif
+#if XCHAL_HAVE_LOOPS
 		     "loop "
-#पूर्ण_अगर
-#अगर XCHAL_HAVE_NSA
+#endif
+#if XCHAL_HAVE_NSA
 		     "nsa "
-#पूर्ण_अगर
-#अगर XCHAL_HAVE_MINMAX
+#endif
+#if XCHAL_HAVE_MINMAX
 		     "minmax "
-#पूर्ण_अगर
-#अगर XCHAL_HAVE_SEXT
+#endif
+#if XCHAL_HAVE_SEXT
 		     "sext "
-#पूर्ण_अगर
-#अगर XCHAL_HAVE_CLAMPS
+#endif
+#if XCHAL_HAVE_CLAMPS
 		     "clamps "
-#पूर्ण_अगर
-#अगर XCHAL_HAVE_MAC16
+#endif
+#if XCHAL_HAVE_MAC16
 		     "mac16 "
-#पूर्ण_अगर
-#अगर XCHAL_HAVE_MUL16
+#endif
+#if XCHAL_HAVE_MUL16
 		     "mul16 "
-#पूर्ण_अगर
-#अगर XCHAL_HAVE_MUL32
+#endif
+#if XCHAL_HAVE_MUL32
 		     "mul32 "
-#पूर्ण_अगर
-#अगर XCHAL_HAVE_MUL32_HIGH
+#endif
+#if XCHAL_HAVE_MUL32_HIGH
 		     "mul32h "
-#पूर्ण_अगर
-#अगर XCHAL_HAVE_FP
+#endif
+#if XCHAL_HAVE_FP
 		     "fpu "
-#पूर्ण_अगर
-#अगर XCHAL_HAVE_S32C1I
+#endif
+#if XCHAL_HAVE_S32C1I
 		     "s32c1i "
-#पूर्ण_अगर
-#अगर XCHAL_HAVE_EXCLUSIVE
+#endif
+#if XCHAL_HAVE_EXCLUSIVE
 		     "exclusive "
-#पूर्ण_अगर
+#endif
 		     "\n");
 
 	/* Registers. */
-	seq_म_लिखो(f,"physical aregs\t: %d\n"
+	seq_printf(f,"physical aregs\t: %d\n"
 		     "misc regs\t: %d\n"
 		     "ibreak\t\t: %d\n"
 		     "dbreak\t\t: %d\n",
@@ -672,7 +671,7 @@ c_show(काष्ठा seq_file *f, व्योम *slot)
 
 
 	/* Interrupt. */
-	seq_म_लिखो(f,"num ints\t: %d\n"
+	seq_printf(f,"num ints\t: %d\n"
 		     "ext ints\t: %d\n"
 		     "int levels\t: %d\n"
 		     "timers\t\t: %d\n"
@@ -684,24 +683,24 @@ c_show(काष्ठा seq_file *f, व्योम *slot)
 		     XCHAL_DEBUGLEVEL);
 
 	/* Cache */
-	seq_म_लिखो(f,"icache line size: %d\n"
+	seq_printf(f,"icache line size: %d\n"
 		     "icache ways\t: %d\n"
 		     "icache size\t: %d\n"
 		     "icache flags\t: "
-#अगर XCHAL_ICACHE_LINE_LOCKABLE
+#if XCHAL_ICACHE_LINE_LOCKABLE
 		     "lock "
-#पूर्ण_अगर
+#endif
 		     "\n"
 		     "dcache line size: %d\n"
 		     "dcache ways\t: %d\n"
 		     "dcache size\t: %d\n"
 		     "dcache flags\t: "
-#अगर XCHAL_DCACHE_IS_WRITEBACK
+#if XCHAL_DCACHE_IS_WRITEBACK
 		     "writeback "
-#पूर्ण_अगर
-#अगर XCHAL_DCACHE_LINE_LOCKABLE
+#endif
+#if XCHAL_DCACHE_LINE_LOCKABLE
 		     "lock "
-#पूर्ण_अगर
+#endif
 		     "\n",
 		     XCHAL_ICACHE_LINESIZE,
 		     XCHAL_ICACHE_WAYS,
@@ -710,36 +709,36 @@ c_show(काष्ठा seq_file *f, व्योम *slot)
 		     XCHAL_DCACHE_WAYS,
 		     XCHAL_DCACHE_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * We show only CPU #0 info.
  */
-अटल व्योम *
-c_start(काष्ठा seq_file *f, loff_t *pos)
-अणु
-	वापस (*pos == 0) ? (व्योम *)1 : शून्य;
-पूर्ण
+static void *
+c_start(struct seq_file *f, loff_t *pos)
+{
+	return (*pos == 0) ? (void *)1 : NULL;
+}
 
-अटल व्योम *
-c_next(काष्ठा seq_file *f, व्योम *v, loff_t *pos)
-अणु
+static void *
+c_next(struct seq_file *f, void *v, loff_t *pos)
+{
 	++*pos;
-	वापस c_start(f, pos);
-पूर्ण
+	return c_start(f, pos);
+}
 
-अटल व्योम
-c_stop(काष्ठा seq_file *f, व्योम *v)
-अणु
-पूर्ण
+static void
+c_stop(struct seq_file *f, void *v)
+{
+}
 
-स्थिर काष्ठा seq_operations cpuinfo_op =
-अणु
+const struct seq_operations cpuinfo_op =
+{
 	.start	= c_start,
 	.next	= c_next,
 	.stop	= c_stop,
 	.show	= c_show,
-पूर्ण;
+};
 
-#पूर्ण_अगर /* CONFIG_PROC_FS */
+#endif /* CONFIG_PROC_FS */

@@ -1,36 +1,35 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
-#अगर_अघोषित __LINUX_KMOD_H__
-#घोषणा __LINUX_KMOD_H__
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+#ifndef __LINUX_KMOD_H__
+#define __LINUX_KMOD_H__
 
 /*
  *	include/linux/kmod.h
  */
 
-#समावेश <linux/umh.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/compiler.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/sysctl.h>
+#include <linux/umh.h>
+#include <linux/gfp.h>
+#include <linux/stddef.h>
+#include <linux/errno.h>
+#include <linux/compiler.h>
+#include <linux/workqueue.h>
+#include <linux/sysctl.h>
 
-#घोषणा KMOD_PATH_LEN 256
+#define KMOD_PATH_LEN 256
 
-#अगर_घोषित CONFIG_MODULES
-बाह्य अक्षर modprobe_path[]; /* क्रम sysctl */
-/* modprobe निकास status on success, -ve on error.  Return value
+#ifdef CONFIG_MODULES
+extern char modprobe_path[]; /* for sysctl */
+/* modprobe exit status on success, -ve on error.  Return value
  * usually useless though. */
-बाह्य __म_लिखो(2, 3)
-पूर्णांक __request_module(bool रुको, स्थिर अक्षर *name, ...);
-#घोषणा request_module(mod...) __request_module(true, mod)
-#घोषणा request_module_noरुको(mod...) __request_module(false, mod)
-#घोषणा try_then_request_module(x, mod...) \
+extern __printf(2, 3)
+int __request_module(bool wait, const char *name, ...);
+#define request_module(mod...) __request_module(true, mod)
+#define request_module_nowait(mod...) __request_module(false, mod)
+#define try_then_request_module(x, mod...) \
 	((x) ?: (__request_module(true, mod), (x)))
-#अन्यथा
-अटल अंतरभूत पूर्णांक request_module(स्थिर अक्षर *name, ...) अणु वापस -ENOSYS; पूर्ण
-अटल अंतरभूत पूर्णांक request_module_noरुको(स्थिर अक्षर *name, ...) अणु वापस -ENOSYS; पूर्ण
-#घोषणा try_then_request_module(x, mod...) (x)
-#पूर्ण_अगर
+#else
+static inline int request_module(const char *name, ...) { return -ENOSYS; }
+static inline int request_module_nowait(const char *name, ...) { return -ENOSYS; }
+#define try_then_request_module(x, mod...) (x)
+#endif
 
-#पूर्ण_अगर /* __LINUX_KMOD_H__ */
+#endif /* __LINUX_KMOD_H__ */

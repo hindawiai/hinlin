@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR MIT
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
  *
- * Copyright तऊ 2011-2018 VMware, Inc., Palo Alto, CA., USA
+ * Copyright © 2011-2018 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -27,200 +26,200 @@
  *
  **************************************************************************/
 
-#समावेश <drm/tपंचांग/tपंचांग_placement.h>
+#include <drm/ttm/ttm_placement.h>
 
-#समावेश "vmwgfx_drv.h"
-#समावेश "ttm_object.h"
+#include "vmwgfx_drv.h"
+#include "ttm_object.h"
 
 
 /**
- * काष्ठा vmw_user_buffer_object - User-space-visible buffer object
+ * struct vmw_user_buffer_object - User-space-visible buffer object
  *
  * @prime: The prime object providing user visibility.
- * @vbo: The काष्ठा vmw_buffer_object
+ * @vbo: The struct vmw_buffer_object
  */
-काष्ठा vmw_user_buffer_object अणु
-	काष्ठा tपंचांग_prime_object prime;
-	काष्ठा vmw_buffer_object vbo;
-पूर्ण;
+struct vmw_user_buffer_object {
+	struct ttm_prime_object prime;
+	struct vmw_buffer_object vbo;
+};
 
 
 /**
- * vmw_buffer_object - Convert a काष्ठा tपंचांग_buffer_object to a काष्ठा
+ * vmw_buffer_object - Convert a struct ttm_buffer_object to a struct
  * vmw_buffer_object.
  *
- * @bo: Poपूर्णांकer to the TTM buffer object.
- * Return: Poपूर्णांकer to the काष्ठा vmw_buffer_object embedding the
+ * @bo: Pointer to the TTM buffer object.
+ * Return: Pointer to the struct vmw_buffer_object embedding the
  * TTM buffer object.
  */
-अटल काष्ठा vmw_buffer_object *
-vmw_buffer_object(काष्ठा tपंचांग_buffer_object *bo)
-अणु
-	वापस container_of(bo, काष्ठा vmw_buffer_object, base);
-पूर्ण
+static struct vmw_buffer_object *
+vmw_buffer_object(struct ttm_buffer_object *bo)
+{
+	return container_of(bo, struct vmw_buffer_object, base);
+}
 
 
 /**
- * vmw_user_buffer_object - Convert a काष्ठा tपंचांग_buffer_object to a काष्ठा
+ * vmw_user_buffer_object - Convert a struct ttm_buffer_object to a struct
  * vmw_user_buffer_object.
  *
- * @bo: Poपूर्णांकer to the TTM buffer object.
- * Return: Poपूर्णांकer to the काष्ठा vmw_buffer_object embedding the TTM buffer
+ * @bo: Pointer to the TTM buffer object.
+ * Return: Pointer to the struct vmw_buffer_object embedding the TTM buffer
  * object.
  */
-अटल काष्ठा vmw_user_buffer_object *
-vmw_user_buffer_object(काष्ठा tपंचांग_buffer_object *bo)
-अणु
-	काष्ठा vmw_buffer_object *vmw_bo = vmw_buffer_object(bo);
+static struct vmw_user_buffer_object *
+vmw_user_buffer_object(struct ttm_buffer_object *bo)
+{
+	struct vmw_buffer_object *vmw_bo = vmw_buffer_object(bo);
 
-	वापस container_of(vmw_bo, काष्ठा vmw_user_buffer_object, vbo);
-पूर्ण
+	return container_of(vmw_bo, struct vmw_user_buffer_object, vbo);
+}
 
 
 /**
  * vmw_bo_pin_in_placement - Validate a buffer to placement.
  *
- * @dev_priv:  Driver निजी.
+ * @dev_priv:  Driver private.
  * @buf:  DMA buffer to move.
  * @placement:  The placement to pin it.
- * @पूर्णांकerruptible:  Use पूर्णांकerruptible रुको.
+ * @interruptible:  Use interruptible wait.
  * Return: Zero on success, Negative error code on failure. In particular
- * -ERESTARTSYS अगर पूर्णांकerrupted by a संकेत
+ * -ERESTARTSYS if interrupted by a signal
  */
-पूर्णांक vmw_bo_pin_in_placement(काष्ठा vmw_निजी *dev_priv,
-			    काष्ठा vmw_buffer_object *buf,
-			    काष्ठा tपंचांग_placement *placement,
-			    bool पूर्णांकerruptible)
-अणु
-	काष्ठा tपंचांग_operation_ctx ctx = अणुपूर्णांकerruptible, false पूर्ण;
-	काष्ठा tपंचांग_buffer_object *bo = &buf->base;
-	पूर्णांक ret;
-	uपूर्णांक32_t new_flags;
+int vmw_bo_pin_in_placement(struct vmw_private *dev_priv,
+			    struct vmw_buffer_object *buf,
+			    struct ttm_placement *placement,
+			    bool interruptible)
+{
+	struct ttm_operation_ctx ctx = {interruptible, false };
+	struct ttm_buffer_object *bo = &buf->base;
+	int ret;
+	uint32_t new_flags;
 
-	ret = tपंचांग_ग_लिखो_lock(&dev_priv->reservation_sem, पूर्णांकerruptible);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	ret = ttm_write_lock(&dev_priv->reservation_sem, interruptible);
+	if (unlikely(ret != 0))
+		return ret;
 
 	vmw_execbuf_release_pinned_bo(dev_priv);
 
-	ret = tपंचांग_bo_reserve(bo, पूर्णांकerruptible, false, शून्य);
-	अगर (unlikely(ret != 0))
-		जाओ err;
+	ret = ttm_bo_reserve(bo, interruptible, false, NULL);
+	if (unlikely(ret != 0))
+		goto err;
 
-	अगर (buf->base.pin_count > 0)
-		ret = tपंचांग_bo_mem_compat(placement, &bo->mem,
+	if (buf->base.pin_count > 0)
+		ret = ttm_bo_mem_compat(placement, &bo->mem,
 					&new_flags) == true ? 0 : -EINVAL;
-	अन्यथा
-		ret = tपंचांग_bo_validate(bo, placement, &ctx);
+	else
+		ret = ttm_bo_validate(bo, placement, &ctx);
 
-	अगर (!ret)
+	if (!ret)
 		vmw_bo_pin_reserved(buf, true);
 
-	tपंचांग_bo_unreserve(bo);
+	ttm_bo_unreserve(bo);
 
 err:
-	tपंचांग_ग_लिखो_unlock(&dev_priv->reservation_sem);
-	वापस ret;
-पूर्ण
+	ttm_write_unlock(&dev_priv->reservation_sem);
+	return ret;
+}
 
 
 /**
  * vmw_bo_pin_in_vram_or_gmr - Move a buffer to vram or gmr.
  *
- * This function takes the reservation_sem in ग_लिखो mode.
- * Flushes and unpins the query bo to aव्योम failures.
+ * This function takes the reservation_sem in write mode.
+ * Flushes and unpins the query bo to avoid failures.
  *
- * @dev_priv:  Driver निजी.
+ * @dev_priv:  Driver private.
  * @buf:  DMA buffer to move.
- * @पूर्णांकerruptible:  Use पूर्णांकerruptible रुको.
+ * @interruptible:  Use interruptible wait.
  * Return: Zero on success, Negative error code on failure. In particular
- * -ERESTARTSYS अगर पूर्णांकerrupted by a संकेत
+ * -ERESTARTSYS if interrupted by a signal
  */
-पूर्णांक vmw_bo_pin_in_vram_or_gmr(काष्ठा vmw_निजी *dev_priv,
-			      काष्ठा vmw_buffer_object *buf,
-			      bool पूर्णांकerruptible)
-अणु
-	काष्ठा tपंचांग_operation_ctx ctx = अणुपूर्णांकerruptible, false पूर्ण;
-	काष्ठा tपंचांग_buffer_object *bo = &buf->base;
-	पूर्णांक ret;
-	uपूर्णांक32_t new_flags;
+int vmw_bo_pin_in_vram_or_gmr(struct vmw_private *dev_priv,
+			      struct vmw_buffer_object *buf,
+			      bool interruptible)
+{
+	struct ttm_operation_ctx ctx = {interruptible, false };
+	struct ttm_buffer_object *bo = &buf->base;
+	int ret;
+	uint32_t new_flags;
 
-	ret = tपंचांग_ग_लिखो_lock(&dev_priv->reservation_sem, पूर्णांकerruptible);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	ret = ttm_write_lock(&dev_priv->reservation_sem, interruptible);
+	if (unlikely(ret != 0))
+		return ret;
 
 	vmw_execbuf_release_pinned_bo(dev_priv);
 
-	ret = tपंचांग_bo_reserve(bo, पूर्णांकerruptible, false, शून्य);
-	अगर (unlikely(ret != 0))
-		जाओ err;
+	ret = ttm_bo_reserve(bo, interruptible, false, NULL);
+	if (unlikely(ret != 0))
+		goto err;
 
-	अगर (buf->base.pin_count > 0) अणु
-		ret = tपंचांग_bo_mem_compat(&vmw_vram_gmr_placement, &bo->mem,
+	if (buf->base.pin_count > 0) {
+		ret = ttm_bo_mem_compat(&vmw_vram_gmr_placement, &bo->mem,
 					&new_flags) == true ? 0 : -EINVAL;
-		जाओ out_unreserve;
-	पूर्ण
+		goto out_unreserve;
+	}
 
-	ret = tपंचांग_bo_validate(bo, &vmw_vram_gmr_placement, &ctx);
-	अगर (likely(ret == 0) || ret == -ERESTARTSYS)
-		जाओ out_unreserve;
+	ret = ttm_bo_validate(bo, &vmw_vram_gmr_placement, &ctx);
+	if (likely(ret == 0) || ret == -ERESTARTSYS)
+		goto out_unreserve;
 
-	ret = tपंचांग_bo_validate(bo, &vmw_vram_placement, &ctx);
+	ret = ttm_bo_validate(bo, &vmw_vram_placement, &ctx);
 
 out_unreserve:
-	अगर (!ret)
+	if (!ret)
 		vmw_bo_pin_reserved(buf, true);
 
-	tपंचांग_bo_unreserve(bo);
+	ttm_bo_unreserve(bo);
 err:
-	tपंचांग_ग_लिखो_unlock(&dev_priv->reservation_sem);
-	वापस ret;
-पूर्ण
+	ttm_write_unlock(&dev_priv->reservation_sem);
+	return ret;
+}
 
 
 /**
  * vmw_bo_pin_in_vram - Move a buffer to vram.
  *
- * This function takes the reservation_sem in ग_लिखो mode.
- * Flushes and unpins the query bo to aव्योम failures.
+ * This function takes the reservation_sem in write mode.
+ * Flushes and unpins the query bo to avoid failures.
  *
- * @dev_priv:  Driver निजी.
+ * @dev_priv:  Driver private.
  * @buf:  DMA buffer to move.
- * @पूर्णांकerruptible:  Use पूर्णांकerruptible रुको.
+ * @interruptible:  Use interruptible wait.
  * Return: Zero on success, Negative error code on failure. In particular
- * -ERESTARTSYS अगर पूर्णांकerrupted by a संकेत
+ * -ERESTARTSYS if interrupted by a signal
  */
-पूर्णांक vmw_bo_pin_in_vram(काष्ठा vmw_निजी *dev_priv,
-		       काष्ठा vmw_buffer_object *buf,
-		       bool पूर्णांकerruptible)
-अणु
-	वापस vmw_bo_pin_in_placement(dev_priv, buf, &vmw_vram_placement,
-				       पूर्णांकerruptible);
-पूर्ण
+int vmw_bo_pin_in_vram(struct vmw_private *dev_priv,
+		       struct vmw_buffer_object *buf,
+		       bool interruptible)
+{
+	return vmw_bo_pin_in_placement(dev_priv, buf, &vmw_vram_placement,
+				       interruptible);
+}
 
 
 /**
  * vmw_bo_pin_in_start_of_vram - Move a buffer to start of vram.
  *
- * This function takes the reservation_sem in ग_लिखो mode.
- * Flushes and unpins the query bo to aव्योम failures.
+ * This function takes the reservation_sem in write mode.
+ * Flushes and unpins the query bo to avoid failures.
  *
- * @dev_priv:  Driver निजी.
+ * @dev_priv:  Driver private.
  * @buf:  DMA buffer to pin.
- * @पूर्णांकerruptible:  Use पूर्णांकerruptible रुको.
+ * @interruptible:  Use interruptible wait.
  * Return: Zero on success, Negative error code on failure. In particular
- * -ERESTARTSYS अगर पूर्णांकerrupted by a संकेत
+ * -ERESTARTSYS if interrupted by a signal
  */
-पूर्णांक vmw_bo_pin_in_start_of_vram(काष्ठा vmw_निजी *dev_priv,
-				काष्ठा vmw_buffer_object *buf,
-				bool पूर्णांकerruptible)
-अणु
-	काष्ठा tपंचांग_operation_ctx ctx = अणुपूर्णांकerruptible, false पूर्ण;
-	काष्ठा tपंचांग_buffer_object *bo = &buf->base;
-	काष्ठा tपंचांग_placement placement;
-	काष्ठा tपंचांग_place place;
-	पूर्णांक ret = 0;
-	uपूर्णांक32_t new_flags;
+int vmw_bo_pin_in_start_of_vram(struct vmw_private *dev_priv,
+				struct vmw_buffer_object *buf,
+				bool interruptible)
+{
+	struct ttm_operation_ctx ctx = {interruptible, false };
+	struct ttm_buffer_object *bo = &buf->base;
+	struct ttm_placement placement;
+	struct ttm_place place;
+	int ret = 0;
+	uint32_t new_flags;
 
 	place = vmw_vram_placement.placement[0];
 	place.lpfn = bo->mem.num_pages;
@@ -229,100 +228,100 @@ err:
 	placement.num_busy_placement = 1;
 	placement.busy_placement = &place;
 
-	ret = tपंचांग_ग_लिखो_lock(&dev_priv->reservation_sem, पूर्णांकerruptible);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	ret = ttm_write_lock(&dev_priv->reservation_sem, interruptible);
+	if (unlikely(ret != 0))
+		return ret;
 
 	vmw_execbuf_release_pinned_bo(dev_priv);
-	ret = tपंचांग_bo_reserve(bo, पूर्णांकerruptible, false, शून्य);
-	अगर (unlikely(ret != 0))
-		जाओ err_unlock;
+	ret = ttm_bo_reserve(bo, interruptible, false, NULL);
+	if (unlikely(ret != 0))
+		goto err_unlock;
 
 	/*
-	 * Is this buffer alपढ़ोy in vram but not at the start of it?
-	 * In that हाल, evict it first because TTM isn't good at handling
+	 * Is this buffer already in vram but not at the start of it?
+	 * In that case, evict it first because TTM isn't good at handling
 	 * that situation.
 	 */
-	अगर (bo->mem.mem_type == TTM_PL_VRAM &&
+	if (bo->mem.mem_type == TTM_PL_VRAM &&
 	    bo->mem.start < bo->mem.num_pages &&
 	    bo->mem.start > 0 &&
-	    buf->base.pin_count == 0) अणु
-		ctx.पूर्णांकerruptible = false;
-		(व्योम) tपंचांग_bo_validate(bo, &vmw_sys_placement, &ctx);
-	पूर्ण
+	    buf->base.pin_count == 0) {
+		ctx.interruptible = false;
+		(void) ttm_bo_validate(bo, &vmw_sys_placement, &ctx);
+	}
 
-	अगर (buf->base.pin_count > 0)
-		ret = tपंचांग_bo_mem_compat(&placement, &bo->mem,
+	if (buf->base.pin_count > 0)
+		ret = ttm_bo_mem_compat(&placement, &bo->mem,
 					&new_flags) == true ? 0 : -EINVAL;
-	अन्यथा
-		ret = tपंचांग_bo_validate(bo, &placement, &ctx);
+	else
+		ret = ttm_bo_validate(bo, &placement, &ctx);
 
 	/* For some reason we didn't end up at the start of vram */
 	WARN_ON(ret == 0 && bo->mem.start != 0);
-	अगर (!ret)
+	if (!ret)
 		vmw_bo_pin_reserved(buf, true);
 
-	tपंचांग_bo_unreserve(bo);
+	ttm_bo_unreserve(bo);
 err_unlock:
-	tपंचांग_ग_लिखो_unlock(&dev_priv->reservation_sem);
+	ttm_write_unlock(&dev_priv->reservation_sem);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 /**
- * vmw_bo_unpin - Unpin the buffer given buffer, करोes not move the buffer.
+ * vmw_bo_unpin - Unpin the buffer given buffer, does not move the buffer.
  *
- * This function takes the reservation_sem in ग_लिखो mode.
+ * This function takes the reservation_sem in write mode.
  *
- * @dev_priv:  Driver निजी.
+ * @dev_priv:  Driver private.
  * @buf:  DMA buffer to unpin.
- * @पूर्णांकerruptible:  Use पूर्णांकerruptible रुको.
+ * @interruptible:  Use interruptible wait.
  * Return: Zero on success, Negative error code on failure. In particular
- * -ERESTARTSYS अगर पूर्णांकerrupted by a संकेत
+ * -ERESTARTSYS if interrupted by a signal
  */
-पूर्णांक vmw_bo_unpin(काष्ठा vmw_निजी *dev_priv,
-		 काष्ठा vmw_buffer_object *buf,
-		 bool पूर्णांकerruptible)
-अणु
-	काष्ठा tपंचांग_buffer_object *bo = &buf->base;
-	पूर्णांक ret;
+int vmw_bo_unpin(struct vmw_private *dev_priv,
+		 struct vmw_buffer_object *buf,
+		 bool interruptible)
+{
+	struct ttm_buffer_object *bo = &buf->base;
+	int ret;
 
-	ret = tपंचांग_पढ़ो_lock(&dev_priv->reservation_sem, पूर्णांकerruptible);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	ret = ttm_read_lock(&dev_priv->reservation_sem, interruptible);
+	if (unlikely(ret != 0))
+		return ret;
 
-	ret = tपंचांग_bo_reserve(bo, पूर्णांकerruptible, false, शून्य);
-	अगर (unlikely(ret != 0))
-		जाओ err;
+	ret = ttm_bo_reserve(bo, interruptible, false, NULL);
+	if (unlikely(ret != 0))
+		goto err;
 
 	vmw_bo_pin_reserved(buf, false);
 
-	tपंचांग_bo_unreserve(bo);
+	ttm_bo_unreserve(bo);
 
 err:
-	tपंचांग_पढ़ो_unlock(&dev_priv->reservation_sem);
-	वापस ret;
-पूर्ण
+	ttm_read_unlock(&dev_priv->reservation_sem);
+	return ret;
+}
 
 /**
  * vmw_bo_get_guest_ptr - Get the guest ptr representing the current placement
  * of a buffer.
  *
- * @bo: Poपूर्णांकer to a काष्ठा tपंचांग_buffer_object. Must be pinned or reserved.
- * @ptr: SVGAGuestPtr वापसing the result.
+ * @bo: Pointer to a struct ttm_buffer_object. Must be pinned or reserved.
+ * @ptr: SVGAGuestPtr returning the result.
  */
-व्योम vmw_bo_get_guest_ptr(स्थिर काष्ठा tपंचांग_buffer_object *bo,
+void vmw_bo_get_guest_ptr(const struct ttm_buffer_object *bo,
 			  SVGAGuestPtr *ptr)
-अणु
-	अगर (bo->mem.mem_type == TTM_PL_VRAM) अणु
+{
+	if (bo->mem.mem_type == TTM_PL_VRAM) {
 		ptr->gmrId = SVGA_GMR_FRAMEBUFFER;
 		ptr->offset = bo->mem.start << PAGE_SHIFT;
-	पूर्ण अन्यथा अणु
+	} else {
 		ptr->gmrId = bo->mem.start;
 		ptr->offset = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /**
@@ -332,580 +331,580 @@ err:
  * @pin: Whether to pin or unpin.
  *
  */
-व्योम vmw_bo_pin_reserved(काष्ठा vmw_buffer_object *vbo, bool pin)
-अणु
-	काष्ठा tपंचांग_operation_ctx ctx = अणु false, true पूर्ण;
-	काष्ठा tपंचांग_place pl;
-	काष्ठा tपंचांग_placement placement;
-	काष्ठा tपंचांग_buffer_object *bo = &vbo->base;
-	uपूर्णांक32_t old_mem_type = bo->mem.mem_type;
-	पूर्णांक ret;
+void vmw_bo_pin_reserved(struct vmw_buffer_object *vbo, bool pin)
+{
+	struct ttm_operation_ctx ctx = { false, true };
+	struct ttm_place pl;
+	struct ttm_placement placement;
+	struct ttm_buffer_object *bo = &vbo->base;
+	uint32_t old_mem_type = bo->mem.mem_type;
+	int ret;
 
-	dma_resv_निश्चित_held(bo->base.resv);
+	dma_resv_assert_held(bo->base.resv);
 
-	अगर (pin == !!bo->pin_count)
-		वापस;
+	if (pin == !!bo->pin_count)
+		return;
 
 	pl.fpfn = 0;
 	pl.lpfn = 0;
 	pl.mem_type = bo->mem.mem_type;
 	pl.flags = bo->mem.placement;
 
-	स_रखो(&placement, 0, माप(placement));
+	memset(&placement, 0, sizeof(placement));
 	placement.num_placement = 1;
 	placement.placement = &pl;
 
-	ret = tपंचांग_bo_validate(bo, &placement, &ctx);
+	ret = ttm_bo_validate(bo, &placement, &ctx);
 
 	BUG_ON(ret != 0 || bo->mem.mem_type != old_mem_type);
 
-	अगर (pin)
-		tपंचांग_bo_pin(bo);
-	अन्यथा
-		tपंचांग_bo_unpin(bo);
-पूर्ण
+	if (pin)
+		ttm_bo_pin(bo);
+	else
+		ttm_bo_unpin(bo);
+}
 
 /**
  * vmw_bo_map_and_cache - Map a buffer object and cache the map
  *
  * @vbo: The buffer object to map
- * Return: A kernel भव address or शून्य अगर mapping failed.
+ * Return: A kernel virtual address or NULL if mapping failed.
  *
- * This function maps a buffer object पूर्णांकo the kernel address space, or
- * वापसs the भव kernel address of an alपढ़ोy existing map. The भव
- * address reमुख्यs valid as दीर्घ as the buffer object is pinned or reserved.
- * The cached map is torn करोwn on either
+ * This function maps a buffer object into the kernel address space, or
+ * returns the virtual kernel address of an already existing map. The virtual
+ * address remains valid as long as the buffer object is pinned or reserved.
+ * The cached map is torn down on either
  * 1) Buffer object move
  * 2) Buffer object swapout
- * 3) Buffer object deकाष्ठाion
+ * 3) Buffer object destruction
  *
  */
-व्योम *vmw_bo_map_and_cache(काष्ठा vmw_buffer_object *vbo)
-अणु
-	काष्ठा tपंचांग_buffer_object *bo = &vbo->base;
+void *vmw_bo_map_and_cache(struct vmw_buffer_object *vbo)
+{
+	struct ttm_buffer_object *bo = &vbo->base;
 	bool not_used;
-	व्योम *भव;
-	पूर्णांक ret;
+	void *virtual;
+	int ret;
 
-	भव = tपंचांग_kmap_obj_भव(&vbo->map, &not_used);
-	अगर (भव)
-		वापस भव;
+	virtual = ttm_kmap_obj_virtual(&vbo->map, &not_used);
+	if (virtual)
+		return virtual;
 
-	ret = tपंचांग_bo_kmap(bo, 0, bo->mem.num_pages, &vbo->map);
-	अगर (ret)
+	ret = ttm_bo_kmap(bo, 0, bo->mem.num_pages, &vbo->map);
+	if (ret)
 		DRM_ERROR("Buffer object map failed: %d.\n", ret);
 
-	वापस tपंचांग_kmap_obj_भव(&vbo->map, &not_used);
-पूर्ण
+	return ttm_kmap_obj_virtual(&vbo->map, &not_used);
+}
 
 
 /**
- * vmw_bo_unmap - Tear करोwn a cached buffer object map.
+ * vmw_bo_unmap - Tear down a cached buffer object map.
  *
- * @vbo: The buffer object whose map we are tearing करोwn.
+ * @vbo: The buffer object whose map we are tearing down.
  *
- * This function tears करोwn a cached map set up using
+ * This function tears down a cached map set up using
  * vmw_buffer_object_map_and_cache().
  */
-व्योम vmw_bo_unmap(काष्ठा vmw_buffer_object *vbo)
-अणु
-	अगर (vbo->map.bo == शून्य)
-		वापस;
+void vmw_bo_unmap(struct vmw_buffer_object *vbo)
+{
+	if (vbo->map.bo == NULL)
+		return;
 
-	tपंचांग_bo_kunmap(&vbo->map);
-पूर्ण
+	ttm_bo_kunmap(&vbo->map);
+}
 
 
 /**
  * vmw_bo_acc_size - Calculate the pinned memory usage of buffers
  *
- * @dev_priv: Poपूर्णांकer to a काष्ठा vmw_निजी identअगरying the device.
+ * @dev_priv: Pointer to a struct vmw_private identifying the device.
  * @size: The requested buffer size.
  * @user: Whether this is an ordinary dma buffer or a user dma buffer.
  */
-अटल माप_प्रकार vmw_bo_acc_size(काष्ठा vmw_निजी *dev_priv, माप_प्रकार size,
+static size_t vmw_bo_acc_size(struct vmw_private *dev_priv, size_t size,
 			      bool user)
-अणु
-	अटल माप_प्रकार काष्ठा_size, user_काष्ठा_size;
-	माप_प्रकार num_pages = PAGE_ALIGN(size) >> PAGE_SHIFT;
-	माप_प्रकार page_array_size = tपंचांग_round_pot(num_pages * माप(व्योम *));
+{
+	static size_t struct_size, user_struct_size;
+	size_t num_pages = PAGE_ALIGN(size) >> PAGE_SHIFT;
+	size_t page_array_size = ttm_round_pot(num_pages * sizeof(void *));
 
-	अगर (unlikely(काष्ठा_size == 0)) अणु
-		माप_प्रकार backend_size = tपंचांग_round_pot(vmw_tt_size);
+	if (unlikely(struct_size == 0)) {
+		size_t backend_size = ttm_round_pot(vmw_tt_size);
 
-		काष्ठा_size = backend_size +
-			tपंचांग_round_pot(माप(काष्ठा vmw_buffer_object));
-		user_काष्ठा_size = backend_size +
-		  tपंचांग_round_pot(माप(काष्ठा vmw_user_buffer_object)) +
+		struct_size = backend_size +
+			ttm_round_pot(sizeof(struct vmw_buffer_object));
+		user_struct_size = backend_size +
+		  ttm_round_pot(sizeof(struct vmw_user_buffer_object)) +
 				      TTM_OBJ_EXTRA_SIZE;
-	पूर्ण
+	}
 
-	अगर (dev_priv->map_mode == vmw_dma_alloc_coherent)
+	if (dev_priv->map_mode == vmw_dma_alloc_coherent)
 		page_array_size +=
-			tपंचांग_round_pot(num_pages * माप(dma_addr_t));
+			ttm_round_pot(num_pages * sizeof(dma_addr_t));
 
-	वापस ((user) ? user_काष्ठा_size : काष्ठा_size) +
+	return ((user) ? user_struct_size : struct_size) +
 		page_array_size;
-पूर्ण
+}
 
 
 /**
- * vmw_bo_bo_मुक्त - vmw buffer object deकाष्ठाor
+ * vmw_bo_bo_free - vmw buffer object destructor
  *
- * @bo: Poपूर्णांकer to the embedded काष्ठा tपंचांग_buffer_object
+ * @bo: Pointer to the embedded struct ttm_buffer_object
  */
-व्योम vmw_bo_bo_मुक्त(काष्ठा tपंचांग_buffer_object *bo)
-अणु
-	काष्ठा vmw_buffer_object *vmw_bo = vmw_buffer_object(bo);
+void vmw_bo_bo_free(struct ttm_buffer_object *bo)
+{
+	struct vmw_buffer_object *vmw_bo = vmw_buffer_object(bo);
 
 	WARN_ON(vmw_bo->dirty);
 	WARN_ON(!RB_EMPTY_ROOT(&vmw_bo->res_tree));
 	vmw_bo_unmap(vmw_bo);
-	kमुक्त(vmw_bo);
-पूर्ण
+	kfree(vmw_bo);
+}
 
 
 /**
- * vmw_user_bo_destroy - vmw buffer object deकाष्ठाor
+ * vmw_user_bo_destroy - vmw buffer object destructor
  *
- * @bo: Poपूर्णांकer to the embedded काष्ठा tपंचांग_buffer_object
+ * @bo: Pointer to the embedded struct ttm_buffer_object
  */
-अटल व्योम vmw_user_bo_destroy(काष्ठा tपंचांग_buffer_object *bo)
-अणु
-	काष्ठा vmw_user_buffer_object *vmw_user_bo = vmw_user_buffer_object(bo);
-	काष्ठा vmw_buffer_object *vbo = &vmw_user_bo->vbo;
+static void vmw_user_bo_destroy(struct ttm_buffer_object *bo)
+{
+	struct vmw_user_buffer_object *vmw_user_bo = vmw_user_buffer_object(bo);
+	struct vmw_buffer_object *vbo = &vmw_user_bo->vbo;
 
 	WARN_ON(vbo->dirty);
 	WARN_ON(!RB_EMPTY_ROOT(&vbo->res_tree));
 	vmw_bo_unmap(vbo);
-	tपंचांग_prime_object_kमुक्त(vmw_user_bo, prime);
-पूर्ण
+	ttm_prime_object_kfree(vmw_user_bo, prime);
+}
 
 /**
- * vmw_bo_create_kernel - Create a pinned BO क्रम पूर्णांकernal kernel use.
+ * vmw_bo_create_kernel - Create a pinned BO for internal kernel use.
  *
- * @dev_priv: Poपूर्णांकer to the device निजी काष्ठा
+ * @dev_priv: Pointer to the device private struct
  * @size: size of the BO we need
  * @placement: where to put it
  * @p_bo: resulting BO
  *
- * Creates and pin a simple BO क्रम in kernel use.
+ * Creates and pin a simple BO for in kernel use.
  */
-पूर्णांक vmw_bo_create_kernel(काष्ठा vmw_निजी *dev_priv, अचिन्हित दीर्घ size,
-			 काष्ठा tपंचांग_placement *placement,
-			 काष्ठा tपंचांग_buffer_object **p_bo)
-अणु
-	अचिन्हित npages = PAGE_ALIGN(size) >> PAGE_SHIFT;
-	काष्ठा tपंचांग_operation_ctx ctx = अणु false, false पूर्ण;
-	काष्ठा tपंचांग_buffer_object *bo;
-	माप_प्रकार acc_size;
-	पूर्णांक ret;
+int vmw_bo_create_kernel(struct vmw_private *dev_priv, unsigned long size,
+			 struct ttm_placement *placement,
+			 struct ttm_buffer_object **p_bo)
+{
+	unsigned npages = PAGE_ALIGN(size) >> PAGE_SHIFT;
+	struct ttm_operation_ctx ctx = { false, false };
+	struct ttm_buffer_object *bo;
+	size_t acc_size;
+	int ret;
 
-	bo = kzalloc(माप(*bo), GFP_KERNEL);
-	अगर (unlikely(!bo))
-		वापस -ENOMEM;
+	bo = kzalloc(sizeof(*bo), GFP_KERNEL);
+	if (unlikely(!bo))
+		return -ENOMEM;
 
-	acc_size = tपंचांग_round_pot(माप(*bo));
-	acc_size += tपंचांग_round_pot(npages * माप(व्योम *));
-	acc_size += tपंचांग_round_pot(माप(काष्ठा tपंचांग_tt));
+	acc_size = ttm_round_pot(sizeof(*bo));
+	acc_size += ttm_round_pot(npages * sizeof(void *));
+	acc_size += ttm_round_pot(sizeof(struct ttm_tt));
 
-	ret = tपंचांग_mem_global_alloc(&tपंचांग_mem_glob, acc_size, &ctx);
-	अगर (unlikely(ret))
-		जाओ error_मुक्त;
+	ret = ttm_mem_global_alloc(&ttm_mem_glob, acc_size, &ctx);
+	if (unlikely(ret))
+		goto error_free;
 
-	ret = tपंचांग_bo_init_reserved(&dev_priv->bdev, bo, size,
-				   tपंचांग_bo_type_device, placement, 0,
-				   &ctx, शून्य, शून्य, शून्य);
-	अगर (unlikely(ret))
-		जाओ error_account;
+	ret = ttm_bo_init_reserved(&dev_priv->bdev, bo, size,
+				   ttm_bo_type_device, placement, 0,
+				   &ctx, NULL, NULL, NULL);
+	if (unlikely(ret))
+		goto error_account;
 
-	tपंचांग_bo_pin(bo);
-	tपंचांग_bo_unreserve(bo);
+	ttm_bo_pin(bo);
+	ttm_bo_unreserve(bo);
 	*p_bo = bo;
 
-	वापस 0;
+	return 0;
 
 error_account:
-	tपंचांग_mem_global_मुक्त(&tपंचांग_mem_glob, acc_size);
+	ttm_mem_global_free(&ttm_mem_glob, acc_size);
 
-error_मुक्त:
-	kमुक्त(bo);
-	वापस ret;
-पूर्ण
+error_free:
+	kfree(bo);
+	return ret;
+}
 
 /**
  * vmw_bo_init - Initialize a vmw buffer object
  *
- * @dev_priv: Poपूर्णांकer to the device निजी काष्ठा
- * @vmw_bo: Poपूर्णांकer to the काष्ठा vmw_buffer_object to initialize.
+ * @dev_priv: Pointer to the device private struct
+ * @vmw_bo: Pointer to the struct vmw_buffer_object to initialize.
  * @size: Buffer object size in bytes.
  * @placement: Initial placement.
- * @पूर्णांकerruptible: Whether रुकोs should be perक्रमmed पूर्णांकerruptible.
+ * @interruptible: Whether waits should be performed interruptible.
  * @pin: If the BO should be created pinned at a fixed location.
- * @bo_मुक्त: The buffer object deकाष्ठाor.
+ * @bo_free: The buffer object destructor.
  * Returns: Zero on success, negative error code on error.
  *
- * Note that on error, the code will मुक्त the buffer object.
+ * Note that on error, the code will free the buffer object.
  */
-पूर्णांक vmw_bo_init(काष्ठा vmw_निजी *dev_priv,
-		काष्ठा vmw_buffer_object *vmw_bo,
-		माप_प्रकार size, काष्ठा tपंचांग_placement *placement,
-		bool पूर्णांकerruptible, bool pin,
-		व्योम (*bo_मुक्त)(काष्ठा tपंचांग_buffer_object *bo))
-अणु
-	काष्ठा tपंचांग_operation_ctx ctx = अणु पूर्णांकerruptible, false पूर्ण;
-	काष्ठा tपंचांग_device *bdev = &dev_priv->bdev;
-	माप_प्रकार acc_size;
-	पूर्णांक ret;
-	bool user = (bo_मुक्त == &vmw_user_bo_destroy);
+int vmw_bo_init(struct vmw_private *dev_priv,
+		struct vmw_buffer_object *vmw_bo,
+		size_t size, struct ttm_placement *placement,
+		bool interruptible, bool pin,
+		void (*bo_free)(struct ttm_buffer_object *bo))
+{
+	struct ttm_operation_ctx ctx = { interruptible, false };
+	struct ttm_device *bdev = &dev_priv->bdev;
+	size_t acc_size;
+	int ret;
+	bool user = (bo_free == &vmw_user_bo_destroy);
 
-	WARN_ON_ONCE(!bo_मुक्त && (!user && (bo_मुक्त != vmw_bo_bo_मुक्त)));
+	WARN_ON_ONCE(!bo_free && (!user && (bo_free != vmw_bo_bo_free)));
 
 	acc_size = vmw_bo_acc_size(dev_priv, size, user);
-	स_रखो(vmw_bo, 0, माप(*vmw_bo));
+	memset(vmw_bo, 0, sizeof(*vmw_bo));
 	BUILD_BUG_ON(TTM_MAX_BO_PRIORITY <= 3);
 	vmw_bo->base.priority = 3;
 	vmw_bo->res_tree = RB_ROOT;
 
-	ret = tपंचांग_mem_global_alloc(&tपंचांग_mem_glob, acc_size, &ctx);
-	अगर (unlikely(ret))
-		वापस ret;
+	ret = ttm_mem_global_alloc(&ttm_mem_glob, acc_size, &ctx);
+	if (unlikely(ret))
+		return ret;
 
-	ret = tपंचांग_bo_init_reserved(bdev, &vmw_bo->base, size,
-				   tपंचांग_bo_type_device, placement,
-				   0, &ctx, शून्य, शून्य, bo_मुक्त);
-	अगर (unlikely(ret)) अणु
-		tपंचांग_mem_global_मुक्त(&tपंचांग_mem_glob, acc_size);
-		वापस ret;
-	पूर्ण
+	ret = ttm_bo_init_reserved(bdev, &vmw_bo->base, size,
+				   ttm_bo_type_device, placement,
+				   0, &ctx, NULL, NULL, bo_free);
+	if (unlikely(ret)) {
+		ttm_mem_global_free(&ttm_mem_glob, acc_size);
+		return ret;
+	}
 
-	अगर (pin)
-		tपंचांग_bo_pin(&vmw_bo->base);
-	tपंचांग_bo_unreserve(&vmw_bo->base);
-	वापस 0;
-पूर्ण
+	if (pin)
+		ttm_bo_pin(&vmw_bo->base);
+	ttm_bo_unreserve(&vmw_bo->base);
+	return 0;
+}
 
 
 /**
- * vmw_user_bo_release - TTM reference base object release callback क्रम
+ * vmw_user_bo_release - TTM reference base object release callback for
  * vmw user buffer objects
  *
- * @p_base: The TTM base object poपूर्णांकer about to be unreferenced.
+ * @p_base: The TTM base object pointer about to be unreferenced.
  *
- * Clears the TTM base object poपूर्णांकer and drops the reference the
- * base object has on the underlying काष्ठा vmw_buffer_object.
+ * Clears the TTM base object pointer and drops the reference the
+ * base object has on the underlying struct vmw_buffer_object.
  */
-अटल व्योम vmw_user_bo_release(काष्ठा tपंचांग_base_object **p_base)
-अणु
-	काष्ठा vmw_user_buffer_object *vmw_user_bo;
-	काष्ठा tपंचांग_base_object *base = *p_base;
+static void vmw_user_bo_release(struct ttm_base_object **p_base)
+{
+	struct vmw_user_buffer_object *vmw_user_bo;
+	struct ttm_base_object *base = *p_base;
 
-	*p_base = शून्य;
+	*p_base = NULL;
 
-	अगर (unlikely(base == शून्य))
-		वापस;
+	if (unlikely(base == NULL))
+		return;
 
-	vmw_user_bo = container_of(base, काष्ठा vmw_user_buffer_object,
+	vmw_user_bo = container_of(base, struct vmw_user_buffer_object,
 				   prime.base);
-	tपंचांग_bo_put(&vmw_user_bo->vbo.base);
-पूर्ण
+	ttm_bo_put(&vmw_user_bo->vbo.base);
+}
 
 
 /**
  * vmw_user_bo_ref_obj-release - TTM synccpu reference object release callback
- * क्रम vmw user buffer objects
+ * for vmw user buffer objects
  *
- * @base: Poपूर्णांकer to the TTM base object
+ * @base: Pointer to the TTM base object
  * @ref_type: Reference type of the reference reaching zero.
  *
  * Called when user-space drops its last synccpu reference on the buffer
- * object, Either explicitly or as part of a cleanup file बंद.
+ * object, Either explicitly or as part of a cleanup file close.
  */
-अटल व्योम vmw_user_bo_ref_obj_release(काष्ठा tपंचांग_base_object *base,
-					क्रमागत tपंचांग_ref_type ref_type)
-अणु
-	काष्ठा vmw_user_buffer_object *user_bo;
+static void vmw_user_bo_ref_obj_release(struct ttm_base_object *base,
+					enum ttm_ref_type ref_type)
+{
+	struct vmw_user_buffer_object *user_bo;
 
-	user_bo = container_of(base, काष्ठा vmw_user_buffer_object, prime.base);
+	user_bo = container_of(base, struct vmw_user_buffer_object, prime.base);
 
-	चयन (ref_type) अणु
-	हाल TTM_REF_SYNCCPU_WRITE:
-		atomic_dec(&user_bo->vbo.cpu_ग_लिखोrs);
-		अवरोध;
-	शेष:
+	switch (ref_type) {
+	case TTM_REF_SYNCCPU_WRITE:
+		atomic_dec(&user_bo->vbo.cpu_writers);
+		break;
+	default:
 		WARN_ONCE(true, "Undefined buffer object reference release.\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /**
  * vmw_user_bo_alloc - Allocate a user buffer object
  *
- * @dev_priv: Poपूर्णांकer to a काष्ठा device निजी.
- * @tfile: Poपूर्णांकer to a काष्ठा tपंचांग_object_file on which to रेजिस्टर the user
+ * @dev_priv: Pointer to a struct device private.
+ * @tfile: Pointer to a struct ttm_object_file on which to register the user
  * object.
  * @size: Size of the buffer object.
- * @shareable: Boolean whether the buffer is shareable with other खोलो files.
- * @handle: Poपूर्णांकer to where the handle value should be asचिन्हित.
- * @p_vbo: Poपूर्णांकer to where the refcounted काष्ठा vmw_buffer_object poपूर्णांकer
- * should be asचिन्हित.
- * @p_base: The TTM base object poपूर्णांकer about to be allocated.
+ * @shareable: Boolean whether the buffer is shareable with other open files.
+ * @handle: Pointer to where the handle value should be assigned.
+ * @p_vbo: Pointer to where the refcounted struct vmw_buffer_object pointer
+ * should be assigned.
+ * @p_base: The TTM base object pointer about to be allocated.
  * Return: Zero on success, negative error code on error.
  */
-पूर्णांक vmw_user_bo_alloc(काष्ठा vmw_निजी *dev_priv,
-		      काष्ठा tपंचांग_object_file *tfile,
-		      uपूर्णांक32_t size,
+int vmw_user_bo_alloc(struct vmw_private *dev_priv,
+		      struct ttm_object_file *tfile,
+		      uint32_t size,
 		      bool shareable,
-		      uपूर्णांक32_t *handle,
-		      काष्ठा vmw_buffer_object **p_vbo,
-		      काष्ठा tपंचांग_base_object **p_base)
-अणु
-	काष्ठा vmw_user_buffer_object *user_bo;
-	पूर्णांक ret;
+		      uint32_t *handle,
+		      struct vmw_buffer_object **p_vbo,
+		      struct ttm_base_object **p_base)
+{
+	struct vmw_user_buffer_object *user_bo;
+	int ret;
 
-	user_bo = kzalloc(माप(*user_bo), GFP_KERNEL);
-	अगर (unlikely(!user_bo)) अणु
+	user_bo = kzalloc(sizeof(*user_bo), GFP_KERNEL);
+	if (unlikely(!user_bo)) {
 		DRM_ERROR("Failed to allocate a buffer.\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	ret = vmw_bo_init(dev_priv, &user_bo->vbo, size,
 			  (dev_priv->has_mob) ?
 			  &vmw_sys_placement :
 			  &vmw_vram_sys_placement, true, false,
 			  &vmw_user_bo_destroy);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	if (unlikely(ret != 0))
+		return ret;
 
-	tपंचांग_bo_get(&user_bo->vbo.base);
-	ret = tपंचांग_prime_object_init(tfile,
+	ttm_bo_get(&user_bo->vbo.base);
+	ret = ttm_prime_object_init(tfile,
 				    size,
 				    &user_bo->prime,
 				    shareable,
-				    tपंचांग_buffer_type,
+				    ttm_buffer_type,
 				    &vmw_user_bo_release,
 				    &vmw_user_bo_ref_obj_release);
-	अगर (unlikely(ret != 0)) अणु
-		tपंचांग_bo_put(&user_bo->vbo.base);
-		जाओ out_no_base_object;
-	पूर्ण
+	if (unlikely(ret != 0)) {
+		ttm_bo_put(&user_bo->vbo.base);
+		goto out_no_base_object;
+	}
 
 	*p_vbo = &user_bo->vbo;
-	अगर (p_base) अणु
+	if (p_base) {
 		*p_base = &user_bo->prime.base;
 		kref_get(&(*p_base)->refcount);
-	पूर्ण
+	}
 	*handle = user_bo->prime.base.handle;
 
 out_no_base_object:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 /**
- * vmw_user_bo_verअगरy_access - verअगरy access permissions on this
+ * vmw_user_bo_verify_access - verify access permissions on this
  * buffer object.
  *
- * @bo: Poपूर्णांकer to the buffer object being accessed
- * @tfile: Identअगरying the caller.
+ * @bo: Pointer to the buffer object being accessed
+ * @tfile: Identifying the caller.
  */
-पूर्णांक vmw_user_bo_verअगरy_access(काष्ठा tपंचांग_buffer_object *bo,
-			      काष्ठा tपंचांग_object_file *tfile)
-अणु
-	काष्ठा vmw_user_buffer_object *vmw_user_bo;
+int vmw_user_bo_verify_access(struct ttm_buffer_object *bo,
+			      struct ttm_object_file *tfile)
+{
+	struct vmw_user_buffer_object *vmw_user_bo;
 
-	अगर (unlikely(bo->destroy != vmw_user_bo_destroy))
-		वापस -EPERM;
+	if (unlikely(bo->destroy != vmw_user_bo_destroy))
+		return -EPERM;
 
 	vmw_user_bo = vmw_user_buffer_object(bo);
 
-	/* Check that the caller has खोलोed the object. */
-	अगर (likely(tपंचांग_ref_object_exists(tfile, &vmw_user_bo->prime.base)))
-		वापस 0;
+	/* Check that the caller has opened the object. */
+	if (likely(ttm_ref_object_exists(tfile, &vmw_user_bo->prime.base)))
+		return 0;
 
 	DRM_ERROR("Could not grant buffer access.\n");
-	वापस -EPERM;
-पूर्ण
+	return -EPERM;
+}
 
 
 /**
- * vmw_user_bo_synccpu_grab - Grab a काष्ठा vmw_user_buffer_object क्रम cpu
+ * vmw_user_bo_synccpu_grab - Grab a struct vmw_user_buffer_object for cpu
  * access, idling previous GPU operations on the buffer and optionally
- * blocking it क्रम further command submissions.
+ * blocking it for further command submissions.
  *
- * @user_bo: Poपूर्णांकer to the buffer object being grabbed क्रम CPU access
- * @tfile: Identअगरying the caller.
- * @flags: Flags indicating how the grab should be perक्रमmed.
+ * @user_bo: Pointer to the buffer object being grabbed for CPU access
+ * @tfile: Identifying the caller.
+ * @flags: Flags indicating how the grab should be performed.
  * Return: Zero on success, Negative error code on error. In particular,
- * -EBUSY will be वापसed अगर a करोntblock operation is requested and the
- * buffer object is busy, and -ERESTARTSYS will be वापसed अगर a रुको is
- * पूर्णांकerrupted by a संकेत.
+ * -EBUSY will be returned if a dontblock operation is requested and the
+ * buffer object is busy, and -ERESTARTSYS will be returned if a wait is
+ * interrupted by a signal.
  *
- * A blocking grab will be स्वतःmatically released when @tfile is बंदd.
+ * A blocking grab will be automatically released when @tfile is closed.
  */
-अटल पूर्णांक vmw_user_bo_synccpu_grab(काष्ठा vmw_user_buffer_object *user_bo,
-				    काष्ठा tपंचांग_object_file *tfile,
-				    uपूर्णांक32_t flags)
-अणु
-	bool nonblock = !!(flags & drm_vmw_synccpu_करोntblock);
-	काष्ठा tपंचांग_buffer_object *bo = &user_bo->vbo.base;
+static int vmw_user_bo_synccpu_grab(struct vmw_user_buffer_object *user_bo,
+				    struct ttm_object_file *tfile,
+				    uint32_t flags)
+{
+	bool nonblock = !!(flags & drm_vmw_synccpu_dontblock);
+	struct ttm_buffer_object *bo = &user_bo->vbo.base;
 	bool existed;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (flags & drm_vmw_synccpu_allow_cs) अणु
-		दीर्घ lret;
+	if (flags & drm_vmw_synccpu_allow_cs) {
+		long lret;
 
-		lret = dma_resv_रुको_समयout_rcu
+		lret = dma_resv_wait_timeout_rcu
 			(bo->base.resv, true, true,
 			 nonblock ? 0 : MAX_SCHEDULE_TIMEOUT);
-		अगर (!lret)
-			वापस -EBUSY;
-		अन्यथा अगर (lret < 0)
-			वापस lret;
-		वापस 0;
-	पूर्ण
+		if (!lret)
+			return -EBUSY;
+		else if (lret < 0)
+			return lret;
+		return 0;
+	}
 
-	ret = tपंचांग_bo_reserve(bo, true, nonblock, शून्य);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	ret = ttm_bo_reserve(bo, true, nonblock, NULL);
+	if (unlikely(ret != 0))
+		return ret;
 
-	ret = tपंचांग_bo_रुको(bo, true, nonblock);
-	अगर (likely(ret == 0))
-		atomic_inc(&user_bo->vbo.cpu_ग_लिखोrs);
+	ret = ttm_bo_wait(bo, true, nonblock);
+	if (likely(ret == 0))
+		atomic_inc(&user_bo->vbo.cpu_writers);
 
-	tपंचांग_bo_unreserve(bo);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	ttm_bo_unreserve(bo);
+	if (unlikely(ret != 0))
+		return ret;
 
-	ret = tपंचांग_ref_object_add(tfile, &user_bo->prime.base,
+	ret = ttm_ref_object_add(tfile, &user_bo->prime.base,
 				 TTM_REF_SYNCCPU_WRITE, &existed, false);
-	अगर (ret != 0 || existed)
-		atomic_dec(&user_bo->vbo.cpu_ग_लिखोrs);
+	if (ret != 0 || existed)
+		atomic_dec(&user_bo->vbo.cpu_writers);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * vmw_user_bo_synccpu_release - Release a previous grab क्रम CPU access,
- * and unblock command submission on the buffer अगर blocked.
+ * vmw_user_bo_synccpu_release - Release a previous grab for CPU access,
+ * and unblock command submission on the buffer if blocked.
  *
- * @handle: Handle identअगरying the buffer object.
- * @tfile: Identअगरying the caller.
+ * @handle: Handle identifying the buffer object.
+ * @tfile: Identifying the caller.
  * @flags: Flags indicating the type of release.
  */
-अटल पूर्णांक vmw_user_bo_synccpu_release(uपूर्णांक32_t handle,
-					   काष्ठा tपंचांग_object_file *tfile,
-					   uपूर्णांक32_t flags)
-अणु
-	अगर (!(flags & drm_vmw_synccpu_allow_cs))
-		वापस tपंचांग_ref_object_base_unref(tfile, handle,
+static int vmw_user_bo_synccpu_release(uint32_t handle,
+					   struct ttm_object_file *tfile,
+					   uint32_t flags)
+{
+	if (!(flags & drm_vmw_synccpu_allow_cs))
+		return ttm_ref_object_base_unref(tfile, handle,
 						 TTM_REF_SYNCCPU_WRITE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /**
  * vmw_user_bo_synccpu_ioctl - ioctl function implementing the synccpu
  * functionality.
  *
- * @dev: Identअगरies the drm device.
- * @data: Poपूर्णांकer to the ioctl argument.
- * @file_priv: Identअगरies the caller.
+ * @dev: Identifies the drm device.
+ * @data: Pointer to the ioctl argument.
+ * @file_priv: Identifies the caller.
  * Return: Zero on success, negative error code on error.
  *
- * This function checks the ioctl arguments क्रम validity and calls the
+ * This function checks the ioctl arguments for validity and calls the
  * relevant synccpu functions.
  */
-पूर्णांक vmw_user_bo_synccpu_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			      काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_vmw_synccpu_arg *arg =
-		(काष्ठा drm_vmw_synccpu_arg *) data;
-	काष्ठा vmw_buffer_object *vbo;
-	काष्ठा vmw_user_buffer_object *user_bo;
-	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
-	काष्ठा tपंचांग_base_object *buffer_base;
-	पूर्णांक ret;
+int vmw_user_bo_synccpu_ioctl(struct drm_device *dev, void *data,
+			      struct drm_file *file_priv)
+{
+	struct drm_vmw_synccpu_arg *arg =
+		(struct drm_vmw_synccpu_arg *) data;
+	struct vmw_buffer_object *vbo;
+	struct vmw_user_buffer_object *user_bo;
+	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+	struct ttm_base_object *buffer_base;
+	int ret;
 
-	अगर ((arg->flags & (drm_vmw_synccpu_पढ़ो | drm_vmw_synccpu_ग_लिखो)) == 0
-	    || (arg->flags & ~(drm_vmw_synccpu_पढ़ो | drm_vmw_synccpu_ग_लिखो |
-			       drm_vmw_synccpu_करोntblock |
-			       drm_vmw_synccpu_allow_cs)) != 0) अणु
+	if ((arg->flags & (drm_vmw_synccpu_read | drm_vmw_synccpu_write)) == 0
+	    || (arg->flags & ~(drm_vmw_synccpu_read | drm_vmw_synccpu_write |
+			       drm_vmw_synccpu_dontblock |
+			       drm_vmw_synccpu_allow_cs)) != 0) {
 		DRM_ERROR("Illegal synccpu flags.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	चयन (arg->op) अणु
-	हाल drm_vmw_synccpu_grab:
+	switch (arg->op) {
+	case drm_vmw_synccpu_grab:
 		ret = vmw_user_bo_lookup(tfile, arg->handle, &vbo,
 					     &buffer_base);
-		अगर (unlikely(ret != 0))
-			वापस ret;
+		if (unlikely(ret != 0))
+			return ret;
 
-		user_bo = container_of(vbo, काष्ठा vmw_user_buffer_object,
+		user_bo = container_of(vbo, struct vmw_user_buffer_object,
 				       vbo);
 		ret = vmw_user_bo_synccpu_grab(user_bo, tfile, arg->flags);
 		vmw_bo_unreference(&vbo);
-		tपंचांग_base_object_unref(&buffer_base);
-		अगर (unlikely(ret != 0 && ret != -ERESTARTSYS &&
-			     ret != -EBUSY)) अणु
+		ttm_base_object_unref(&buffer_base);
+		if (unlikely(ret != 0 && ret != -ERESTARTSYS &&
+			     ret != -EBUSY)) {
 			DRM_ERROR("Failed synccpu grab on handle 0x%08x.\n",
-				  (अचिन्हित पूर्णांक) arg->handle);
-			वापस ret;
-		पूर्ण
-		अवरोध;
-	हाल drm_vmw_synccpu_release:
+				  (unsigned int) arg->handle);
+			return ret;
+		}
+		break;
+	case drm_vmw_synccpu_release:
 		ret = vmw_user_bo_synccpu_release(arg->handle, tfile,
 						  arg->flags);
-		अगर (unlikely(ret != 0)) अणु
+		if (unlikely(ret != 0)) {
 			DRM_ERROR("Failed synccpu release on handle 0x%08x.\n",
-				  (अचिन्हित पूर्णांक) arg->handle);
-			वापस ret;
-		पूर्ण
-		अवरोध;
-	शेष:
+				  (unsigned int) arg->handle);
+			return ret;
+		}
+		break;
+	default:
 		DRM_ERROR("Invalid synccpu operation.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /**
  * vmw_bo_alloc_ioctl - ioctl function implementing the buffer object
  * allocation functionality.
  *
- * @dev: Identअगरies the drm device.
- * @data: Poपूर्णांकer to the ioctl argument.
- * @file_priv: Identअगरies the caller.
+ * @dev: Identifies the drm device.
+ * @data: Pointer to the ioctl argument.
+ * @file_priv: Identifies the caller.
  * Return: Zero on success, negative error code on error.
  *
- * This function checks the ioctl arguments क्रम validity and allocates a
- * काष्ठा vmw_user_buffer_object bo.
+ * This function checks the ioctl arguments for validity and allocates a
+ * struct vmw_user_buffer_object bo.
  */
-पूर्णांक vmw_bo_alloc_ioctl(काष्ठा drm_device *dev, व्योम *data,
-		       काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा vmw_निजी *dev_priv = vmw_priv(dev);
-	जोड़ drm_vmw_alloc_dmabuf_arg *arg =
-	    (जोड़ drm_vmw_alloc_dmabuf_arg *)data;
-	काष्ठा drm_vmw_alloc_dmabuf_req *req = &arg->req;
-	काष्ठा drm_vmw_dmabuf_rep *rep = &arg->rep;
-	काष्ठा vmw_buffer_object *vbo;
-	uपूर्णांक32_t handle;
-	पूर्णांक ret;
+int vmw_bo_alloc_ioctl(struct drm_device *dev, void *data,
+		       struct drm_file *file_priv)
+{
+	struct vmw_private *dev_priv = vmw_priv(dev);
+	union drm_vmw_alloc_dmabuf_arg *arg =
+	    (union drm_vmw_alloc_dmabuf_arg *)data;
+	struct drm_vmw_alloc_dmabuf_req *req = &arg->req;
+	struct drm_vmw_dmabuf_rep *rep = &arg->rep;
+	struct vmw_buffer_object *vbo;
+	uint32_t handle;
+	int ret;
 
-	ret = tपंचांग_पढ़ो_lock(&dev_priv->reservation_sem, true);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	ret = ttm_read_lock(&dev_priv->reservation_sem, true);
+	if (unlikely(ret != 0))
+		return ret;
 
 	ret = vmw_user_bo_alloc(dev_priv, vmw_fpriv(file_priv)->tfile,
 				req->size, false, &handle, &vbo,
-				शून्य);
-	अगर (unlikely(ret != 0))
-		जाओ out_no_bo;
+				NULL);
+	if (unlikely(ret != 0))
+		goto out_no_bo;
 
 	rep->handle = handle;
 	rep->map_handle = drm_vma_node_offset_addr(&vbo->base.base.vma_node);
@@ -915,318 +914,318 @@ out_no_base_object:
 	vmw_bo_unreference(&vbo);
 
 out_no_bo:
-	tपंचांग_पढ़ो_unlock(&dev_priv->reservation_sem);
+	ttm_read_unlock(&dev_priv->reservation_sem);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
 /**
- * vmw_bo_unref_ioctl - Generic handle बंद ioctl.
+ * vmw_bo_unref_ioctl - Generic handle close ioctl.
  *
- * @dev: Identअगरies the drm device.
- * @data: Poपूर्णांकer to the ioctl argument.
- * @file_priv: Identअगरies the caller.
+ * @dev: Identifies the drm device.
+ * @data: Pointer to the ioctl argument.
+ * @file_priv: Identifies the caller.
  * Return: Zero on success, negative error code on error.
  *
- * This function checks the ioctl arguments क्रम validity and बंदs a
- * handle to a TTM base object, optionally मुक्तing the object.
+ * This function checks the ioctl arguments for validity and closes a
+ * handle to a TTM base object, optionally freeing the object.
  */
-पूर्णांक vmw_bo_unref_ioctl(काष्ठा drm_device *dev, व्योम *data,
-		       काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_vmw_unref_dmabuf_arg *arg =
-	    (काष्ठा drm_vmw_unref_dmabuf_arg *)data;
+int vmw_bo_unref_ioctl(struct drm_device *dev, void *data,
+		       struct drm_file *file_priv)
+{
+	struct drm_vmw_unref_dmabuf_arg *arg =
+	    (struct drm_vmw_unref_dmabuf_arg *)data;
 
-	वापस tपंचांग_ref_object_base_unref(vmw_fpriv(file_priv)->tfile,
+	return ttm_ref_object_base_unref(vmw_fpriv(file_priv)->tfile,
 					 arg->handle,
 					 TTM_REF_USAGE);
-पूर्ण
+}
 
 
 /**
  * vmw_user_bo_lookup - Look up a vmw user buffer object from a handle.
  *
- * @tfile: The TTM object file the handle is रेजिस्टरed with.
+ * @tfile: The TTM object file the handle is registered with.
  * @handle: The user buffer object handle
- * @out: Poपूर्णांकer to a where a poपूर्णांकer to the embedded
- * काष्ठा vmw_buffer_object should be placed.
- * @p_base: Poपूर्णांकer to where a poपूर्णांकer to the TTM base object should be
- * placed, or शून्य अगर no such poपूर्णांकer is required.
+ * @out: Pointer to a where a pointer to the embedded
+ * struct vmw_buffer_object should be placed.
+ * @p_base: Pointer to where a pointer to the TTM base object should be
+ * placed, or NULL if no such pointer is required.
  * Return: Zero on success, Negative error code on error.
  *
- * Both the output base object poपूर्णांकer and the vmw buffer object poपूर्णांकer
+ * Both the output base object pointer and the vmw buffer object pointer
  * will be refcounted.
  */
-पूर्णांक vmw_user_bo_lookup(काष्ठा tपंचांग_object_file *tfile,
-		       uपूर्णांक32_t handle, काष्ठा vmw_buffer_object **out,
-		       काष्ठा tपंचांग_base_object **p_base)
-अणु
-	काष्ठा vmw_user_buffer_object *vmw_user_bo;
-	काष्ठा tपंचांग_base_object *base;
+int vmw_user_bo_lookup(struct ttm_object_file *tfile,
+		       uint32_t handle, struct vmw_buffer_object **out,
+		       struct ttm_base_object **p_base)
+{
+	struct vmw_user_buffer_object *vmw_user_bo;
+	struct ttm_base_object *base;
 
-	base = tपंचांग_base_object_lookup(tfile, handle);
-	अगर (unlikely(base == शून्य)) अणु
+	base = ttm_base_object_lookup(tfile, handle);
+	if (unlikely(base == NULL)) {
 		DRM_ERROR("Invalid buffer object handle 0x%08lx.\n",
-			  (अचिन्हित दीर्घ)handle);
-		वापस -ESRCH;
-	पूर्ण
+			  (unsigned long)handle);
+		return -ESRCH;
+	}
 
-	अगर (unlikely(tपंचांग_base_object_type(base) != tपंचांग_buffer_type)) अणु
-		tपंचांग_base_object_unref(&base);
+	if (unlikely(ttm_base_object_type(base) != ttm_buffer_type)) {
+		ttm_base_object_unref(&base);
 		DRM_ERROR("Invalid buffer object handle 0x%08lx.\n",
-			  (अचिन्हित दीर्घ)handle);
-		वापस -EINVAL;
-	पूर्ण
+			  (unsigned long)handle);
+		return -EINVAL;
+	}
 
-	vmw_user_bo = container_of(base, काष्ठा vmw_user_buffer_object,
+	vmw_user_bo = container_of(base, struct vmw_user_buffer_object,
 				   prime.base);
-	tपंचांग_bo_get(&vmw_user_bo->vbo.base);
-	अगर (p_base)
+	ttm_bo_get(&vmw_user_bo->vbo.base);
+	if (p_base)
 		*p_base = base;
-	अन्यथा
-		tपंचांग_base_object_unref(&base);
+	else
+		ttm_base_object_unref(&base);
 	*out = &vmw_user_bo->vbo;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vmw_user_bo_noref_lookup - Look up a vmw user buffer object without reference
- * @tfile: The TTM object file the handle is रेजिस्टरed with.
+ * @tfile: The TTM object file the handle is registered with.
  * @handle: The user buffer object handle.
  *
- * This function looks up a काष्ठा vmw_user_bo and वापसs a poपूर्णांकer to the
- * काष्ठा vmw_buffer_object it derives from without refcounting the poपूर्णांकer.
- * The वापसed poपूर्णांकer is only valid until vmw_user_bo_noref_release() is
- * called, and the object poपूर्णांकed to by the वापसed poपूर्णांकer may be करोomed.
+ * This function looks up a struct vmw_user_bo and returns a pointer to the
+ * struct vmw_buffer_object it derives from without refcounting the pointer.
+ * The returned pointer is only valid until vmw_user_bo_noref_release() is
+ * called, and the object pointed to by the returned pointer may be doomed.
  * Any persistent usage of the object requires a refcount to be taken using
- * tपंचांग_bo_reference_unless_करोomed(). Iff this function वापसs successfully it
+ * ttm_bo_reference_unless_doomed(). Iff this function returns successfully it
  * needs to be paired with vmw_user_bo_noref_release() and no sleeping-
  * or scheduling functions may be called inbetween these function calls.
  *
- * Return: A काष्ठा vmw_buffer_object poपूर्णांकer अगर successful or negative
- * error poपूर्णांकer on failure.
+ * Return: A struct vmw_buffer_object pointer if successful or negative
+ * error pointer on failure.
  */
-काष्ठा vmw_buffer_object *
-vmw_user_bo_noref_lookup(काष्ठा tपंचांग_object_file *tfile, u32 handle)
-अणु
-	काष्ठा vmw_user_buffer_object *vmw_user_bo;
-	काष्ठा tपंचांग_base_object *base;
+struct vmw_buffer_object *
+vmw_user_bo_noref_lookup(struct ttm_object_file *tfile, u32 handle)
+{
+	struct vmw_user_buffer_object *vmw_user_bo;
+	struct ttm_base_object *base;
 
-	base = tपंचांग_base_object_noref_lookup(tfile, handle);
-	अगर (!base) अणु
+	base = ttm_base_object_noref_lookup(tfile, handle);
+	if (!base) {
 		DRM_ERROR("Invalid buffer object handle 0x%08lx.\n",
-			  (अचिन्हित दीर्घ)handle);
-		वापस ERR_PTR(-ESRCH);
-	पूर्ण
+			  (unsigned long)handle);
+		return ERR_PTR(-ESRCH);
+	}
 
-	अगर (unlikely(tपंचांग_base_object_type(base) != tपंचांग_buffer_type)) अणु
-		tपंचांग_base_object_noref_release();
+	if (unlikely(ttm_base_object_type(base) != ttm_buffer_type)) {
+		ttm_base_object_noref_release();
 		DRM_ERROR("Invalid buffer object handle 0x%08lx.\n",
-			  (अचिन्हित दीर्घ)handle);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+			  (unsigned long)handle);
+		return ERR_PTR(-EINVAL);
+	}
 
-	vmw_user_bo = container_of(base, काष्ठा vmw_user_buffer_object,
+	vmw_user_bo = container_of(base, struct vmw_user_buffer_object,
 				   prime.base);
-	वापस &vmw_user_bo->vbo;
-पूर्ण
+	return &vmw_user_bo->vbo;
+}
 
 /**
  * vmw_user_bo_reference - Open a handle to a vmw user buffer object.
  *
- * @tfile: The TTM object file to रेजिस्टर the handle with.
+ * @tfile: The TTM object file to register the handle with.
  * @vbo: The embedded vmw buffer object.
- * @handle: Poपूर्णांकer to where the new handle should be placed.
+ * @handle: Pointer to where the new handle should be placed.
  * Return: Zero on success, Negative error code on error.
  */
-पूर्णांक vmw_user_bo_reference(काष्ठा tपंचांग_object_file *tfile,
-			  काष्ठा vmw_buffer_object *vbo,
-			  uपूर्णांक32_t *handle)
-अणु
-	काष्ठा vmw_user_buffer_object *user_bo;
+int vmw_user_bo_reference(struct ttm_object_file *tfile,
+			  struct vmw_buffer_object *vbo,
+			  uint32_t *handle)
+{
+	struct vmw_user_buffer_object *user_bo;
 
-	अगर (vbo->base.destroy != vmw_user_bo_destroy)
-		वापस -EINVAL;
+	if (vbo->base.destroy != vmw_user_bo_destroy)
+		return -EINVAL;
 
-	user_bo = container_of(vbo, काष्ठा vmw_user_buffer_object, vbo);
+	user_bo = container_of(vbo, struct vmw_user_buffer_object, vbo);
 
 	*handle = user_bo->prime.base.handle;
-	वापस tपंचांग_ref_object_add(tfile, &user_bo->prime.base,
-				  TTM_REF_USAGE, शून्य, false);
-पूर्ण
+	return ttm_ref_object_add(tfile, &user_bo->prime.base,
+				  TTM_REF_USAGE, NULL, false);
+}
 
 
 /**
  * vmw_bo_fence_single - Utility function to fence a single TTM buffer
  *                       object without unreserving it.
  *
- * @bo:             Poपूर्णांकer to the काष्ठा tपंचांग_buffer_object to fence.
- * @fence:          Poपूर्णांकer to the fence. If शून्य, this function will
- *                  insert a fence पूर्णांकo the command stream..
+ * @bo:             Pointer to the struct ttm_buffer_object to fence.
+ * @fence:          Pointer to the fence. If NULL, this function will
+ *                  insert a fence into the command stream..
  *
- * Contrary to the tपंचांग_eu version of this function, it takes only
- * a single buffer object instead of a list, and it also करोesn't
- * unreserve the buffer object, which needs to be करोne separately.
+ * Contrary to the ttm_eu version of this function, it takes only
+ * a single buffer object instead of a list, and it also doesn't
+ * unreserve the buffer object, which needs to be done separately.
  */
-व्योम vmw_bo_fence_single(काष्ठा tपंचांग_buffer_object *bo,
-			 काष्ठा vmw_fence_obj *fence)
-अणु
-	काष्ठा tपंचांग_device *bdev = bo->bdev;
+void vmw_bo_fence_single(struct ttm_buffer_object *bo,
+			 struct vmw_fence_obj *fence)
+{
+	struct ttm_device *bdev = bo->bdev;
 
-	काष्ठा vmw_निजी *dev_priv =
-		container_of(bdev, काष्ठा vmw_निजी, bdev);
+	struct vmw_private *dev_priv =
+		container_of(bdev, struct vmw_private, bdev);
 
-	अगर (fence == शून्य) अणु
-		vmw_execbuf_fence_commands(शून्य, dev_priv, &fence, शून्य);
+	if (fence == NULL) {
+		vmw_execbuf_fence_commands(NULL, dev_priv, &fence, NULL);
 		dma_resv_add_excl_fence(bo->base.resv, &fence->base);
 		dma_fence_put(&fence->base);
-	पूर्ण अन्यथा
+	} else
 		dma_resv_add_excl_fence(bo->base.resv, &fence->base);
-पूर्ण
+}
 
 
 /**
  * vmw_dumb_create - Create a dumb kms buffer
  *
- * @file_priv: Poपूर्णांकer to a काष्ठा drm_file identअगरying the caller.
- * @dev: Poपूर्णांकer to the drm device.
- * @args: Poपूर्णांकer to a काष्ठा drm_mode_create_dumb काष्ठाure
+ * @file_priv: Pointer to a struct drm_file identifying the caller.
+ * @dev: Pointer to the drm device.
+ * @args: Pointer to a struct drm_mode_create_dumb structure
  * Return: Zero on success, negative error code on failure.
  *
- * This is a driver callback क्रम the core drm create_dumb functionality.
+ * This is a driver callback for the core drm create_dumb functionality.
  * Note that this is very similar to the vmw_bo_alloc ioctl, except
- * that the arguments have a dअगरferent क्रमmat.
+ * that the arguments have a different format.
  */
-पूर्णांक vmw_dumb_create(काष्ठा drm_file *file_priv,
-		    काष्ठा drm_device *dev,
-		    काष्ठा drm_mode_create_dumb *args)
-अणु
-	काष्ठा vmw_निजी *dev_priv = vmw_priv(dev);
-	काष्ठा vmw_buffer_object *vbo;
-	पूर्णांक ret;
+int vmw_dumb_create(struct drm_file *file_priv,
+		    struct drm_device *dev,
+		    struct drm_mode_create_dumb *args)
+{
+	struct vmw_private *dev_priv = vmw_priv(dev);
+	struct vmw_buffer_object *vbo;
+	int ret;
 
 	args->pitch = args->width * ((args->bpp + 7) / 8);
 	args->size = args->pitch * args->height;
 
-	ret = tपंचांग_पढ़ो_lock(&dev_priv->reservation_sem, true);
-	अगर (unlikely(ret != 0))
-		वापस ret;
+	ret = ttm_read_lock(&dev_priv->reservation_sem, true);
+	if (unlikely(ret != 0))
+		return ret;
 
 	ret = vmw_user_bo_alloc(dev_priv, vmw_fpriv(file_priv)->tfile,
 				    args->size, false, &args->handle,
-				    &vbo, शून्य);
-	अगर (unlikely(ret != 0))
-		जाओ out_no_bo;
+				    &vbo, NULL);
+	if (unlikely(ret != 0))
+		goto out_no_bo;
 
 	vmw_bo_unreference(&vbo);
 out_no_bo:
-	tपंचांग_पढ़ो_unlock(&dev_priv->reservation_sem);
-	वापस ret;
-पूर्ण
+	ttm_read_unlock(&dev_priv->reservation_sem);
+	return ret;
+}
 
 
 /**
  * vmw_dumb_map_offset - Return the address space offset of a dumb buffer
  *
- * @file_priv: Poपूर्णांकer to a काष्ठा drm_file identअगरying the caller.
- * @dev: Poपूर्णांकer to the drm device.
- * @handle: Handle identअगरying the dumb buffer.
- * @offset: The address space offset वापसed.
+ * @file_priv: Pointer to a struct drm_file identifying the caller.
+ * @dev: Pointer to the drm device.
+ * @handle: Handle identifying the dumb buffer.
+ * @offset: The address space offset returned.
  * Return: Zero on success, negative error code on failure.
  *
- * This is a driver callback क्रम the core drm dumb_map_offset functionality.
+ * This is a driver callback for the core drm dumb_map_offset functionality.
  */
-पूर्णांक vmw_dumb_map_offset(काष्ठा drm_file *file_priv,
-			काष्ठा drm_device *dev, uपूर्णांक32_t handle,
-			uपूर्णांक64_t *offset)
-अणु
-	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
-	काष्ठा vmw_buffer_object *out_buf;
-	पूर्णांक ret;
+int vmw_dumb_map_offset(struct drm_file *file_priv,
+			struct drm_device *dev, uint32_t handle,
+			uint64_t *offset)
+{
+	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+	struct vmw_buffer_object *out_buf;
+	int ret;
 
-	ret = vmw_user_bo_lookup(tfile, handle, &out_buf, शून्य);
-	अगर (ret != 0)
-		वापस -EINVAL;
+	ret = vmw_user_bo_lookup(tfile, handle, &out_buf, NULL);
+	if (ret != 0)
+		return -EINVAL;
 
 	*offset = drm_vma_node_offset_addr(&out_buf->base.base.vma_node);
 	vmw_bo_unreference(&out_buf);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /**
  * vmw_dumb_destroy - Destroy a dumb boffer
  *
- * @file_priv: Poपूर्णांकer to a काष्ठा drm_file identअगरying the caller.
- * @dev: Poपूर्णांकer to the drm device.
- * @handle: Handle identअगरying the dumb buffer.
+ * @file_priv: Pointer to a struct drm_file identifying the caller.
+ * @dev: Pointer to the drm device.
+ * @handle: Handle identifying the dumb buffer.
  * Return: Zero on success, negative error code on failure.
  *
- * This is a driver callback क्रम the core drm dumb_destroy functionality.
+ * This is a driver callback for the core drm dumb_destroy functionality.
  */
-पूर्णांक vmw_dumb_destroy(काष्ठा drm_file *file_priv,
-		     काष्ठा drm_device *dev,
-		     uपूर्णांक32_t handle)
-अणु
-	वापस tपंचांग_ref_object_base_unref(vmw_fpriv(file_priv)->tfile,
+int vmw_dumb_destroy(struct drm_file *file_priv,
+		     struct drm_device *dev,
+		     uint32_t handle)
+{
+	return ttm_ref_object_base_unref(vmw_fpriv(file_priv)->tfile,
 					 handle, TTM_REF_USAGE);
-पूर्ण
+}
 
 
 /**
- * vmw_bo_swap_notअगरy - swapout notअगरy callback.
+ * vmw_bo_swap_notify - swapout notify callback.
  *
  * @bo: The buffer object to be swapped out.
  */
-व्योम vmw_bo_swap_notअगरy(काष्ठा tपंचांग_buffer_object *bo)
-अणु
-	/* Is @bo embedded in a काष्ठा vmw_buffer_object? */
-	अगर (bo->destroy != vmw_bo_bo_मुक्त &&
+void vmw_bo_swap_notify(struct ttm_buffer_object *bo)
+{
+	/* Is @bo embedded in a struct vmw_buffer_object? */
+	if (bo->destroy != vmw_bo_bo_free &&
 	    bo->destroy != vmw_user_bo_destroy)
-		वापस;
+		return;
 
-	/* Kill any cached kernel maps beक्रमe swapout */
+	/* Kill any cached kernel maps before swapout */
 	vmw_bo_unmap(vmw_buffer_object(bo));
-पूर्ण
+}
 
 
 /**
- * vmw_bo_move_notअगरy - TTM move_notअगरy_callback
+ * vmw_bo_move_notify - TTM move_notify_callback
  *
  * @bo: The TTM buffer object about to move.
- * @mem: The काष्ठा tपंचांग_resource indicating to what memory
+ * @mem: The struct ttm_resource indicating to what memory
  *       region the move is taking place.
  *
  * Detaches cached maps and device bindings that require that the
- * buffer करोesn't move.
+ * buffer doesn't move.
  */
-व्योम vmw_bo_move_notअगरy(काष्ठा tपंचांग_buffer_object *bo,
-			काष्ठा tपंचांग_resource *mem)
-अणु
-	काष्ठा vmw_buffer_object *vbo;
+void vmw_bo_move_notify(struct ttm_buffer_object *bo,
+			struct ttm_resource *mem)
+{
+	struct vmw_buffer_object *vbo;
 
-	/* Make sure @bo is embedded in a काष्ठा vmw_buffer_object? */
-	अगर (bo->destroy != vmw_bo_bo_मुक्त &&
+	/* Make sure @bo is embedded in a struct vmw_buffer_object? */
+	if (bo->destroy != vmw_bo_bo_free &&
 	    bo->destroy != vmw_user_bo_destroy)
-		वापस;
+		return;
 
-	vbo = container_of(bo, काष्ठा vmw_buffer_object, base);
+	vbo = container_of(bo, struct vmw_buffer_object, base);
 
 	/*
-	 * Kill any cached kernel maps beक्रमe move to or from VRAM.
+	 * Kill any cached kernel maps before move to or from VRAM.
 	 * With other types of moves, the underlying pages stay the same,
 	 * and the map can be kept.
 	 */
-	अगर (mem->mem_type == TTM_PL_VRAM || bo->mem.mem_type == TTM_PL_VRAM)
+	if (mem->mem_type == TTM_PL_VRAM || bo->mem.mem_type == TTM_PL_VRAM)
 		vmw_bo_unmap(vbo);
 
 	/*
 	 * If we're moving a backup MOB out of MOB placement, then make sure we
-	 * पढ़ो back all resource content first, and unbind the MOB from
+	 * read back all resource content first, and unbind the MOB from
 	 * the resource.
 	 */
-	अगर (mem->mem_type != VMW_PL_MOB && bo->mem.mem_type == VMW_PL_MOB)
+	if (mem->mem_type != VMW_PL_MOB && bo->mem.mem_type == VMW_PL_MOB)
 		vmw_resource_unbind_list(vbo);
-पूर्ण
+}

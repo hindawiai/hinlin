@@ -1,266 +1,265 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित __MACH_MMP_CLK_H
-#घोषणा __MACH_MMP_CLK_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef __MACH_MMP_CLK_H
+#define __MACH_MMP_CLK_H
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/clkdev.h>
+#include <linux/clk-provider.h>
+#include <linux/pm_domain.h>
+#include <linux/clkdev.h>
 
-#घोषणा APBC_NO_BUS_CTRL	BIT(0)
-#घोषणा APBC_POWER_CTRL		BIT(1)
+#define APBC_NO_BUS_CTRL	BIT(0)
+#define APBC_POWER_CTRL		BIT(1)
 
 
 /* Clock type "factor" */
-काष्ठा mmp_clk_factor_masks अणु
-	अचिन्हित पूर्णांक factor;
-	अचिन्हित पूर्णांक num_mask;
-	अचिन्हित पूर्णांक den_mask;
-	अचिन्हित पूर्णांक num_shअगरt;
-	अचिन्हित पूर्णांक den_shअगरt;
-	अचिन्हित पूर्णांक enable_mask;
-पूर्ण;
+struct mmp_clk_factor_masks {
+	unsigned int factor;
+	unsigned int num_mask;
+	unsigned int den_mask;
+	unsigned int num_shift;
+	unsigned int den_shift;
+	unsigned int enable_mask;
+};
 
-काष्ठा mmp_clk_factor_tbl अणु
-	अचिन्हित पूर्णांक num;
-	अचिन्हित पूर्णांक den;
-पूर्ण;
+struct mmp_clk_factor_tbl {
+	unsigned int num;
+	unsigned int den;
+};
 
-काष्ठा mmp_clk_factor अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *base;
-	काष्ठा mmp_clk_factor_masks *masks;
-	काष्ठा mmp_clk_factor_tbl *ftbl;
-	अचिन्हित पूर्णांक ftbl_cnt;
+struct mmp_clk_factor {
+	struct clk_hw hw;
+	void __iomem *base;
+	struct mmp_clk_factor_masks *masks;
+	struct mmp_clk_factor_tbl *ftbl;
+	unsigned int ftbl_cnt;
 	spinlock_t *lock;
-पूर्ण;
+};
 
-बाह्य काष्ठा clk *mmp_clk_रेजिस्टर_factor(स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
-		व्योम __iomem *base, काष्ठा mmp_clk_factor_masks *masks,
-		काष्ठा mmp_clk_factor_tbl *ftbl, अचिन्हित पूर्णांक ftbl_cnt,
+extern struct clk *mmp_clk_register_factor(const char *name,
+		const char *parent_name, unsigned long flags,
+		void __iomem *base, struct mmp_clk_factor_masks *masks,
+		struct mmp_clk_factor_tbl *ftbl, unsigned int ftbl_cnt,
 		spinlock_t *lock);
 
 /* Clock type "mix" */
-#घोषणा MMP_CLK_BITS_MASK(width, shअगरt)			\
-		(((1 << (width)) - 1) << (shअगरt))
-#घोषणा MMP_CLK_BITS_GET_VAL(data, width, shअगरt)	\
-		((data & MMP_CLK_BITS_MASK(width, shअगरt)) >> (shअगरt))
-#घोषणा MMP_CLK_BITS_SET_VAL(val, width, shअगरt)		\
-		(((val) << (shअगरt)) & MMP_CLK_BITS_MASK(width, shअगरt))
+#define MMP_CLK_BITS_MASK(width, shift)			\
+		(((1 << (width)) - 1) << (shift))
+#define MMP_CLK_BITS_GET_VAL(data, width, shift)	\
+		((data & MMP_CLK_BITS_MASK(width, shift)) >> (shift))
+#define MMP_CLK_BITS_SET_VAL(val, width, shift)		\
+		(((val) << (shift)) & MMP_CLK_BITS_MASK(width, shift))
 
-क्रमागत अणु
+enum {
 	MMP_CLK_MIX_TYPE_V1,
 	MMP_CLK_MIX_TYPE_V2,
 	MMP_CLK_MIX_TYPE_V3,
-पूर्ण;
+};
 
-/* The रेजिस्टर layout */
-काष्ठा mmp_clk_mix_reg_info अणु
-	व्योम __iomem *reg_clk_ctrl;
-	व्योम __iomem *reg_clk_sel;
-	u8 width_भाग;
-	u8 shअगरt_भाग;
+/* The register layout */
+struct mmp_clk_mix_reg_info {
+	void __iomem *reg_clk_ctrl;
+	void __iomem *reg_clk_sel;
+	u8 width_div;
+	u8 shift_div;
 	u8 width_mux;
-	u8 shअगरt_mux;
+	u8 shift_mux;
 	u8 bit_fc;
-पूर्ण;
+};
 
-/* The suggested घड़ी table from user. */
-काष्ठा mmp_clk_mix_clk_table अणु
-	अचिन्हित दीर्घ rate;
+/* The suggested clock table from user. */
+struct mmp_clk_mix_clk_table {
+	unsigned long rate;
 	u8 parent_index;
-	अचिन्हित पूर्णांक भागisor;
-	अचिन्हित पूर्णांक valid;
-पूर्ण;
+	unsigned int divisor;
+	unsigned int valid;
+};
 
-काष्ठा mmp_clk_mix_config अणु
-	काष्ठा mmp_clk_mix_reg_info reg_info;
-	काष्ठा mmp_clk_mix_clk_table *table;
-	अचिन्हित पूर्णांक table_size;
+struct mmp_clk_mix_config {
+	struct mmp_clk_mix_reg_info reg_info;
+	struct mmp_clk_mix_clk_table *table;
+	unsigned int table_size;
 	u32 *mux_table;
-	काष्ठा clk_भाग_प्रकारable *भाग_प्रकारable;
-	u8 भाग_flags;
+	struct clk_div_table *div_table;
+	u8 div_flags;
 	u8 mux_flags;
-पूर्ण;
+};
 
-काष्ठा mmp_clk_mix अणु
-	काष्ठा clk_hw hw;
-	काष्ठा mmp_clk_mix_reg_info reg_info;
-	काष्ठा mmp_clk_mix_clk_table *table;
+struct mmp_clk_mix {
+	struct clk_hw hw;
+	struct mmp_clk_mix_reg_info reg_info;
+	struct mmp_clk_mix_clk_table *table;
 	u32 *mux_table;
-	काष्ठा clk_भाग_प्रकारable *भाग_प्रकारable;
-	अचिन्हित पूर्णांक table_size;
-	u8 भाग_flags;
+	struct clk_div_table *div_table;
+	unsigned int table_size;
+	u8 div_flags;
 	u8 mux_flags;
-	अचिन्हित पूर्णांक type;
+	unsigned int type;
 	spinlock_t *lock;
-पूर्ण;
+};
 
-बाह्य स्थिर काष्ठा clk_ops mmp_clk_mix_ops;
-बाह्य काष्ठा clk *mmp_clk_रेजिस्टर_mix(काष्ठा device *dev,
-					स्थिर अक्षर *name,
-					स्थिर अक्षर * स्थिर *parent_names,
+extern const struct clk_ops mmp_clk_mix_ops;
+extern struct clk *mmp_clk_register_mix(struct device *dev,
+					const char *name,
+					const char * const *parent_names,
 					u8 num_parents,
-					अचिन्हित दीर्घ flags,
-					काष्ठा mmp_clk_mix_config *config,
+					unsigned long flags,
+					struct mmp_clk_mix_config *config,
 					spinlock_t *lock);
 
 
-/* Clock type "gate". MMP निजी gate */
-#घोषणा MMP_CLK_GATE_NEED_DELAY		BIT(0)
+/* Clock type "gate". MMP private gate */
+#define MMP_CLK_GATE_NEED_DELAY		BIT(0)
 
-काष्ठा mmp_clk_gate अणु
-	काष्ठा clk_hw hw;
-	व्योम __iomem *reg;
+struct mmp_clk_gate {
+	struct clk_hw hw;
+	void __iomem *reg;
 	u32 mask;
 	u32 val_enable;
 	u32 val_disable;
-	अचिन्हित पूर्णांक flags;
+	unsigned int flags;
 	spinlock_t *lock;
-पूर्ण;
+};
 
-बाह्य स्थिर काष्ठा clk_ops mmp_clk_gate_ops;
-बाह्य काष्ठा clk *mmp_clk_रेजिस्टर_gate(काष्ठा device *dev, स्थिर अक्षर *name,
-			स्थिर अक्षर *parent_name, अचिन्हित दीर्घ flags,
-			व्योम __iomem *reg, u32 mask, u32 val_enable,
-			u32 val_disable, अचिन्हित पूर्णांक gate_flags,
+extern const struct clk_ops mmp_clk_gate_ops;
+extern struct clk *mmp_clk_register_gate(struct device *dev, const char *name,
+			const char *parent_name, unsigned long flags,
+			void __iomem *reg, u32 mask, u32 val_enable,
+			u32 val_disable, unsigned int gate_flags,
 			spinlock_t *lock);
 
-बाह्य काष्ठा clk *mmp_clk_रेजिस्टर_apbc(स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, व्योम __iomem *base,
-		अचिन्हित पूर्णांक delay, अचिन्हित पूर्णांक apbc_flags, spinlock_t *lock);
-बाह्य काष्ठा clk *mmp_clk_रेजिस्टर_apmu(स्थिर अक्षर *name,
-		स्थिर अक्षर *parent_name, व्योम __iomem *base, u32 enable_mask,
+extern struct clk *mmp_clk_register_apbc(const char *name,
+		const char *parent_name, void __iomem *base,
+		unsigned int delay, unsigned int apbc_flags, spinlock_t *lock);
+extern struct clk *mmp_clk_register_apmu(const char *name,
+		const char *parent_name, void __iomem *base, u32 enable_mask,
 		spinlock_t *lock);
 
-काष्ठा mmp_clk_unit अणु
-	अचिन्हित पूर्णांक nr_clks;
-	काष्ठा clk **clk_table;
-	काष्ठा clk_onecell_data clk_data;
-पूर्ण;
+struct mmp_clk_unit {
+	unsigned int nr_clks;
+	struct clk **clk_table;
+	struct clk_onecell_data clk_data;
+};
 
-काष्ठा mmp_param_fixed_rate_clk अणु
-	अचिन्हित पूर्णांक id;
-	अक्षर *name;
-	स्थिर अक्षर *parent_name;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ fixed_rate;
-पूर्ण;
-व्योम mmp_रेजिस्टर_fixed_rate_clks(काष्ठा mmp_clk_unit *unit,
-				काष्ठा mmp_param_fixed_rate_clk *clks,
-				पूर्णांक size);
+struct mmp_param_fixed_rate_clk {
+	unsigned int id;
+	char *name;
+	const char *parent_name;
+	unsigned long flags;
+	unsigned long fixed_rate;
+};
+void mmp_register_fixed_rate_clks(struct mmp_clk_unit *unit,
+				struct mmp_param_fixed_rate_clk *clks,
+				int size);
 
-काष्ठा mmp_param_fixed_factor_clk अणु
-	अचिन्हित पूर्णांक id;
-	अक्षर *name;
-	स्थिर अक्षर *parent_name;
-	अचिन्हित दीर्घ mult;
-	अचिन्हित दीर्घ भाग;
-	अचिन्हित दीर्घ flags;
-पूर्ण;
-व्योम mmp_रेजिस्टर_fixed_factor_clks(काष्ठा mmp_clk_unit *unit,
-				काष्ठा mmp_param_fixed_factor_clk *clks,
-				पूर्णांक size);
+struct mmp_param_fixed_factor_clk {
+	unsigned int id;
+	char *name;
+	const char *parent_name;
+	unsigned long mult;
+	unsigned long div;
+	unsigned long flags;
+};
+void mmp_register_fixed_factor_clks(struct mmp_clk_unit *unit,
+				struct mmp_param_fixed_factor_clk *clks,
+				int size);
 
-काष्ठा mmp_param_general_gate_clk अणु
-	अचिन्हित पूर्णांक id;
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *parent_name;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ offset;
+struct mmp_param_general_gate_clk {
+	unsigned int id;
+	const char *name;
+	const char *parent_name;
+	unsigned long flags;
+	unsigned long offset;
 	u8 bit_idx;
 	u8 gate_flags;
 	spinlock_t *lock;
-पूर्ण;
-व्योम mmp_रेजिस्टर_general_gate_clks(काष्ठा mmp_clk_unit *unit,
-				काष्ठा mmp_param_general_gate_clk *clks,
-				व्योम __iomem *base, पूर्णांक size);
+};
+void mmp_register_general_gate_clks(struct mmp_clk_unit *unit,
+				struct mmp_param_general_gate_clk *clks,
+				void __iomem *base, int size);
 
-काष्ठा mmp_param_gate_clk अणु
-	अचिन्हित पूर्णांक id;
-	अक्षर *name;
-	स्थिर अक्षर *parent_name;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ offset;
+struct mmp_param_gate_clk {
+	unsigned int id;
+	char *name;
+	const char *parent_name;
+	unsigned long flags;
+	unsigned long offset;
 	u32 mask;
 	u32 val_enable;
 	u32 val_disable;
-	अचिन्हित पूर्णांक gate_flags;
+	unsigned int gate_flags;
 	spinlock_t *lock;
-पूर्ण;
-व्योम mmp_रेजिस्टर_gate_clks(काष्ठा mmp_clk_unit *unit,
-			काष्ठा mmp_param_gate_clk *clks,
-			व्योम __iomem *base, पूर्णांक size);
+};
+void mmp_register_gate_clks(struct mmp_clk_unit *unit,
+			struct mmp_param_gate_clk *clks,
+			void __iomem *base, int size);
 
-काष्ठा mmp_param_mux_clk अणु
-	अचिन्हित पूर्णांक id;
-	अक्षर *name;
-	स्थिर अक्षर * स्थिर *parent_name;
+struct mmp_param_mux_clk {
+	unsigned int id;
+	char *name;
+	const char * const *parent_name;
 	u8 num_parents;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ offset;
-	u8 shअगरt;
+	unsigned long flags;
+	unsigned long offset;
+	u8 shift;
 	u8 width;
 	u8 mux_flags;
 	spinlock_t *lock;
-पूर्ण;
-व्योम mmp_रेजिस्टर_mux_clks(काष्ठा mmp_clk_unit *unit,
-			काष्ठा mmp_param_mux_clk *clks,
-			व्योम __iomem *base, पूर्णांक size);
+};
+void mmp_register_mux_clks(struct mmp_clk_unit *unit,
+			struct mmp_param_mux_clk *clks,
+			void __iomem *base, int size);
 
-काष्ठा mmp_param_भाग_clk अणु
-	अचिन्हित पूर्णांक id;
-	अक्षर *name;
-	स्थिर अक्षर *parent_name;
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ offset;
-	u8 shअगरt;
+struct mmp_param_div_clk {
+	unsigned int id;
+	char *name;
+	const char *parent_name;
+	unsigned long flags;
+	unsigned long offset;
+	u8 shift;
 	u8 width;
-	u8 भाग_flags;
+	u8 div_flags;
 	spinlock_t *lock;
-पूर्ण;
-व्योम mmp_रेजिस्टर_भाग_clks(काष्ठा mmp_clk_unit *unit,
-			काष्ठा mmp_param_भाग_clk *clks,
-			व्योम __iomem *base, पूर्णांक size);
+};
+void mmp_register_div_clks(struct mmp_clk_unit *unit,
+			struct mmp_param_div_clk *clks,
+			void __iomem *base, int size);
 
-काष्ठा mmp_param_pll_clk अणु
-	अचिन्हित पूर्णांक id;
-	अक्षर *name;
-	अचिन्हित दीर्घ शेष_rate;
-	अचिन्हित दीर्घ enable_offset;
+struct mmp_param_pll_clk {
+	unsigned int id;
+	char *name;
+	unsigned long default_rate;
+	unsigned long enable_offset;
 	u32 enable;
-	अचिन्हित दीर्घ offset;
-	u8 shअगरt;
-	/* MMP3 specअगरic: */
-	अचिन्हित दीर्घ input_rate;
-	अचिन्हित दीर्घ postभाग_offset;
-	अचिन्हित दीर्घ postभाग_shअगरt;
-पूर्ण;
-व्योम mmp_रेजिस्टर_pll_clks(काष्ठा mmp_clk_unit *unit,
-			काष्ठा mmp_param_pll_clk *clks,
-			व्योम __iomem *base, पूर्णांक size);
+	unsigned long offset;
+	u8 shift;
+	/* MMP3 specific: */
+	unsigned long input_rate;
+	unsigned long postdiv_offset;
+	unsigned long postdiv_shift;
+};
+void mmp_register_pll_clks(struct mmp_clk_unit *unit,
+			struct mmp_param_pll_clk *clks,
+			void __iomem *base, int size);
 
-#घोषणा DEFINE_MIX_REG_INFO(w_d, s_d, w_m, s_m, fc)	\
-अणु							\
-	.width_भाग = (w_d),				\
-	.shअगरt_भाग = (s_d),				\
+#define DEFINE_MIX_REG_INFO(w_d, s_d, w_m, s_m, fc)	\
+{							\
+	.width_div = (w_d),				\
+	.shift_div = (s_d),				\
 	.width_mux = (w_m),				\
-	.shअगरt_mux = (s_m),				\
+	.shift_mux = (s_m),				\
 	.bit_fc = (fc),					\
-पूर्ण
+}
 
-व्योम mmp_clk_init(काष्ठा device_node *np, काष्ठा mmp_clk_unit *unit,
-		पूर्णांक nr_clks);
-व्योम mmp_clk_add(काष्ठा mmp_clk_unit *unit, अचिन्हित पूर्णांक id,
-		काष्ठा clk *clk);
+void mmp_clk_init(struct device_node *np, struct mmp_clk_unit *unit,
+		int nr_clks);
+void mmp_clk_add(struct mmp_clk_unit *unit, unsigned int id,
+		struct clk *clk);
 
 /* Power islands */
-#घोषणा MMP_PM_DOMAIN_NO_DISABLE		BIT(0)
+#define MMP_PM_DOMAIN_NO_DISABLE		BIT(0)
 
-काष्ठा generic_pm_करोमुख्य *mmp_pm_करोमुख्य_रेजिस्टर(स्थिर अक्षर *name,
-		व्योम __iomem *reg,
-		u32 घातer_on, u32 reset, u32 घड़ी_enable,
-		अचिन्हित पूर्णांक flags, spinlock_t *lock);
+struct generic_pm_domain *mmp_pm_domain_register(const char *name,
+		void __iomem *reg,
+		u32 power_on, u32 reset, u32 clock_enable,
+		unsigned int flags, spinlock_t *lock);
 
-#पूर्ण_अगर
+#endif

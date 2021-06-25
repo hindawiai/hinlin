@@ -1,3 +1,2 @@
-<शैली गुरु>
-#घोषणा SNDRV_STB
-#समावेश "interwave.c"
+#define SNDRV_STB
+#include "interwave.c"

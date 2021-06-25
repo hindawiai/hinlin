@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित _ASM_S390_FUTEX_H
-#घोषणा _ASM_S390_FUTEX_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef _ASM_S390_FUTEX_H
+#define _ASM_S390_FUTEX_H
 
-#समावेश <linux/uaccess.h>
-#समावेश <linux/futex.h>
-#समावेश <यंत्र/mmu_context.h>
-#समावेश <यंत्र/त्रुटिसं.स>
+#include <linux/uaccess.h>
+#include <linux/futex.h>
+#include <asm/mmu_context.h>
+#include <asm/errno.h>
 
-#घोषणा __futex_atomic_op(insn, ret, oldval, newval, uaddr, oparg)	\
-	यंत्र अस्थिर(							\
+#define __futex_atomic_op(insn, ret, oldval, newval, uaddr, oparg)	\
+	asm volatile(							\
 		"   sacf  256\n"					\
 		"0: l     %1,0(%6)\n"					\
 		"1:"insn						\
@@ -23,48 +22,48 @@
 		: "0" (-EFAULT), "d" (oparg), "a" (uaddr),		\
 		  "m" (*uaddr) : "cc");
 
-अटल अंतरभूत पूर्णांक arch_futex_atomic_op_inuser(पूर्णांक op, पूर्णांक oparg, पूर्णांक *oval,
+static inline int arch_futex_atomic_op_inuser(int op, int oparg, int *oval,
 		u32 __user *uaddr)
-अणु
-	पूर्णांक oldval = 0, newval, ret;
+{
+	int oldval = 0, newval, ret;
 
-	चयन (op) अणु
-	हाल FUTEX_OP_SET:
+	switch (op) {
+	case FUTEX_OP_SET:
 		__futex_atomic_op("lr %2,%5\n",
 				  ret, oldval, newval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_ADD:
+		break;
+	case FUTEX_OP_ADD:
 		__futex_atomic_op("lr %2,%1\nar %2,%5\n",
 				  ret, oldval, newval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_OR:
+		break;
+	case FUTEX_OP_OR:
 		__futex_atomic_op("lr %2,%1\nor %2,%5\n",
 				  ret, oldval, newval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_ANDN:
+		break;
+	case FUTEX_OP_ANDN:
 		__futex_atomic_op("lr %2,%1\nnr %2,%5\n",
 				  ret, oldval, newval, uaddr, oparg);
-		अवरोध;
-	हाल FUTEX_OP_XOR:
+		break;
+	case FUTEX_OP_XOR:
 		__futex_atomic_op("lr %2,%1\nxr %2,%5\n",
 				  ret, oldval, newval, uaddr, oparg);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -ENOSYS;
-	पूर्ण
+	}
 
-	अगर (!ret)
+	if (!ret)
 		*oval = oldval;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल अंतरभूत पूर्णांक futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
+static inline int futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 						u32 oldval, u32 newval)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	यंत्र अस्थिर(
+	asm volatile(
 		"   sacf 256\n"
 		"0: cs   %1,%4,0(%5)\n"
 		"1: la   %0,0\n"
@@ -74,7 +73,7 @@
 		: "0" (-EFAULT), "d" (newval), "a" (uaddr), "m" (*uaddr)
 		: "cc", "memory");
 	*uval = oldval;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-#पूर्ण_अगर /* _ASM_S390_FUTEX_H */
+#endif /* _ASM_S390_FUTEX_H */

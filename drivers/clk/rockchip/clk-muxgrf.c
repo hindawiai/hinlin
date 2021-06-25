@@ -1,76 +1,75 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
-#समावेश <linux/slab.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश "clk.h"
+#include <linux/slab.h>
+#include <linux/bitops.h>
+#include <linux/regmap.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include "clk.h"
 
-काष्ठा rockchip_muxgrf_घड़ी अणु
-	काष्ठा clk_hw		hw;
-	काष्ठा regmap		*regmap;
+struct rockchip_muxgrf_clock {
+	struct clk_hw		hw;
+	struct regmap		*regmap;
 	u32			reg;
-	u32			shअगरt;
+	u32			shift;
 	u32			width;
-	पूर्णांक			flags;
-पूर्ण;
+	int			flags;
+};
 
-#घोषणा to_muxgrf_घड़ी(_hw) container_of(_hw, काष्ठा rockchip_muxgrf_घड़ी, hw)
+#define to_muxgrf_clock(_hw) container_of(_hw, struct rockchip_muxgrf_clock, hw)
 
-अटल u8 rockchip_muxgrf_get_parent(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा rockchip_muxgrf_घड़ी *mux = to_muxgrf_घड़ी(hw);
-	अचिन्हित पूर्णांक mask = GENMASK(mux->width - 1, 0);
-	अचिन्हित पूर्णांक val;
+static u8 rockchip_muxgrf_get_parent(struct clk_hw *hw)
+{
+	struct rockchip_muxgrf_clock *mux = to_muxgrf_clock(hw);
+	unsigned int mask = GENMASK(mux->width - 1, 0);
+	unsigned int val;
 
-	regmap_पढ़ो(mux->regmap, mux->reg, &val);
+	regmap_read(mux->regmap, mux->reg, &val);
 
-	val >>= mux->shअगरt;
+	val >>= mux->shift;
 	val &= mask;
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल पूर्णांक rockchip_muxgrf_set_parent(काष्ठा clk_hw *hw, u8 index)
-अणु
-	काष्ठा rockchip_muxgrf_घड़ी *mux = to_muxgrf_घड़ी(hw);
-	अचिन्हित पूर्णांक mask = GENMASK(mux->width + mux->shअगरt - 1, mux->shअगरt);
-	अचिन्हित पूर्णांक val;
+static int rockchip_muxgrf_set_parent(struct clk_hw *hw, u8 index)
+{
+	struct rockchip_muxgrf_clock *mux = to_muxgrf_clock(hw);
+	unsigned int mask = GENMASK(mux->width + mux->shift - 1, mux->shift);
+	unsigned int val;
 
 	val = index;
-	val <<= mux->shअगरt;
+	val <<= mux->shift;
 
-	अगर (mux->flags & CLK_MUX_HIWORD_MASK)
-		वापस regmap_ग_लिखो(mux->regmap, mux->reg, val | (mask << 16));
-	अन्यथा
-		वापस regmap_update_bits(mux->regmap, mux->reg, mask, val);
-पूर्ण
+	if (mux->flags & CLK_MUX_HIWORD_MASK)
+		return regmap_write(mux->regmap, mux->reg, val | (mask << 16));
+	else
+		return regmap_update_bits(mux->regmap, mux->reg, mask, val);
+}
 
-अटल स्थिर काष्ठा clk_ops rockchip_muxgrf_clk_ops = अणु
+static const struct clk_ops rockchip_muxgrf_clk_ops = {
 	.get_parent = rockchip_muxgrf_get_parent,
 	.set_parent = rockchip_muxgrf_set_parent,
 	.determine_rate = __clk_mux_determine_rate,
-पूर्ण;
+};
 
-काष्ठा clk *rockchip_clk_रेजिस्टर_muxgrf(स्थिर अक्षर *name,
-				स्थिर अक्षर *स्थिर *parent_names, u8 num_parents,
-				पूर्णांक flags, काष्ठा regmap *regmap, पूर्णांक reg,
-				पूर्णांक shअगरt, पूर्णांक width, पूर्णांक mux_flags)
-अणु
-	काष्ठा rockchip_muxgrf_घड़ी *muxgrf_घड़ी;
-	काष्ठा clk_init_data init;
-	काष्ठा clk *clk;
+struct clk *rockchip_clk_register_muxgrf(const char *name,
+				const char *const *parent_names, u8 num_parents,
+				int flags, struct regmap *regmap, int reg,
+				int shift, int width, int mux_flags)
+{
+	struct rockchip_muxgrf_clock *muxgrf_clock;
+	struct clk_init_data init;
+	struct clk *clk;
 
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		pr_err("%s: regmap not available\n", __func__);
-		वापस ERR_PTR(-ENOTSUPP);
-	पूर्ण
+		return ERR_PTR(-ENOTSUPP);
+	}
 
-	muxgrf_घड़ी = kदो_स्मृति(माप(*muxgrf_घड़ी), GFP_KERNEL);
-	अगर (!muxgrf_घड़ी)
-		वापस ERR_PTR(-ENOMEM);
+	muxgrf_clock = kmalloc(sizeof(*muxgrf_clock), GFP_KERNEL);
+	if (!muxgrf_clock)
+		return ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.flags = flags;
@@ -78,16 +77,16 @@
 	init.parent_names = parent_names;
 	init.ops = &rockchip_muxgrf_clk_ops;
 
-	muxgrf_घड़ी->hw.init = &init;
-	muxgrf_घड़ी->regmap = regmap;
-	muxgrf_घड़ी->reg = reg;
-	muxgrf_घड़ी->shअगरt = shअगरt;
-	muxgrf_घड़ी->width = width;
-	muxgrf_घड़ी->flags = mux_flags;
+	muxgrf_clock->hw.init = &init;
+	muxgrf_clock->regmap = regmap;
+	muxgrf_clock->reg = reg;
+	muxgrf_clock->shift = shift;
+	muxgrf_clock->width = width;
+	muxgrf_clock->flags = mux_flags;
 
-	clk = clk_रेजिस्टर(शून्य, &muxgrf_घड़ी->hw);
-	अगर (IS_ERR(clk))
-		kमुक्त(muxgrf_घड़ी);
+	clk = clk_register(NULL, &muxgrf_clock->hw);
+	if (IS_ERR(clk))
+		kfree(muxgrf_clock);
 
-	वापस clk;
-पूर्ण
+	return clk;
+}

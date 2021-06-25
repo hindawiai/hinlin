@@ -1,71 +1,70 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <linux/bits.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/err.h>
+// SPDX-License-Identifier: GPL-2.0
+#include <linux/bits.h>
+#include <linux/clk-provider.h>
+#include <linux/io.h>
+#include <linux/slab.h>
+#include <linux/kernel.h>
+#include <linux/err.h>
 
-#समावेश "clk.h"
+#include "clk.h"
 
 /**
  * pll v1
  *
- * @clk_hw	घड़ी source
- * @parent	the parent घड़ी name
- * @base	base address of pll रेजिस्टरs
+ * @clk_hw	clock source
+ * @parent	the parent clock name
+ * @base	base address of pll registers
  *
- * PLL घड़ी version 1, found on i.MX1/21/25/27/31/35
+ * PLL clock version 1, found on i.MX1/21/25/27/31/35
  */
 
-#घोषणा MFN_BITS	(10)
-#घोषणा MFN_SIGN	(BIT(MFN_BITS - 1))
-#घोषणा MFN_MASK	(MFN_SIGN - 1)
+#define MFN_BITS	(10)
+#define MFN_SIGN	(BIT(MFN_BITS - 1))
+#define MFN_MASK	(MFN_SIGN - 1)
 
-काष्ठा clk_pllv1 अणु
-	काष्ठा clk_hw	hw;
-	व्योम __iomem	*base;
-	क्रमागत imx_pllv1_type type;
-पूर्ण;
+struct clk_pllv1 {
+	struct clk_hw	hw;
+	void __iomem	*base;
+	enum imx_pllv1_type type;
+};
 
-#घोषणा to_clk_pllv1(clk) (container_of(clk, काष्ठा clk_pllv1, clk))
+#define to_clk_pllv1(clk) (container_of(clk, struct clk_pllv1, clk))
 
-अटल अंतरभूत bool is_imx1_pllv1(काष्ठा clk_pllv1 *pll)
-अणु
-	वापस pll->type == IMX_PLLV1_IMX1;
-पूर्ण
+static inline bool is_imx1_pllv1(struct clk_pllv1 *pll)
+{
+	return pll->type == IMX_PLLV1_IMX1;
+}
 
-अटल अंतरभूत bool is_imx21_pllv1(काष्ठा clk_pllv1 *pll)
-अणु
-	वापस pll->type == IMX_PLLV1_IMX21;
-पूर्ण
+static inline bool is_imx21_pllv1(struct clk_pllv1 *pll)
+{
+	return pll->type == IMX_PLLV1_IMX21;
+}
 
-अटल अंतरभूत bool is_imx27_pllv1(काष्ठा clk_pllv1 *pll)
-अणु
-	वापस pll->type == IMX_PLLV1_IMX27;
-पूर्ण
+static inline bool is_imx27_pllv1(struct clk_pllv1 *pll)
+{
+	return pll->type == IMX_PLLV1_IMX27;
+}
 
-अटल अंतरभूत bool mfn_is_negative(काष्ठा clk_pllv1 *pll, अचिन्हित पूर्णांक mfn)
-अणु
-	वापस !is_imx1_pllv1(pll) && !is_imx21_pllv1(pll) && (mfn & MFN_SIGN);
-पूर्ण
+static inline bool mfn_is_negative(struct clk_pllv1 *pll, unsigned int mfn)
+{
+	return !is_imx1_pllv1(pll) && !is_imx21_pllv1(pll) && (mfn & MFN_SIGN);
+}
 
-अटल अचिन्हित दीर्घ clk_pllv1_recalc_rate(काष्ठा clk_hw *hw,
-		अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_pllv1 *pll = to_clk_pllv1(hw);
-	अचिन्हित दीर्घ दीर्घ ull;
-	पूर्णांक mfn_असल;
-	अचिन्हित पूर्णांक mfi, mfn, mfd, pd;
+static unsigned long clk_pllv1_recalc_rate(struct clk_hw *hw,
+		unsigned long parent_rate)
+{
+	struct clk_pllv1 *pll = to_clk_pllv1(hw);
+	unsigned long long ull;
+	int mfn_abs;
+	unsigned int mfi, mfn, mfd, pd;
 	u32 reg;
-	अचिन्हित दीर्घ rate;
+	unsigned long rate;
 
-	reg = पढ़ोl(pll->base);
+	reg = readl(pll->base);
 
 	/*
-	 * Get the resulting घड़ी rate from a PLL रेजिस्टर value and the input
-	 * frequency. PLLs with this रेजिस्टर layout can be found on i.MX1,
+	 * Get the resulting clock rate from a PLL register value and the input
+	 * frequency. PLLs with this register layout can be found on i.MX1,
 	 * i.MX21, i.MX27 and i,MX31
 	 *
 	 *                  mfi + mfn / (mfd + 1)
@@ -80,50 +79,50 @@
 
 	mfi = mfi <= 5 ? 5 : mfi;
 
-	mfn_असल = mfn;
+	mfn_abs = mfn;
 
 	/*
 	 * On all i.MXs except i.MX1 and i.MX21 mfn is a 10bit
 	 * 2's complements number.
 	 * On i.MX27 the bit 9 is the sign bit.
 	 */
-	अगर (mfn_is_negative(pll, mfn)) अणु
-		अगर (is_imx27_pllv1(pll))
-			mfn_असल = mfn & MFN_MASK;
-		अन्यथा
-			mfn_असल = BIT(MFN_BITS) - mfn;
-	पूर्ण
+	if (mfn_is_negative(pll, mfn)) {
+		if (is_imx27_pllv1(pll))
+			mfn_abs = mfn & MFN_MASK;
+		else
+			mfn_abs = BIT(MFN_BITS) - mfn;
+	}
 
 	rate = parent_rate * 2;
 	rate /= pd + 1;
 
-	ull = (अचिन्हित दीर्घ दीर्घ)rate * mfn_असल;
+	ull = (unsigned long long)rate * mfn_abs;
 
-	करो_भाग(ull, mfd + 1);
+	do_div(ull, mfd + 1);
 
-	अगर (mfn_is_negative(pll, mfn))
+	if (mfn_is_negative(pll, mfn))
 		ull = (rate * mfi) - ull;
-	अन्यथा
+	else
 		ull = (rate * mfi) + ull;
 
-	वापस ull;
-पूर्ण
+	return ull;
+}
 
-अटल स्थिर काष्ठा clk_ops clk_pllv1_ops = अणु
+static const struct clk_ops clk_pllv1_ops = {
 	.recalc_rate = clk_pllv1_recalc_rate,
-पूर्ण;
+};
 
-काष्ठा clk_hw *imx_clk_hw_pllv1(क्रमागत imx_pllv1_type type, स्थिर अक्षर *name,
-		स्थिर अक्षर *parent, व्योम __iomem *base)
-अणु
-	काष्ठा clk_pllv1 *pll;
-	काष्ठा clk_hw *hw;
-	काष्ठा clk_init_data init;
-	पूर्णांक ret;
+struct clk_hw *imx_clk_hw_pllv1(enum imx_pllv1_type type, const char *name,
+		const char *parent, void __iomem *base)
+{
+	struct clk_pllv1 *pll;
+	struct clk_hw *hw;
+	struct clk_init_data init;
+	int ret;
 
-	pll = kदो_स्मृति(माप(*pll), GFP_KERNEL);
-	अगर (!pll)
-		वापस ERR_PTR(-ENOMEM);
+	pll = kmalloc(sizeof(*pll), GFP_KERNEL);
+	if (!pll)
+		return ERR_PTR(-ENOMEM);
 
 	pll->base = base;
 	pll->type = type;
@@ -137,11 +136,11 @@
 	pll->hw.init = &init;
 	hw = &pll->hw;
 
-	ret = clk_hw_रेजिस्टर(शून्य, hw);
-	अगर (ret) अणु
-		kमुक्त(pll);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	ret = clk_hw_register(NULL, hw);
+	if (ret) {
+		kfree(pll);
+		return ERR_PTR(ret);
+	}
 
-	वापस hw;
-पूर्ण
+	return hw;
+}

@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- *  bytcht_nocodec.c - ASoc Machine driver क्रम MinnowBoard Max and Up
- *  to make I2S संकेतs observable on the Low-Speed connector. Audio codec
+ *  bytcht_nocodec.c - ASoc Machine driver for MinnowBoard Max and Up
+ *  to make I2S signals observable on the Low-Speed connector. Audio codec
  *  is not managed by ASoC/DAPM
  *
  *  Copyright (C) 2015-2017 Intel Corp
@@ -12,50 +11,50 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#समावेश <linux/module.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
-#समावेश "../atom/sst-atom-controls.h"
+#include <linux/module.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
+#include "../atom/sst-atom-controls.h"
 
-अटल स्थिर काष्ठा snd_soc_dapm_widget widमाला_लो[] = अणु
-	SND_SOC_DAPM_MIC("Mic", शून्य),
-	SND_SOC_DAPM_SPK("Speaker", शून्य),
-पूर्ण;
+static const struct snd_soc_dapm_widget widgets[] = {
+	SND_SOC_DAPM_MIC("Mic", NULL),
+	SND_SOC_DAPM_SPK("Speaker", NULL),
+};
 
-अटल स्थिर काष्ठा snd_kcontrol_new controls[] = अणु
+static const struct snd_kcontrol_new controls[] = {
 	SOC_DAPM_PIN_SWITCH("Mic"),
 	SOC_DAPM_PIN_SWITCH("Speaker"),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_soc_dapm_route audio_map[] = अणु
-	अणु"ssp2 Tx", शून्य, "codec_out0"पूर्ण,
-	अणु"ssp2 Tx", शून्य, "codec_out1"पूर्ण,
-	अणु"codec_in0", शून्य, "ssp2 Rx"पूर्ण,
-	अणु"codec_in1", शून्य, "ssp2 Rx"पूर्ण,
+static const struct snd_soc_dapm_route audio_map[] = {
+	{"ssp2 Tx", NULL, "codec_out0"},
+	{"ssp2 Tx", NULL, "codec_out1"},
+	{"codec_in0", NULL, "ssp2 Rx"},
+	{"codec_in1", NULL, "ssp2 Rx"},
 
-	अणु"ssp2 Rx", शून्य, "Mic"पूर्ण,
-	अणु"Speaker", शून्य, "ssp2 Tx"पूर्ण,
-पूर्ण;
+	{"ssp2 Rx", NULL, "Mic"},
+	{"Speaker", NULL, "ssp2 Tx"},
+};
 
-अटल पूर्णांक codec_fixup(काष्ठा snd_soc_pcm_runसमय *rtd,
-			    काष्ठा snd_pcm_hw_params *params)
-अणु
-	काष्ठा snd_पूर्णांकerval *rate = hw_param_पूर्णांकerval(params,
+static int codec_fixup(struct snd_soc_pcm_runtime *rtd,
+			    struct snd_pcm_hw_params *params)
+{
+	struct snd_interval *rate = hw_param_interval(params,
 			SNDRV_PCM_HW_PARAM_RATE);
-	काष्ठा snd_पूर्णांकerval *channels = hw_param_पूर्णांकerval(params,
+	struct snd_interval *channels = hw_param_interval(params,
 						SNDRV_PCM_HW_PARAM_CHANNELS);
-	पूर्णांक ret;
+	int ret;
 
 	/* The DSP will convert the FE rate to 48k, stereo, 24bits */
 	rate->min = rate->max = 48000;
 	channels->min = channels->max = 2;
 
 	/* set SSP2 to 24-bit */
-	params_set_क्रमmat(params, SNDRV_PCM_FORMAT_S24_LE);
+	params_set_format(params, SNDRV_PCM_FORMAT_S24_LE);
 
 	/*
-	 * Default mode क्रम SSP configuration is TDM 4 slot, override config
+	 * Default mode for SSP configuration is TDM 4 slot, override config
 	 * with explicit setting to I2S 2ch 24-bit. The word length is set with
 	 * dai_set_tdm_slot() since there is no other API exposed
 	 */
@@ -64,39 +63,39 @@
 				  SND_SOC_DAIFMT_NB_NF   |
 				  SND_SOC_DAIFMT_CBS_CFS);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(rtd->dev, "can't set format to I2S, err %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = snd_soc_dai_set_tdm_slot(asoc_rtd_to_cpu(rtd, 0), 0x3, 0x3, 2, 24);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(rtd->dev, "can't set I2S config, err %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अचिन्हित पूर्णांक rates_48000[] = अणु
+static const unsigned int rates_48000[] = {
 	48000,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list स्थिरraपूर्णांकs_48000 = अणु
+static const struct snd_pcm_hw_constraint_list constraints_48000 = {
 	.count = ARRAY_SIZE(rates_48000),
 	.list  = rates_48000,
-पूर्ण;
+};
 
-अटल पूर्णांक aअगर1_startup(काष्ठा snd_pcm_substream *substream)
-अणु
-	वापस snd_pcm_hw_स्थिरraपूर्णांक_list(substream->runसमय, 0,
+static int aif1_startup(struct snd_pcm_substream *substream)
+{
+	return snd_pcm_hw_constraint_list(substream->runtime, 0,
 			SNDRV_PCM_HW_PARAM_RATE,
-			&स्थिरraपूर्णांकs_48000);
-पूर्ण
+			&constraints_48000);
+}
 
-अटल काष्ठा snd_soc_ops aअगर1_ops = अणु
-	.startup = aअगर1_startup,
-पूर्ण;
+static struct snd_soc_ops aif1_ops = {
+	.startup = aif1_startup,
+};
 
 SND_SOC_DAILINK_DEF(dummy,
 	DAILINK_COMP_ARRAY(COMP_DUMMY()));
@@ -110,11 +109,11 @@ SND_SOC_DAILINK_DEF(deepbuffer,
 SND_SOC_DAILINK_DEF(ssp2_port,
 	DAILINK_COMP_ARRAY(COMP_CPU("ssp2-port")));
 
-SND_SOC_DAILINK_DEF(platक्रमm,
+SND_SOC_DAILINK_DEF(platform,
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("sst-mfld-platform")));
 
-अटल काष्ठा snd_soc_dai_link dais[] = अणु
-	[MERR_DPCM_AUDIO] = अणु
+static struct snd_soc_dai_link dais[] = {
+	[MERR_DPCM_AUDIO] = {
 		.name = "Audio Port",
 		.stream_name = "Audio",
 		.ignore_suspend = 1,
@@ -122,22 +121,22 @@ SND_SOC_DAILINK_DEF(platक्रमm,
 		.dynamic = 1,
 		.dpcm_playback = 1,
 		.dpcm_capture = 1,
-		.ops = &aअगर1_ops,
-		SND_SOC_DAILINK_REG(media, dummy, platक्रमm),
-	पूर्ण,
-	[MERR_DPCM_DEEP_BUFFER] = अणु
+		.ops = &aif1_ops,
+		SND_SOC_DAILINK_REG(media, dummy, platform),
+	},
+	[MERR_DPCM_DEEP_BUFFER] = {
 		.name = "Deep-Buffer Audio Port",
 		.stream_name = "Deep-Buffer Audio",
 		.ignore_suspend = 1,
 		.nonatomic = true,
 		.dynamic = 1,
 		.dpcm_playback = 1,
-		.ops = &aअगर1_ops,
-		SND_SOC_DAILINK_REG(deepbuffer, dummy, platक्रमm),
-	पूर्ण,
+		.ops = &aif1_ops,
+		SND_SOC_DAILINK_REG(deepbuffer, dummy, platform),
+	},
 	/* CODEC<->CODEC link */
 	/* back ends */
-	अणु
+	{
 		.name = "SSP2-LowSpeed Connector",
 		.id = 0,
 		.no_pcm = 1,
@@ -148,50 +147,50 @@ SND_SOC_DAILINK_DEF(platक्रमm,
 		.nonatomic = true,
 		.dpcm_playback = 1,
 		.dpcm_capture = 1,
-		SND_SOC_DAILINK_REG(ssp2_port, dummy, platक्रमm),
-	पूर्ण,
-पूर्ण;
+		SND_SOC_DAILINK_REG(ssp2_port, dummy, platform),
+	},
+};
 
 /* SoC card */
-अटल काष्ठा snd_soc_card bytcht_nocodec_card = अणु
+static struct snd_soc_card bytcht_nocodec_card = {
 	.name = "bytcht-nocodec",
 	.owner = THIS_MODULE,
 	.dai_link = dais,
 	.num_links = ARRAY_SIZE(dais),
-	.dapm_widमाला_लो = widमाला_लो,
-	.num_dapm_widमाला_लो = ARRAY_SIZE(widमाला_लो),
+	.dapm_widgets = widgets,
+	.num_dapm_widgets = ARRAY_SIZE(widgets),
 	.dapm_routes = audio_map,
 	.num_dapm_routes = ARRAY_SIZE(audio_map),
 	.controls = controls,
 	.num_controls = ARRAY_SIZE(controls),
 	.fully_routed = true,
-पूर्ण;
+};
 
-अटल पूर्णांक snd_bytcht_nocodec_mc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	पूर्णांक ret_val = 0;
+static int snd_bytcht_nocodec_mc_probe(struct platform_device *pdev)
+{
+	int ret_val = 0;
 
-	/* रेजिस्टर the soc card */
+	/* register the soc card */
 	bytcht_nocodec_card.dev = &pdev->dev;
 
-	ret_val = devm_snd_soc_रेजिस्टर_card(&pdev->dev, &bytcht_nocodec_card);
+	ret_val = devm_snd_soc_register_card(&pdev->dev, &bytcht_nocodec_card);
 
-	अगर (ret_val) अणु
+	if (ret_val) {
 		dev_err(&pdev->dev, "devm_snd_soc_register_card failed %d\n",
 			ret_val);
-		वापस ret_val;
-	पूर्ण
-	platक्रमm_set_drvdata(pdev, &bytcht_nocodec_card);
-	वापस ret_val;
-पूर्ण
+		return ret_val;
+	}
+	platform_set_drvdata(pdev, &bytcht_nocodec_card);
+	return ret_val;
+}
 
-अटल काष्ठा platक्रमm_driver snd_bytcht_nocodec_mc_driver = अणु
-	.driver = अणु
+static struct platform_driver snd_bytcht_nocodec_mc_driver = {
+	.driver = {
 		.name = "bytcht_nocodec",
-	पूर्ण,
+	},
 	.probe = snd_bytcht_nocodec_mc_probe,
-पूर्ण;
-module_platक्रमm_driver(snd_bytcht_nocodec_mc_driver);
+};
+module_platform_driver(snd_bytcht_nocodec_mc_driver);
 
 MODULE_DESCRIPTION("ASoC Intel(R) Baytrail/Cherrytrail Nocodec Machine driver");
 MODULE_AUTHOR("Pierre-Louis Bossart <pierre-louis.bossart at linux.intel.com>");

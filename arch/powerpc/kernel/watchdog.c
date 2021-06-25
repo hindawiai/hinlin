@@ -1,165 +1,164 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Watchकरोg support on घातerpc प्रणालीs.
+ * Watchdog support on powerpc systems.
  *
  * Copyright 2017, IBM Corporation.
  *
- * This uses code from arch/sparc/kernel/nmi.c and kernel/watchकरोg.c
+ * This uses code from arch/sparc/kernel/nmi.c and kernel/watchdog.c
  */
 
-#घोषणा pr_fmt(fmt) "watchdog: " fmt
+#define pr_fmt(fmt) "watchdog: " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/param.h>
-#समावेश <linux/init.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/cpu.h>
-#समावेश <linux/nmi.h>
-#समावेश <linux/module.h>
-#समावेश <linux/export.h>
-#समावेश <linux/kprobes.h>
-#समावेश <linux/hardirq.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/kdebug.h>
-#समावेश <linux/sched/debug.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/smp.h>
+#include <linux/kernel.h>
+#include <linux/param.h>
+#include <linux/init.h>
+#include <linux/percpu.h>
+#include <linux/cpu.h>
+#include <linux/nmi.h>
+#include <linux/module.h>
+#include <linux/export.h>
+#include <linux/kprobes.h>
+#include <linux/hardirq.h>
+#include <linux/reboot.h>
+#include <linux/slab.h>
+#include <linux/kdebug.h>
+#include <linux/sched/debug.h>
+#include <linux/delay.h>
+#include <linux/smp.h>
 
-#समावेश <यंत्र/पूर्णांकerrupt.h>
-#समावेश <यंत्र/paca.h>
-#समावेश <यंत्र/nmi.h>
+#include <asm/interrupt.h>
+#include <asm/paca.h>
+#include <asm/nmi.h>
 
 /*
- * The घातerpc watchकरोg ensures that each CPU is able to service समयrs.
- * The watchकरोg sets up a simple समयr on each CPU to run once per समयr
- * period, and updates a per-cpu बारtamp and a "pending" cpumask. This is
+ * The powerpc watchdog ensures that each CPU is able to service timers.
+ * The watchdog sets up a simple timer on each CPU to run once per timer
+ * period, and updates a per-cpu timestamp and a "pending" cpumask. This is
  * the heartbeat.
  *
- * Then there are two प्रणालीs to check that the heartbeat is still running.
+ * Then there are two systems to check that the heartbeat is still running.
  * The local soft-NMI, and the SMP checker.
  *
- * The soft-NMI checker can detect lockups on the local CPU. When पूर्णांकerrupts
- * are disabled with local_irq_disable(), platक्रमms that use soft-masking
- * can leave hardware पूर्णांकerrupts enabled and handle them with a masked
- * पूर्णांकerrupt handler. The masked handler can send the समयr पूर्णांकerrupt to the
- * watchकरोg's soft_nmi_पूर्णांकerrupt(), which appears to Linux as an NMI
- * पूर्णांकerrupt, and can be used to detect CPUs stuck with IRQs disabled.
+ * The soft-NMI checker can detect lockups on the local CPU. When interrupts
+ * are disabled with local_irq_disable(), platforms that use soft-masking
+ * can leave hardware interrupts enabled and handle them with a masked
+ * interrupt handler. The masked handler can send the timer interrupt to the
+ * watchdog's soft_nmi_interrupt(), which appears to Linux as an NMI
+ * interrupt, and can be used to detect CPUs stuck with IRQs disabled.
  *
- * The soft-NMI checker will compare the heartbeat बारtamp क्रम this CPU
- * with the current समय, and take action अगर the dअगरference exceeds the
- * watchकरोg threshold.
+ * The soft-NMI checker will compare the heartbeat timestamp for this CPU
+ * with the current time, and take action if the difference exceeds the
+ * watchdog threshold.
  *
- * The limitation of the soft-NMI watchकरोg is that it करोes not work when
- * पूर्णांकerrupts are hard disabled or otherwise not being serviced. This is
- * solved by also having a SMP watchकरोg where all CPUs check all other
+ * The limitation of the soft-NMI watchdog is that it does not work when
+ * interrupts are hard disabled or otherwise not being serviced. This is
+ * solved by also having a SMP watchdog where all CPUs check all other
  * CPUs heartbeat.
  *
  * The SMP checker can detect lockups on other CPUs. A gobal "pending"
- * cpumask is kept, containing all CPUs which enable the watchकरोg. Each
- * CPU clears their pending bit in their heartbeat समयr. When the biपंचांगask
+ * cpumask is kept, containing all CPUs which enable the watchdog. Each
+ * CPU clears their pending bit in their heartbeat timer. When the bitmask
  * becomes empty, the last CPU to clear its pending bit updates a global
- * बारtamp and refills the pending biपंचांगask.
+ * timestamp and refills the pending bitmask.
  *
- * In the heartbeat समयr, अगर any CPU notices that the global बारtamp has
- * not been updated क्रम a period exceeding the watchकरोg threshold, then it
+ * In the heartbeat timer, if any CPU notices that the global timestamp has
+ * not been updated for a period exceeding the watchdog threshold, then it
  * means the CPU(s) with their bit still set in the pending mask have had
  * their heartbeat stop, and action is taken.
  *
- * Some platक्रमms implement true NMI IPIs, which can be used by the SMP
- * watchकरोg to detect an unresponsive CPU and pull it out of its stuck
+ * Some platforms implement true NMI IPIs, which can be used by the SMP
+ * watchdog to detect an unresponsive CPU and pull it out of its stuck
  * state with the NMI IPI, to get crash/debug data from it. This way the
- * SMP watchकरोg can detect hardware पूर्णांकerrupts off lockups.
+ * SMP watchdog can detect hardware interrupts off lockups.
  */
 
-अटल cpumask_t wd_cpus_enabled __पढ़ो_mostly;
+static cpumask_t wd_cpus_enabled __read_mostly;
 
-अटल u64 wd_panic_समयout_tb __पढ़ो_mostly; /* समयbase ticks until panic */
-अटल u64 wd_smp_panic_समयout_tb __पढ़ो_mostly; /* panic other CPUs */
+static u64 wd_panic_timeout_tb __read_mostly; /* timebase ticks until panic */
+static u64 wd_smp_panic_timeout_tb __read_mostly; /* panic other CPUs */
 
-अटल u64 wd_समयr_period_ms __पढ़ो_mostly;  /* पूर्णांकerval between heartbeat */
+static u64 wd_timer_period_ms __read_mostly;  /* interval between heartbeat */
 
-अटल DEFINE_PER_CPU(काष्ठा hrसमयr, wd_hrसमयr);
-अटल DEFINE_PER_CPU(u64, wd_समयr_tb);
+static DEFINE_PER_CPU(struct hrtimer, wd_hrtimer);
+static DEFINE_PER_CPU(u64, wd_timer_tb);
 
 /* SMP checker bits */
-अटल अचिन्हित दीर्घ __wd_smp_lock;
-अटल cpumask_t wd_smp_cpus_pending;
-अटल cpumask_t wd_smp_cpus_stuck;
-अटल u64 wd_smp_last_reset_tb;
+static unsigned long __wd_smp_lock;
+static cpumask_t wd_smp_cpus_pending;
+static cpumask_t wd_smp_cpus_stuck;
+static u64 wd_smp_last_reset_tb;
 
-अटल अंतरभूत व्योम wd_smp_lock(अचिन्हित दीर्घ *flags)
-अणु
+static inline void wd_smp_lock(unsigned long *flags)
+{
 	/*
-	 * Aव्योम locking layers अगर possible.
-	 * This may be called from low level पूर्णांकerrupt handlers at some
-	 * poपूर्णांक in future.
+	 * Avoid locking layers if possible.
+	 * This may be called from low level interrupt handlers at some
+	 * point in future.
 	 */
 	raw_local_irq_save(*flags);
 	hard_irq_disable(); /* Make it soft-NMI safe */
-	जबतक (unlikely(test_and_set_bit_lock(0, &__wd_smp_lock))) अणु
+	while (unlikely(test_and_set_bit_lock(0, &__wd_smp_lock))) {
 		raw_local_irq_restore(*flags);
 		spin_until_cond(!test_bit(0, &__wd_smp_lock));
 		raw_local_irq_save(*flags);
 		hard_irq_disable();
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम wd_smp_unlock(अचिन्हित दीर्घ *flags)
-अणु
+static inline void wd_smp_unlock(unsigned long *flags)
+{
 	clear_bit_unlock(0, &__wd_smp_lock);
 	raw_local_irq_restore(*flags);
-पूर्ण
+}
 
-अटल व्योम wd_lockup_ipi(काष्ठा pt_regs *regs)
-अणु
-	पूर्णांक cpu = raw_smp_processor_id();
+static void wd_lockup_ipi(struct pt_regs *regs)
+{
+	int cpu = raw_smp_processor_id();
 	u64 tb = get_tb();
 
 	pr_emerg("CPU %d Hard LOCKUP\n", cpu);
 	pr_emerg("CPU %d TB:%lld, last heartbeat TB:%lld (%lldms ago)\n",
-		 cpu, tb, per_cpu(wd_समयr_tb, cpu),
-		 tb_to_ns(tb - per_cpu(wd_समयr_tb, cpu)) / 1000000);
-	prपूर्णांक_modules();
-	prपूर्णांक_irqtrace_events(current);
-	अगर (regs)
+		 cpu, tb, per_cpu(wd_timer_tb, cpu),
+		 tb_to_ns(tb - per_cpu(wd_timer_tb, cpu)) / 1000000);
+	print_modules();
+	print_irqtrace_events(current);
+	if (regs)
 		show_regs(regs);
-	अन्यथा
+	else
 		dump_stack();
 
-	/* Do not panic from here because that can recurse पूर्णांकo NMI IPI layer */
-पूर्ण
+	/* Do not panic from here because that can recurse into NMI IPI layer */
+}
 
-अटल व्योम set_cpumask_stuck(स्थिर काष्ठा cpumask *cpumask, u64 tb)
-अणु
+static void set_cpumask_stuck(const struct cpumask *cpumask, u64 tb)
+{
 	cpumask_or(&wd_smp_cpus_stuck, &wd_smp_cpus_stuck, cpumask);
 	cpumask_andnot(&wd_smp_cpus_pending, &wd_smp_cpus_pending, cpumask);
-	अगर (cpumask_empty(&wd_smp_cpus_pending)) अणु
+	if (cpumask_empty(&wd_smp_cpus_pending)) {
 		wd_smp_last_reset_tb = tb;
 		cpumask_andnot(&wd_smp_cpus_pending,
 				&wd_cpus_enabled,
 				&wd_smp_cpus_stuck);
-	पूर्ण
-पूर्ण
-अटल व्योम set_cpu_stuck(पूर्णांक cpu, u64 tb)
-अणु
+	}
+}
+static void set_cpu_stuck(int cpu, u64 tb)
+{
 	set_cpumask_stuck(cpumask_of(cpu), tb);
-पूर्ण
+}
 
-अटल व्योम watchकरोg_smp_panic(पूर्णांक cpu, u64 tb)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक c;
+static void watchdog_smp_panic(int cpu, u64 tb)
+{
+	unsigned long flags;
+	int c;
 
 	wd_smp_lock(&flags);
 	/* Double check some things under lock */
-	अगर ((s64)(tb - wd_smp_last_reset_tb) < (s64)wd_smp_panic_समयout_tb)
-		जाओ out;
-	अगर (cpumask_test_cpu(cpu, &wd_smp_cpus_pending))
-		जाओ out;
-	अगर (cpumask_weight(&wd_smp_cpus_pending) == 0)
-		जाओ out;
+	if ((s64)(tb - wd_smp_last_reset_tb) < (s64)wd_smp_panic_timeout_tb)
+		goto out;
+	if (cpumask_test_cpu(cpu, &wd_smp_cpus_pending))
+		goto out;
+	if (cpumask_weight(&wd_smp_cpus_pending) == 0)
+		goto out;
 
 	pr_emerg("CPU %d detected hard LOCKUP on other CPUs %*pbl\n",
 		 cpu, cpumask_pr_args(&wd_smp_cpus_pending));
@@ -167,268 +166,268 @@
 		 cpu, tb, wd_smp_last_reset_tb,
 		 tb_to_ns(tb - wd_smp_last_reset_tb) / 1000000);
 
-	अगर (!sysctl_hardlockup_all_cpu_backtrace) अणु
+	if (!sysctl_hardlockup_all_cpu_backtrace) {
 		/*
 		 * Try to trigger the stuck CPUs, unless we are going to
 		 * get a backtrace on all of them anyway.
 		 */
-		क्रम_each_cpu(c, &wd_smp_cpus_pending) अणु
-			अगर (c == cpu)
-				जारी;
+		for_each_cpu(c, &wd_smp_cpus_pending) {
+			if (c == cpu)
+				continue;
 			smp_send_nmi_ipi(c, wd_lockup_ipi, 1000000);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Take the stuck CPUs out of the watch group */
 	set_cpumask_stuck(&wd_smp_cpus_pending, tb);
 
 	wd_smp_unlock(&flags);
 
-	prपूर्णांकk_safe_flush();
+	printk_safe_flush();
 	/*
-	 * prपूर्णांकk_safe_flush() seems to require another prपूर्णांक
-	 * beक्रमe anything actually goes out to console.
+	 * printk_safe_flush() seems to require another print
+	 * before anything actually goes out to console.
 	 */
-	अगर (sysctl_hardlockup_all_cpu_backtrace)
+	if (sysctl_hardlockup_all_cpu_backtrace)
 		trigger_allbutself_cpu_backtrace();
 
-	अगर (hardlockup_panic)
-		nmi_panic(शून्य, "Hard LOCKUP");
+	if (hardlockup_panic)
+		nmi_panic(NULL, "Hard LOCKUP");
 
-	वापस;
+	return;
 
 out:
 	wd_smp_unlock(&flags);
-पूर्ण
+}
 
-अटल व्योम wd_smp_clear_cpu_pending(पूर्णांक cpu, u64 tb)
-अणु
-	अगर (!cpumask_test_cpu(cpu, &wd_smp_cpus_pending)) अणु
-		अगर (unlikely(cpumask_test_cpu(cpu, &wd_smp_cpus_stuck))) अणु
-			काष्ठा pt_regs *regs = get_irq_regs();
-			अचिन्हित दीर्घ flags;
+static void wd_smp_clear_cpu_pending(int cpu, u64 tb)
+{
+	if (!cpumask_test_cpu(cpu, &wd_smp_cpus_pending)) {
+		if (unlikely(cpumask_test_cpu(cpu, &wd_smp_cpus_stuck))) {
+			struct pt_regs *regs = get_irq_regs();
+			unsigned long flags;
 
 			wd_smp_lock(&flags);
 
 			pr_emerg("CPU %d became unstuck TB:%lld\n",
 				 cpu, tb);
-			prपूर्णांक_irqtrace_events(current);
-			अगर (regs)
+			print_irqtrace_events(current);
+			if (regs)
 				show_regs(regs);
-			अन्यथा
+			else
 				dump_stack();
 
 			cpumask_clear_cpu(cpu, &wd_smp_cpus_stuck);
 			wd_smp_unlock(&flags);
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 	cpumask_clear_cpu(cpu, &wd_smp_cpus_pending);
-	अगर (cpumask_empty(&wd_smp_cpus_pending)) अणु
-		अचिन्हित दीर्घ flags;
+	if (cpumask_empty(&wd_smp_cpus_pending)) {
+		unsigned long flags;
 
 		wd_smp_lock(&flags);
-		अगर (cpumask_empty(&wd_smp_cpus_pending)) अणु
+		if (cpumask_empty(&wd_smp_cpus_pending)) {
 			wd_smp_last_reset_tb = tb;
 			cpumask_andnot(&wd_smp_cpus_pending,
 					&wd_cpus_enabled,
 					&wd_smp_cpus_stuck);
-		पूर्ण
+		}
 		wd_smp_unlock(&flags);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम watchकरोg_समयr_पूर्णांकerrupt(पूर्णांक cpu)
-अणु
+static void watchdog_timer_interrupt(int cpu)
+{
 	u64 tb = get_tb();
 
-	per_cpu(wd_समयr_tb, cpu) = tb;
+	per_cpu(wd_timer_tb, cpu) = tb;
 
 	wd_smp_clear_cpu_pending(cpu, tb);
 
-	अगर ((s64)(tb - wd_smp_last_reset_tb) >= (s64)wd_smp_panic_समयout_tb)
-		watchकरोg_smp_panic(cpu, tb);
-पूर्ण
+	if ((s64)(tb - wd_smp_last_reset_tb) >= (s64)wd_smp_panic_timeout_tb)
+		watchdog_smp_panic(cpu, tb);
+}
 
-DEFINE_INTERRUPT_HANDLER_NMI(soft_nmi_पूर्णांकerrupt)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक cpu = raw_smp_processor_id();
+DEFINE_INTERRUPT_HANDLER_NMI(soft_nmi_interrupt)
+{
+	unsigned long flags;
+	int cpu = raw_smp_processor_id();
 	u64 tb;
 
 	/* should only arrive from kernel, with irqs disabled */
 	WARN_ON_ONCE(!arch_irq_disabled_regs(regs));
 
-	अगर (!cpumask_test_cpu(cpu, &wd_cpus_enabled))
-		वापस 0;
+	if (!cpumask_test_cpu(cpu, &wd_cpus_enabled))
+		return 0;
 
 	__this_cpu_inc(irq_stat.soft_nmi_irqs);
 
 	tb = get_tb();
-	अगर (tb - per_cpu(wd_समयr_tb, cpu) >= wd_panic_समयout_tb) अणु
+	if (tb - per_cpu(wd_timer_tb, cpu) >= wd_panic_timeout_tb) {
 		wd_smp_lock(&flags);
-		अगर (cpumask_test_cpu(cpu, &wd_smp_cpus_stuck)) अणु
+		if (cpumask_test_cpu(cpu, &wd_smp_cpus_stuck)) {
 			wd_smp_unlock(&flags);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 		set_cpu_stuck(cpu, tb);
 
 		pr_emerg("CPU %d self-detected hard LOCKUP @ %pS\n",
-			 cpu, (व्योम *)regs->nip);
+			 cpu, (void *)regs->nip);
 		pr_emerg("CPU %d TB:%lld, last heartbeat TB:%lld (%lldms ago)\n",
-			 cpu, tb, per_cpu(wd_समयr_tb, cpu),
-			 tb_to_ns(tb - per_cpu(wd_समयr_tb, cpu)) / 1000000);
-		prपूर्णांक_modules();
-		prपूर्णांक_irqtrace_events(current);
+			 cpu, tb, per_cpu(wd_timer_tb, cpu),
+			 tb_to_ns(tb - per_cpu(wd_timer_tb, cpu)) / 1000000);
+		print_modules();
+		print_irqtrace_events(current);
 		show_regs(regs);
 
 		wd_smp_unlock(&flags);
 
-		अगर (sysctl_hardlockup_all_cpu_backtrace)
+		if (sysctl_hardlockup_all_cpu_backtrace)
 			trigger_allbutself_cpu_backtrace();
 
-		अगर (hardlockup_panic)
+		if (hardlockup_panic)
 			nmi_panic(regs, "Hard LOCKUP");
-	पूर्ण
-	अगर (wd_panic_समयout_tb < 0x7fffffff)
-		mtspr(SPRN_DEC, wd_panic_समयout_tb);
+	}
+	if (wd_panic_timeout_tb < 0x7fffffff)
+		mtspr(SPRN_DEC, wd_panic_timeout_tb);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत hrसमयr_restart watchकरोg_समयr_fn(काष्ठा hrसमयr *hrसमयr)
-अणु
-	पूर्णांक cpu = smp_processor_id();
+static enum hrtimer_restart watchdog_timer_fn(struct hrtimer *hrtimer)
+{
+	int cpu = smp_processor_id();
 
-	अगर (!(watchकरोg_enabled & NMI_WATCHDOG_ENABLED))
-		वापस HRTIMER_NORESTART;
+	if (!(watchdog_enabled & NMI_WATCHDOG_ENABLED))
+		return HRTIMER_NORESTART;
 
-	अगर (!cpumask_test_cpu(cpu, &watchकरोg_cpumask))
-		वापस HRTIMER_NORESTART;
+	if (!cpumask_test_cpu(cpu, &watchdog_cpumask))
+		return HRTIMER_NORESTART;
 
-	watchकरोg_समयr_पूर्णांकerrupt(cpu);
+	watchdog_timer_interrupt(cpu);
 
-	hrसमयr_क्रमward_now(hrसमयr, ms_to_kसमय(wd_समयr_period_ms));
+	hrtimer_forward_now(hrtimer, ms_to_ktime(wd_timer_period_ms));
 
-	वापस HRTIMER_RESTART;
-पूर्ण
+	return HRTIMER_RESTART;
+}
 
-व्योम arch_touch_nmi_watchकरोg(व्योम)
-अणु
-	अचिन्हित दीर्घ ticks = tb_ticks_per_usec * wd_समयr_period_ms * 1000;
-	पूर्णांक cpu = smp_processor_id();
+void arch_touch_nmi_watchdog(void)
+{
+	unsigned long ticks = tb_ticks_per_usec * wd_timer_period_ms * 1000;
+	int cpu = smp_processor_id();
 	u64 tb = get_tb();
 
-	अगर (tb - per_cpu(wd_समयr_tb, cpu) >= ticks) अणु
-		per_cpu(wd_समयr_tb, cpu) = tb;
+	if (tb - per_cpu(wd_timer_tb, cpu) >= ticks) {
+		per_cpu(wd_timer_tb, cpu) = tb;
 		wd_smp_clear_cpu_pending(cpu, tb);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(arch_touch_nmi_watchकरोg);
+	}
+}
+EXPORT_SYMBOL(arch_touch_nmi_watchdog);
 
-अटल व्योम start_watchकरोg(व्योम *arg)
-अणु
-	काष्ठा hrसमयr *hrसमयr = this_cpu_ptr(&wd_hrसमयr);
-	पूर्णांक cpu = smp_processor_id();
-	अचिन्हित दीर्घ flags;
+static void start_watchdog(void *arg)
+{
+	struct hrtimer *hrtimer = this_cpu_ptr(&wd_hrtimer);
+	int cpu = smp_processor_id();
+	unsigned long flags;
 
-	अगर (cpumask_test_cpu(cpu, &wd_cpus_enabled)) अणु
+	if (cpumask_test_cpu(cpu, &wd_cpus_enabled)) {
 		WARN_ON(1);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!(watchकरोg_enabled & NMI_WATCHDOG_ENABLED))
-		वापस;
+	if (!(watchdog_enabled & NMI_WATCHDOG_ENABLED))
+		return;
 
-	अगर (!cpumask_test_cpu(cpu, &watchकरोg_cpumask))
-		वापस;
+	if (!cpumask_test_cpu(cpu, &watchdog_cpumask))
+		return;
 
 	wd_smp_lock(&flags);
 	cpumask_set_cpu(cpu, &wd_cpus_enabled);
-	अगर (cpumask_weight(&wd_cpus_enabled) == 1) अणु
+	if (cpumask_weight(&wd_cpus_enabled) == 1) {
 		cpumask_set_cpu(cpu, &wd_smp_cpus_pending);
 		wd_smp_last_reset_tb = get_tb();
-	पूर्ण
+	}
 	wd_smp_unlock(&flags);
 
-	*this_cpu_ptr(&wd_समयr_tb) = get_tb();
+	*this_cpu_ptr(&wd_timer_tb) = get_tb();
 
-	hrसमयr_init(hrसमयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	hrसमयr->function = watchकरोg_समयr_fn;
-	hrसमयr_start(hrसमयr, ms_to_kसमय(wd_समयr_period_ms),
+	hrtimer_init(hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	hrtimer->function = watchdog_timer_fn;
+	hrtimer_start(hrtimer, ms_to_ktime(wd_timer_period_ms),
 		      HRTIMER_MODE_REL_PINNED);
-पूर्ण
+}
 
-अटल पूर्णांक start_watchकरोg_on_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	वापस smp_call_function_single(cpu, start_watchकरोg, शून्य, true);
-पूर्ण
+static int start_watchdog_on_cpu(unsigned int cpu)
+{
+	return smp_call_function_single(cpu, start_watchdog, NULL, true);
+}
 
-अटल व्योम stop_watchकरोg(व्योम *arg)
-अणु
-	काष्ठा hrसमयr *hrसमयr = this_cpu_ptr(&wd_hrसमयr);
-	पूर्णांक cpu = smp_processor_id();
-	अचिन्हित दीर्घ flags;
+static void stop_watchdog(void *arg)
+{
+	struct hrtimer *hrtimer = this_cpu_ptr(&wd_hrtimer);
+	int cpu = smp_processor_id();
+	unsigned long flags;
 
-	अगर (!cpumask_test_cpu(cpu, &wd_cpus_enabled))
-		वापस; /* Can happen in CPU unplug हाल */
+	if (!cpumask_test_cpu(cpu, &wd_cpus_enabled))
+		return; /* Can happen in CPU unplug case */
 
-	hrसमयr_cancel(hrसमयr);
+	hrtimer_cancel(hrtimer);
 
 	wd_smp_lock(&flags);
 	cpumask_clear_cpu(cpu, &wd_cpus_enabled);
 	wd_smp_unlock(&flags);
 
 	wd_smp_clear_cpu_pending(cpu, get_tb());
-पूर्ण
+}
 
-अटल पूर्णांक stop_watchकरोg_on_cpu(अचिन्हित पूर्णांक cpu)
-अणु
-	वापस smp_call_function_single(cpu, stop_watchकरोg, शून्य, true);
-पूर्ण
+static int stop_watchdog_on_cpu(unsigned int cpu)
+{
+	return smp_call_function_single(cpu, stop_watchdog, NULL, true);
+}
 
-अटल व्योम watchकरोg_calc_समयouts(व्योम)
-अणु
-	wd_panic_समयout_tb = watchकरोg_thresh * ppc_tb_freq;
+static void watchdog_calc_timeouts(void)
+{
+	wd_panic_timeout_tb = watchdog_thresh * ppc_tb_freq;
 
 	/* Have the SMP detector trigger a bit later */
-	wd_smp_panic_समयout_tb = wd_panic_समयout_tb * 3 / 2;
+	wd_smp_panic_timeout_tb = wd_panic_timeout_tb * 3 / 2;
 
 	/* 2/5 is the factor that the perf based detector uses */
-	wd_समयr_period_ms = watchकरोg_thresh * 1000 * 2 / 5;
-पूर्ण
+	wd_timer_period_ms = watchdog_thresh * 1000 * 2 / 5;
+}
 
-व्योम watchकरोg_nmi_stop(व्योम)
-अणु
-	पूर्णांक cpu;
+void watchdog_nmi_stop(void)
+{
+	int cpu;
 
-	क्रम_each_cpu(cpu, &wd_cpus_enabled)
-		stop_watchकरोg_on_cpu(cpu);
-पूर्ण
+	for_each_cpu(cpu, &wd_cpus_enabled)
+		stop_watchdog_on_cpu(cpu);
+}
 
-व्योम watchकरोg_nmi_start(व्योम)
-अणु
-	पूर्णांक cpu;
+void watchdog_nmi_start(void)
+{
+	int cpu;
 
-	watchकरोg_calc_समयouts();
-	क्रम_each_cpu_and(cpu, cpu_online_mask, &watchकरोg_cpumask)
-		start_watchकरोg_on_cpu(cpu);
-पूर्ण
+	watchdog_calc_timeouts();
+	for_each_cpu_and(cpu, cpu_online_mask, &watchdog_cpumask)
+		start_watchdog_on_cpu(cpu);
+}
 
 /*
- * Invoked from core watchकरोg init.
+ * Invoked from core watchdog init.
  */
-पूर्णांक __init watchकरोg_nmi_probe(व्योम)
-अणु
-	पूर्णांक err;
+int __init watchdog_nmi_probe(void)
+{
+	int err;
 
 	err = cpuhp_setup_state_nocalls(CPUHP_AP_ONLINE_DYN,
 					"powerpc/watchdog:online",
-					start_watchकरोg_on_cpu,
-					stop_watchकरोg_on_cpu);
-	अगर (err < 0) अणु
+					start_watchdog_on_cpu,
+					stop_watchdog_on_cpu);
+	if (err < 0) {
 		pr_warn("could not be initialized");
-		वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return err;
+	}
+	return 0;
+}

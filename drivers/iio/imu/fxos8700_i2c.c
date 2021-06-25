@@ -1,69 +1,68 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * FXOS8700 - NXP IMU, I2C bits
  *
  * 7-bit I2C slave address determined by SA1 and SA0 logic level
- * inमाला_दो represented in the following table:
+ * inputs represented in the following table:
  *      SA1  |  SA0  |  Slave Address
  *      0    |  0    |  0x1E
  *      0    |  1    |  0x1D
  *      1    |  0    |  0x1C
  *      1    |  1    |  0x1F
  */
-#समावेश <linux/acpi.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mod_devicetable.h>
-#समावेश <linux/regmap.h>
+#include <linux/acpi.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
+#include <linux/regmap.h>
 
-#समावेश "fxos8700.h"
+#include "fxos8700.h"
 
-अटल पूर्णांक fxos8700_i2c_probe(काष्ठा i2c_client *client,
-			      स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा regmap *regmap;
-	स्थिर अक्षर *name = शून्य;
+static int fxos8700_i2c_probe(struct i2c_client *client,
+			      const struct i2c_device_id *id)
+{
+	struct regmap *regmap;
+	const char *name = NULL;
 
 	regmap = devm_regmap_init_i2c(client, &fxos8700_regmap_config);
-	अगर (IS_ERR(regmap)) अणु
+	if (IS_ERR(regmap)) {
 		dev_err(&client->dev, "Failed to register i2c regmap %ld\n", PTR_ERR(regmap));
-		वापस PTR_ERR(regmap);
-	पूर्ण
+		return PTR_ERR(regmap);
+	}
 
-	अगर (id)
+	if (id)
 		name = id->name;
 
-	वापस fxos8700_core_probe(&client->dev, regmap, name, false);
-पूर्ण
+	return fxos8700_core_probe(&client->dev, regmap, name, false);
+}
 
-अटल स्थिर काष्ठा i2c_device_id fxos8700_i2c_id[] = अणु
-	अणु"fxos8700", 0पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id fxos8700_i2c_id[] = {
+	{"fxos8700", 0},
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, fxos8700_i2c_id);
 
-अटल स्थिर काष्ठा acpi_device_id fxos8700_acpi_match[] = अणु
-	अणु"FXOS8700", 0पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct acpi_device_id fxos8700_acpi_match[] = {
+	{"FXOS8700", 0},
+	{ }
+};
 MODULE_DEVICE_TABLE(acpi, fxos8700_acpi_match);
 
-अटल स्थिर काष्ठा of_device_id fxos8700_of_match[] = अणु
-	अणु .compatible = "nxp,fxos8700" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id fxos8700_of_match[] = {
+	{ .compatible = "nxp,fxos8700" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, fxos8700_of_match);
 
-अटल काष्ठा i2c_driver fxos8700_i2c_driver = अणु
-	.driver = अणु
+static struct i2c_driver fxos8700_i2c_driver = {
+	.driver = {
 		.name                   = "fxos8700_i2c",
 		.acpi_match_table       = ACPI_PTR(fxos8700_acpi_match),
 		.of_match_table         = fxos8700_of_match,
-	पूर्ण,
+	},
 	.probe          = fxos8700_i2c_probe,
 	.id_table       = fxos8700_i2c_id,
-पूर्ण;
+};
 module_i2c_driver(fxos8700_i2c_driver);
 
 MODULE_AUTHOR("Robert Jones <rjones@gateworks.com>");

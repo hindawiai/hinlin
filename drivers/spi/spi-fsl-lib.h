@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Freescale SPI/eSPI controller driver library.
  *
- * Maपूर्णांकainer: Kumar Gala
+ * Maintainer: Kumar Gala
  *
  * Copyright 2010 Freescale Semiconductor, Inc.
  * Copyright (C) 2006 Polycom, Inc.
@@ -12,30 +11,30 @@
  * Copyright (c) 2009  MontaVista Software, Inc.
  * Author: Anton Vorontsov <avorontsov@ru.mvista.com>
  */
-#अगर_अघोषित __SPI_FSL_LIB_H__
-#घोषणा __SPI_FSL_LIB_H__
+#ifndef __SPI_FSL_LIB_H__
+#define __SPI_FSL_LIB_H__
 
-#समावेश <यंत्र/पन.स>
+#include <asm/io.h>
 
-/* SPI/eSPI Controller driver's निजी data. */
-काष्ठा mpc8xxx_spi अणु
-	काष्ठा device *dev;
-	व्योम __iomem *reg_base;
+/* SPI/eSPI Controller driver's private data. */
+struct mpc8xxx_spi {
+	struct device *dev;
+	void __iomem *reg_base;
 
 	/* rx & tx bufs from the spi_transfer */
-	स्थिर व्योम *tx;
-	व्योम *rx;
+	const void *tx;
+	void *rx;
 
-	पूर्णांक subblock;
-	काष्ठा spi_pram __iomem *pram;
-#अगर_घोषित CONFIG_FSL_SOC
-	काष्ठा cpm_buf_desc __iomem *tx_bd;
-	काष्ठा cpm_buf_desc __iomem *rx_bd;
-#पूर्ण_अगर
+	int subblock;
+	struct spi_pram __iomem *pram;
+#ifdef CONFIG_FSL_SOC
+	struct cpm_buf_desc __iomem *tx_bd;
+	struct cpm_buf_desc __iomem *rx_bd;
+#endif
 
-	काष्ठा spi_transfer *xfer_in_progress;
+	struct spi_transfer *xfer_in_progress;
 
-	/* dma addresses क्रम CPM transfers */
+	/* dma addresses for CPM transfers */
 	dma_addr_t tx_dma;
 	dma_addr_t rx_dma;
 	bool map_tx_dma;
@@ -44,72 +43,72 @@
 	dma_addr_t dma_dummy_tx;
 	dma_addr_t dma_dummy_rx;
 
-	/* functions to deal with dअगरferent sized buffers */
-	व्योम (*get_rx) (u32 rx_data, काष्ठा mpc8xxx_spi *);
-	u32(*get_tx) (काष्ठा mpc8xxx_spi *);
+	/* functions to deal with different sized buffers */
+	void (*get_rx) (u32 rx_data, struct mpc8xxx_spi *);
+	u32(*get_tx) (struct mpc8xxx_spi *);
 
-	अचिन्हित पूर्णांक count;
-	अचिन्हित पूर्णांक irq;
+	unsigned int count;
+	unsigned int irq;
 
-	अचिन्हित nsecs;		/* (घड़ी cycle समय)/2 */
+	unsigned nsecs;		/* (clock cycle time)/2 */
 
-	u32 spibrg;		/* SPIBRG input घड़ी */
-	u32 rx_shअगरt;		/* RX data reg shअगरt when in qe mode */
-	u32 tx_shअगरt;		/* TX data reg shअगरt when in qe mode */
+	u32 spibrg;		/* SPIBRG input clock */
+	u32 rx_shift;		/* RX data reg shift when in qe mode */
+	u32 tx_shift;		/* TX data reg shift when in qe mode */
 
-	अचिन्हित पूर्णांक flags;
+	unsigned int flags;
 
-#अगर IS_ENABLED(CONFIG_SPI_FSL_SPI)
-	पूर्णांक type;
-	पूर्णांक native_chipselects;
+#if IS_ENABLED(CONFIG_SPI_FSL_SPI)
+	int type;
+	int native_chipselects;
 	u8 max_bits_per_word;
 
-	व्योम (*set_shअगरts)(u32 *rx_shअगरt, u32 *tx_shअगरt,
-			   पूर्णांक bits_per_word, पूर्णांक msb_first);
-#पूर्ण_अगर
+	void (*set_shifts)(u32 *rx_shift, u32 *tx_shift,
+			   int bits_per_word, int msb_first);
+#endif
 
-	काष्ठा completion करोne;
-पूर्ण;
+	struct completion done;
+};
 
-काष्ठा spi_mpc8xxx_cs अणु
-	/* functions to deal with dअगरferent sized buffers */
-	व्योम (*get_rx) (u32 rx_data, काष्ठा mpc8xxx_spi *);
-	u32 (*get_tx) (काष्ठा mpc8xxx_spi *);
-	u32 rx_shअगरt;		/* RX data reg shअगरt when in qe mode */
-	u32 tx_shअगरt;		/* TX data reg shअगरt when in qe mode */
-	u32 hw_mode;		/* Holds HW mode रेजिस्टर settings */
-पूर्ण;
+struct spi_mpc8xxx_cs {
+	/* functions to deal with different sized buffers */
+	void (*get_rx) (u32 rx_data, struct mpc8xxx_spi *);
+	u32 (*get_tx) (struct mpc8xxx_spi *);
+	u32 rx_shift;		/* RX data reg shift when in qe mode */
+	u32 tx_shift;		/* TX data reg shift when in qe mode */
+	u32 hw_mode;		/* Holds HW mode register settings */
+};
 
-अटल अंतरभूत व्योम mpc8xxx_spi_ग_लिखो_reg(__be32 __iomem *reg, u32 val)
-अणु
-	ioग_लिखो32be(val, reg);
-पूर्ण
+static inline void mpc8xxx_spi_write_reg(__be32 __iomem *reg, u32 val)
+{
+	iowrite32be(val, reg);
+}
 
-अटल अंतरभूत u32 mpc8xxx_spi_पढ़ो_reg(__be32 __iomem *reg)
-अणु
-	वापस ioपढ़ो32be(reg);
-पूर्ण
+static inline u32 mpc8xxx_spi_read_reg(__be32 __iomem *reg)
+{
+	return ioread32be(reg);
+}
 
-काष्ठा mpc8xxx_spi_probe_info अणु
-	काष्ठा fsl_spi_platक्रमm_data pdata;
+struct mpc8xxx_spi_probe_info {
+	struct fsl_spi_platform_data pdata;
 	__be32 __iomem *immr_spi_cs;
-पूर्ण;
+};
 
-बाह्य u32 mpc8xxx_spi_tx_buf_u8(काष्ठा mpc8xxx_spi *mpc8xxx_spi);
-बाह्य u32 mpc8xxx_spi_tx_buf_u16(काष्ठा mpc8xxx_spi *mpc8xxx_spi);
-बाह्य u32 mpc8xxx_spi_tx_buf_u32(काष्ठा mpc8xxx_spi *mpc8xxx_spi);
-बाह्य व्योम mpc8xxx_spi_rx_buf_u8(u32 data, काष्ठा mpc8xxx_spi *mpc8xxx_spi);
-बाह्य व्योम mpc8xxx_spi_rx_buf_u16(u32 data, काष्ठा mpc8xxx_spi *mpc8xxx_spi);
-बाह्य व्योम mpc8xxx_spi_rx_buf_u32(u32 data, काष्ठा mpc8xxx_spi *mpc8xxx_spi);
+extern u32 mpc8xxx_spi_tx_buf_u8(struct mpc8xxx_spi *mpc8xxx_spi);
+extern u32 mpc8xxx_spi_tx_buf_u16(struct mpc8xxx_spi *mpc8xxx_spi);
+extern u32 mpc8xxx_spi_tx_buf_u32(struct mpc8xxx_spi *mpc8xxx_spi);
+extern void mpc8xxx_spi_rx_buf_u8(u32 data, struct mpc8xxx_spi *mpc8xxx_spi);
+extern void mpc8xxx_spi_rx_buf_u16(u32 data, struct mpc8xxx_spi *mpc8xxx_spi);
+extern void mpc8xxx_spi_rx_buf_u32(u32 data, struct mpc8xxx_spi *mpc8xxx_spi);
 
-बाह्य काष्ठा mpc8xxx_spi_probe_info *to_of_pinfo(
-		काष्ठा fsl_spi_platक्रमm_data *pdata);
-बाह्य पूर्णांक mpc8xxx_spi_bufs(काष्ठा mpc8xxx_spi *mspi,
-		काष्ठा spi_transfer *t, अचिन्हित पूर्णांक len);
-बाह्य स्थिर अक्षर *mpc8xxx_spi_strmode(अचिन्हित पूर्णांक flags);
-बाह्य व्योम mpc8xxx_spi_probe(काष्ठा device *dev, काष्ठा resource *mem,
-		अचिन्हित पूर्णांक irq);
-बाह्य पूर्णांक mpc8xxx_spi_हटाओ(काष्ठा device *dev);
-बाह्य पूर्णांक of_mpc8xxx_spi_probe(काष्ठा platक्रमm_device *ofdev);
+extern struct mpc8xxx_spi_probe_info *to_of_pinfo(
+		struct fsl_spi_platform_data *pdata);
+extern int mpc8xxx_spi_bufs(struct mpc8xxx_spi *mspi,
+		struct spi_transfer *t, unsigned int len);
+extern const char *mpc8xxx_spi_strmode(unsigned int flags);
+extern void mpc8xxx_spi_probe(struct device *dev, struct resource *mem,
+		unsigned int irq);
+extern int mpc8xxx_spi_remove(struct device *dev);
+extern int of_mpc8xxx_spi_probe(struct platform_device *ofdev);
 
-#पूर्ण_अगर /* __SPI_FSL_LIB_H__ */
+#endif /* __SPI_FSL_LIB_H__ */

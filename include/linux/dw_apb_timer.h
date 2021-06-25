@@ -1,52 +1,51 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * (C) Copyright 2009 Intel Corporation
- * Author: Jacob Pan (jacob.jun.pan@पूर्णांकel.com)
+ * Author: Jacob Pan (jacob.jun.pan@intel.com)
  *
- * Shared with ARM platक्रमms, Jamie Iles, Picochip 2011
+ * Shared with ARM platforms, Jamie Iles, Picochip 2011
  *
- * Support क्रम the Synopsys DesignWare APB Timers.
+ * Support for the Synopsys DesignWare APB Timers.
  */
-#अगर_अघोषित __DW_APB_TIMER_H__
-#घोषणा __DW_APB_TIMER_H__
+#ifndef __DW_APB_TIMER_H__
+#define __DW_APB_TIMER_H__
 
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/घड़ीsource.h>
-#समावेश <linux/पूर्णांकerrupt.h>
+#include <linux/clockchips.h>
+#include <linux/clocksource.h>
+#include <linux/interrupt.h>
 
-#घोषणा APBTMRS_REG_SIZE       0x14
+#define APBTMRS_REG_SIZE       0x14
 
-काष्ठा dw_apb_समयr अणु
-	व्योम __iomem				*base;
-	अचिन्हित दीर्घ				freq;
-	पूर्णांक					irq;
-पूर्ण;
+struct dw_apb_timer {
+	void __iomem				*base;
+	unsigned long				freq;
+	int					irq;
+};
 
-काष्ठा dw_apb_घड़ी_event_device अणु
-	काष्ठा घड़ी_event_device		ced;
-	काष्ठा dw_apb_समयr			समयr;
-	व्योम					(*eoi)(काष्ठा dw_apb_समयr *);
-पूर्ण;
+struct dw_apb_clock_event_device {
+	struct clock_event_device		ced;
+	struct dw_apb_timer			timer;
+	void					(*eoi)(struct dw_apb_timer *);
+};
 
-काष्ठा dw_apb_घड़ीsource अणु
-	काष्ठा dw_apb_समयr			समयr;
-	काष्ठा घड़ीsource			cs;
-पूर्ण;
+struct dw_apb_clocksource {
+	struct dw_apb_timer			timer;
+	struct clocksource			cs;
+};
 
-व्योम dw_apb_घड़ीevent_रेजिस्टर(काष्ठा dw_apb_घड़ी_event_device *dw_ced);
-व्योम dw_apb_घड़ीevent_छोड़ो(काष्ठा dw_apb_घड़ी_event_device *dw_ced);
-व्योम dw_apb_घड़ीevent_resume(काष्ठा dw_apb_घड़ी_event_device *dw_ced);
-व्योम dw_apb_घड़ीevent_stop(काष्ठा dw_apb_घड़ी_event_device *dw_ced);
+void dw_apb_clockevent_register(struct dw_apb_clock_event_device *dw_ced);
+void dw_apb_clockevent_pause(struct dw_apb_clock_event_device *dw_ced);
+void dw_apb_clockevent_resume(struct dw_apb_clock_event_device *dw_ced);
+void dw_apb_clockevent_stop(struct dw_apb_clock_event_device *dw_ced);
 
-काष्ठा dw_apb_घड़ी_event_device *
-dw_apb_घड़ीevent_init(पूर्णांक cpu, स्थिर अक्षर *name, अचिन्हित rating,
-		       व्योम __iomem *base, पूर्णांक irq, अचिन्हित दीर्घ freq);
-काष्ठा dw_apb_घड़ीsource *
-dw_apb_घड़ीsource_init(अचिन्हित rating, स्थिर अक्षर *name, व्योम __iomem *base,
-			अचिन्हित दीर्घ freq);
-व्योम dw_apb_घड़ीsource_रेजिस्टर(काष्ठा dw_apb_घड़ीsource *dw_cs);
-व्योम dw_apb_घड़ीsource_start(काष्ठा dw_apb_घड़ीsource *dw_cs);
-u64 dw_apb_घड़ीsource_पढ़ो(काष्ठा dw_apb_घड़ीsource *dw_cs);
+struct dw_apb_clock_event_device *
+dw_apb_clockevent_init(int cpu, const char *name, unsigned rating,
+		       void __iomem *base, int irq, unsigned long freq);
+struct dw_apb_clocksource *
+dw_apb_clocksource_init(unsigned rating, const char *name, void __iomem *base,
+			unsigned long freq);
+void dw_apb_clocksource_register(struct dw_apb_clocksource *dw_cs);
+void dw_apb_clocksource_start(struct dw_apb_clocksource *dw_cs);
+u64 dw_apb_clocksource_read(struct dw_apb_clocksource *dw_cs);
 
-#पूर्ण_अगर /* __DW_APB_TIMER_H__ */
+#endif /* __DW_APB_TIMER_H__ */

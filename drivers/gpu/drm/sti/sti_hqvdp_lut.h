@@ -1,27 +1,26 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) STMicroelectronics SA 2014
- * Authors: Fabien Dessenne <fabien.dessenne@st.com> क्रम STMicroelectronics.
+ * Authors: Fabien Dessenne <fabien.dessenne@st.com> for STMicroelectronics.
  */
 
-#अगर_अघोषित _STI_HQVDP_LUT_H_
-#घोषणा _STI_HQVDP_LUT_H_
+#ifndef _STI_HQVDP_LUT_H_
+#define _STI_HQVDP_LUT_H_
 
-#घोषणा NB_COEF                 128
+#define NB_COEF                 128
 
-#घोषणा SHIFT_LUT_A_LEGACY      8
-#घोषणा SHIFT_LUT_B             8
-#घोषणा SHIFT_LUT_C_Y_LEGACY    8
-#घोषणा SHIFT_LUT_C_C_LEGACY    8
-#घोषणा SHIFT_LUT_D_Y_LEGACY    8
-#घोषणा SHIFT_LUT_D_C_LEGACY    8
-#घोषणा SHIFT_LUT_E_Y_LEGACY    8
-#घोषणा SHIFT_LUT_E_C_LEGACY    8
-#घोषणा SHIFT_LUT_F_Y_LEGACY    8
-#घोषणा SHIFT_LUT_F_C_LEGACY    8
+#define SHIFT_LUT_A_LEGACY      8
+#define SHIFT_LUT_B             8
+#define SHIFT_LUT_C_Y_LEGACY    8
+#define SHIFT_LUT_C_C_LEGACY    8
+#define SHIFT_LUT_D_Y_LEGACY    8
+#define SHIFT_LUT_D_C_LEGACY    8
+#define SHIFT_LUT_E_Y_LEGACY    8
+#define SHIFT_LUT_E_C_LEGACY    8
+#define SHIFT_LUT_F_Y_LEGACY    8
+#define SHIFT_LUT_F_C_LEGACY    8
 
-अटल स्थिर u32 coef_lut_a_legacy[NB_COEF] = अणु
+static const u32 coef_lut_a_legacy[NB_COEF] = {
 	0x0000ffff, 0x00010000, 0x000100ff, 0x00000000,
 	0x00000000, 0x00050000, 0xfffc00ff, 0x00000000,
 	0x00000000, 0x00090000, 0xfff900fe, 0x00000000,
@@ -54,9 +53,9 @@
 	0x00000000, 0x00fbfff6, 0xffff0010, 0x00000000,
 	0x00000000, 0x00fefff9, 0x00000009, 0x00000000,
 	0x00000000, 0x00fffffc, 0x00000005, 0x00000000
-पूर्ण;
+};
 
-अटल स्थिर u32 coef_lut_b[NB_COEF] = अणु
+static const u32 coef_lut_b[NB_COEF] = {
 	0x00000000, 0x00000000, 0x00000100, 0x00000000,
 	0x00000000, 0x00000000, 0x00000100, 0x00000000,
 	0x00000000, 0x00000000, 0x00000100, 0x00000000,
@@ -89,9 +88,9 @@
 	0x00000000, 0x00000000, 0x00000100, 0x00000000,
 	0x00000000, 0x00000000, 0x00000100, 0x00000000,
 	0x00000000, 0x00000000, 0x00000100, 0x00000000
-पूर्ण;
+};
 
-अटल स्थिर u32 coef_lut_c_y_legacy[NB_COEF] = अणु
+static const u32 coef_lut_c_y_legacy[NB_COEF] = {
 	0x00060004, 0x0038ffe1, 0x003800be, 0x0006ffe1,
 	0x00050005, 0x0042ffe1, 0x003800b3, 0x0007ffe1,
 	0x00040006, 0x0046ffe1, 0x003300b2, 0x0008ffe2,
@@ -124,9 +123,9 @@
 	0xffe20008, 0x00b1002e, 0xffe1004c, 0x00070003,
 	0xffe20008, 0x00b20033, 0xffe10046, 0x00060004,
 	0xffe10007, 0x00b30038, 0xffe10042, 0x00050005
-पूर्ण;
+};
 
-अटल स्थिर u32 coef_lut_c_c_legacy[NB_COEF] = अणु
+static const u32 coef_lut_c_c_legacy[NB_COEF] = {
 	0x0001fff3, 0x003afffb, 0x003a00a1, 0x0001fffb,
 	0x0001fff5, 0x0041fffb, 0x0038009a, 0x0001fffb,
 	0x0001fff5, 0x0046fffb, 0x00340099, 0x0001fffb,
@@ -159,9 +158,9 @@
 	0xfffb0001, 0x00980030, 0xfffb0049, 0xfff70001,
 	0xfffb0001, 0x00990034, 0xfffb0046, 0xfff50001,
 	0xfffb0001, 0x009a0038, 0xfffb0041, 0xfff50001
-पूर्ण;
+};
 
-अटल स्थिर u32 coef_lut_d_y_legacy[NB_COEF] = अणु
+static const u32 coef_lut_d_y_legacy[NB_COEF] = {
 	0xfff80009, 0x0046ffec, 0x004600a3, 0xfff8ffec,
 	0xfff70009, 0x004effed, 0x0044009d, 0xfff9ffeb,
 	0xfff6000a, 0x0052ffee, 0x003f009d, 0xfffaffea,
@@ -194,9 +193,9 @@
 	0xffe9fffb, 0x009d003b, 0xffef0057, 0x0009fff5,
 	0xffeafffa, 0x009d003f, 0xffee0052, 0x000afff6,
 	0xffebfff9, 0x009d0044, 0xffed004e, 0x0009fff7
-पूर्ण;
+};
 
-अटल स्थिर u32 coef_lut_d_c_legacy[NB_COEF] = अणु
+static const u32 coef_lut_d_c_legacy[NB_COEF] = {
 	0xfffeffff, 0x003fffff, 0x003f0089, 0xfffeffff,
 	0xfffe0000, 0x00460000, 0x0042007d, 0xfffffffe,
 	0xfffe0000, 0x00490001, 0x003f007d, 0xfffffffd,
@@ -229,9 +228,9 @@
 	0xfffc0000, 0x007d003c, 0x0002004b, 0x0001fffd,
 	0xfffdffff, 0x007d003f, 0x00010049, 0x0000fffe,
 	0xfffeffff, 0x007d0042, 0x00000046, 0x0000fffe
-पूर्ण;
+};
 
-अटल स्थिर u32 coef_lut_e_y_legacy[NB_COEF] = अणु
+static const u32 coef_lut_e_y_legacy[NB_COEF] = {
 	0xfff10001, 0x00490004, 0x00490083, 0xfff10004,
 	0xfff10000, 0x00500006, 0x004b007b, 0xfff10002,
 	0xfff10000, 0x00530007, 0x0048007b, 0xfff10001,
@@ -264,9 +263,9 @@
 	0x0000fff1, 0x007a0046, 0x00090055, 0x0000fff1,
 	0x0001fff1, 0x007b0048, 0x00070053, 0x0000fff1,
 	0x0002fff1, 0x007b004b, 0x00060050, 0x0000fff1
-पूर्ण;
+};
 
-अटल स्थिर u32 coef_lut_e_c_legacy[NB_COEF] = अणु
+static const u32 coef_lut_e_c_legacy[NB_COEF] = {
 	0xfffa0001, 0x003f0010, 0x003f006d, 0xfffa0010,
 	0xfffb0002, 0x00440011, 0x00440062, 0xfffa000e,
 	0xfffb0001, 0x00460013, 0x00420062, 0xfffa000d,
@@ -299,9 +298,9 @@
 	0x000cfffa, 0x00620041, 0x00140048, 0x0000fffb,
 	0x000dfffa, 0x00620042, 0x00130046, 0x0001fffb,
 	0x000efffa, 0x00620044, 0x00110044, 0x0002fffb
-पूर्ण;
+};
 
-अटल स्थिर u32 coef_lut_f_y_legacy[NB_COEF] = अणु
+static const u32 coef_lut_f_y_legacy[NB_COEF] = {
 	0xfff6fff0, 0x00490012, 0x0049006e, 0xfff60012,
 	0xfff7fff1, 0x004e0013, 0x00490068, 0xfff60010,
 	0xfff7fff2, 0x004f0015, 0x00470067, 0xfff6000f,
@@ -334,9 +333,9 @@
 	0x000efff6, 0x00650045, 0x0017004f, 0xfff5fff7,
 	0x000ffff6, 0x00670047, 0x0015004f, 0xfff2fff7,
 	0x0010fff6, 0x00680049, 0x0013004e, 0xfff1fff7
-पूर्ण;
+};
 
-अटल स्थिर u32 coef_lut_f_c_legacy[NB_COEF] = अणु
+static const u32 coef_lut_f_c_legacy[NB_COEF] = {
 	0x0000fffb, 0x003a001a, 0x003a005d, 0x0000001a,
 	0x0001fffb, 0x003f001b, 0x00400051, 0x00000019,
 	0x0001fffc, 0x0040001c, 0x003f0051, 0x00000017,
@@ -369,6 +368,6 @@
 	0x0016ffff, 0x0051003e, 0x001d0042, 0xfffb0002,
 	0x00170000, 0x0051003f, 0x001c0040, 0xfffc0001,
 	0x00190000, 0x00510040, 0x001b003f, 0xfffb0001
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

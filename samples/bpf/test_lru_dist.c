@@ -1,538 +1,537 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016 Facebook
  */
-#घोषणा _GNU_SOURCE
-#समावेश <linux/types.h>
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <linux/bpf.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <माला.स>
-#समावेश <निश्चित.स>
-#समावेश <sched.h>
-#समावेश <sys/रुको.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/resource.h>
-#समावेश <fcntl.h>
-#समावेश <मानककोष.स>
-#समावेश <समय.स>
+#define _GNU_SOURCE
+#include <linux/types.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <linux/bpf.h>
+#include <errno.h>
+#include <string.h>
+#include <assert.h>
+#include <sched.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <sys/resource.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <time.h>
 
-#समावेश <bpf/bpf.h>
-#समावेश "bpf_util.h"
+#include <bpf/bpf.h>
+#include "bpf_util.h"
 
-#घोषणा min(a, b) ((a) < (b) ? (a) : (b))
-#अगर_अघोषित दुरत्व
-# define दुरत्व(TYPE, MEMBER)	((माप_प्रकार)&((TYPE *)0)->MEMBER)
-#पूर्ण_अगर
-#घोषणा container_of(ptr, type, member) (अणु			\
-	स्थिर typeof( ((type *)0)->member ) *__mptr = (ptr);	\
-	(type *)( (अक्षर *)__mptr - दुरत्व(type,member) );पूर्ण)
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#ifndef offsetof
+# define offsetof(TYPE, MEMBER)	((size_t)&((TYPE *)0)->MEMBER)
+#endif
+#define container_of(ptr, type, member) ({			\
+	const typeof( ((type *)0)->member ) *__mptr = (ptr);	\
+	(type *)( (char *)__mptr - offsetof(type,member) );})
 
-अटल पूर्णांक nr_cpus;
-अटल अचिन्हित दीर्घ दीर्घ *dist_keys;
-अटल अचिन्हित पूर्णांक dist_key_counts;
+static int nr_cpus;
+static unsigned long long *dist_keys;
+static unsigned int dist_key_counts;
 
-काष्ठा list_head अणु
-	काष्ठा list_head *next, *prev;
-पूर्ण;
+struct list_head {
+	struct list_head *next, *prev;
+};
 
-अटल अंतरभूत व्योम INIT_LIST_HEAD(काष्ठा list_head *list)
-अणु
+static inline void INIT_LIST_HEAD(struct list_head *list)
+{
 	list->next = list;
 	list->prev = list;
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक list_empty(स्थिर काष्ठा list_head *head)
-अणु
-	वापस head->next == head;
-पूर्ण
+static inline int list_empty(const struct list_head *head)
+{
+	return head->next == head;
+}
 
-अटल अंतरभूत व्योम __list_add(काष्ठा list_head *new,
-			      काष्ठा list_head *prev,
-			      काष्ठा list_head *next)
-अणु
+static inline void __list_add(struct list_head *new,
+			      struct list_head *prev,
+			      struct list_head *next)
+{
 	next->prev = new;
 	new->next = next;
 	new->prev = prev;
 	prev->next = new;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम list_add(काष्ठा list_head *new, काष्ठा list_head *head)
-अणु
+static inline void list_add(struct list_head *new, struct list_head *head)
+{
 	__list_add(new, head, head->next);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __list_del(काष्ठा list_head *prev, काष्ठा list_head *next)
-अणु
+static inline void __list_del(struct list_head *prev, struct list_head *next)
+{
 	next->prev = prev;
 	prev->next = next;
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __list_del_entry(काष्ठा list_head *entry)
-अणु
+static inline void __list_del_entry(struct list_head *entry)
+{
 	__list_del(entry->prev, entry->next);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम list_move(काष्ठा list_head *list, काष्ठा list_head *head)
-अणु
+static inline void list_move(struct list_head *list, struct list_head *head)
+{
 	__list_del_entry(list);
 	list_add(list, head);
-पूर्ण
+}
 
-#घोषणा list_entry(ptr, type, member) \
+#define list_entry(ptr, type, member) \
 	container_of(ptr, type, member)
 
-#घोषणा list_last_entry(ptr, type, member) \
+#define list_last_entry(ptr, type, member) \
 	list_entry((ptr)->prev, type, member)
 
-काष्ठा pfect_lru_node अणु
-	काष्ठा list_head list;
-	अचिन्हित दीर्घ दीर्घ key;
-पूर्ण;
+struct pfect_lru_node {
+	struct list_head list;
+	unsigned long long key;
+};
 
-काष्ठा pfect_lru अणु
-	काष्ठा list_head list;
-	काष्ठा pfect_lru_node *मुक्त_nodes;
-	अचिन्हित पूर्णांक cur_size;
-	अचिन्हित पूर्णांक lru_size;
-	अचिन्हित पूर्णांक nr_unique;
-	अचिन्हित पूर्णांक nr_misses;
-	अचिन्हित पूर्णांक total;
-	पूर्णांक map_fd;
-पूर्ण;
+struct pfect_lru {
+	struct list_head list;
+	struct pfect_lru_node *free_nodes;
+	unsigned int cur_size;
+	unsigned int lru_size;
+	unsigned int nr_unique;
+	unsigned int nr_misses;
+	unsigned int total;
+	int map_fd;
+};
 
-अटल व्योम pfect_lru_init(काष्ठा pfect_lru *lru, अचिन्हित पूर्णांक lru_size,
-			   अचिन्हित पूर्णांक nr_possible_elems)
-अणु
+static void pfect_lru_init(struct pfect_lru *lru, unsigned int lru_size,
+			   unsigned int nr_possible_elems)
+{
 	lru->map_fd = bpf_create_map(BPF_MAP_TYPE_HASH,
-				     माप(अचिन्हित दीर्घ दीर्घ),
-				     माप(काष्ठा pfect_lru_node *),
+				     sizeof(unsigned long long),
+				     sizeof(struct pfect_lru_node *),
 				     nr_possible_elems, 0);
-	निश्चित(lru->map_fd != -1);
+	assert(lru->map_fd != -1);
 
-	lru->मुक्त_nodes = दो_स्मृति(lru_size * माप(काष्ठा pfect_lru_node));
-	निश्चित(lru->मुक्त_nodes);
+	lru->free_nodes = malloc(lru_size * sizeof(struct pfect_lru_node));
+	assert(lru->free_nodes);
 
 	INIT_LIST_HEAD(&lru->list);
 	lru->cur_size = 0;
 	lru->lru_size = lru_size;
 	lru->nr_unique = lru->nr_misses = lru->total = 0;
-पूर्ण
+}
 
-अटल व्योम pfect_lru_destroy(काष्ठा pfect_lru *lru)
-अणु
-	बंद(lru->map_fd);
-	मुक्त(lru->मुक्त_nodes);
-पूर्ण
+static void pfect_lru_destroy(struct pfect_lru *lru)
+{
+	close(lru->map_fd);
+	free(lru->free_nodes);
+}
 
-अटल पूर्णांक pfect_lru_lookup_or_insert(काष्ठा pfect_lru *lru,
-				      अचिन्हित दीर्घ दीर्घ key)
-अणु
-	काष्ठा pfect_lru_node *node = शून्य;
-	पूर्णांक seen = 0;
+static int pfect_lru_lookup_or_insert(struct pfect_lru *lru,
+				      unsigned long long key)
+{
+	struct pfect_lru_node *node = NULL;
+	int seen = 0;
 
 	lru->total++;
-	अगर (!bpf_map_lookup_elem(lru->map_fd, &key, &node)) अणु
-		अगर (node) अणु
+	if (!bpf_map_lookup_elem(lru->map_fd, &key, &node)) {
+		if (node) {
 			list_move(&node->list, &lru->list);
-			वापस 1;
-		पूर्ण
+			return 1;
+		}
 		seen = 1;
-	पूर्ण
+	}
 
-	अगर (lru->cur_size < lru->lru_size) अणु
-		node =  &lru->मुक्त_nodes[lru->cur_size++];
+	if (lru->cur_size < lru->lru_size) {
+		node =  &lru->free_nodes[lru->cur_size++];
 		INIT_LIST_HEAD(&node->list);
-	पूर्ण अन्यथा अणु
-		काष्ठा pfect_lru_node *null_node = शून्य;
+	} else {
+		struct pfect_lru_node *null_node = NULL;
 
 		node = list_last_entry(&lru->list,
-				       काष्ठा pfect_lru_node,
+				       struct pfect_lru_node,
 				       list);
 		bpf_map_update_elem(lru->map_fd, &node->key, &null_node, BPF_EXIST);
-	पूर्ण
+	}
 
 	node->key = key;
 	list_move(&node->list, &lru->list);
 
 	lru->nr_misses++;
-	अगर (seen) अणु
-		निश्चित(!bpf_map_update_elem(lru->map_fd, &key, &node, BPF_EXIST));
-	पूर्ण अन्यथा अणु
+	if (seen) {
+		assert(!bpf_map_update_elem(lru->map_fd, &key, &node, BPF_EXIST));
+	} else {
 		lru->nr_unique++;
-		निश्चित(!bpf_map_update_elem(lru->map_fd, &key, &node, BPF_NOEXIST));
-	पूर्ण
+		assert(!bpf_map_update_elem(lru->map_fd, &key, &node, BPF_NOEXIST));
+	}
 
-	वापस seen;
-पूर्ण
+	return seen;
+}
 
-अटल अचिन्हित पूर्णांक पढ़ो_keys(स्थिर अक्षर *dist_file,
-			      अचिन्हित दीर्घ दीर्घ **keys)
-अणु
-	काष्ठा stat fst;
-	अचिन्हित दीर्घ दीर्घ *retkeys;
-	अचिन्हित पूर्णांक counts = 0;
-	पूर्णांक dist_fd;
-	अक्षर *b, *l;
-	पूर्णांक i;
+static unsigned int read_keys(const char *dist_file,
+			      unsigned long long **keys)
+{
+	struct stat fst;
+	unsigned long long *retkeys;
+	unsigned int counts = 0;
+	int dist_fd;
+	char *b, *l;
+	int i;
 
-	dist_fd = खोलो(dist_file, 0);
-	निश्चित(dist_fd != -1);
+	dist_fd = open(dist_file, 0);
+	assert(dist_fd != -1);
 
-	निश्चित(ख_स्थिति(dist_fd, &fst) == 0);
-	b = दो_स्मृति(fst.st_size);
-	निश्चित(b);
+	assert(fstat(dist_fd, &fst) == 0);
+	b = malloc(fst.st_size);
+	assert(b);
 
-	निश्चित(पढ़ो(dist_fd, b, fst.st_size) == fst.st_size);
-	बंद(dist_fd);
-	क्रम (i = 0; i < fst.st_size; i++) अणु
-		अगर (b[i] == '\n')
+	assert(read(dist_fd, b, fst.st_size) == fst.st_size);
+	close(dist_fd);
+	for (i = 0; i < fst.st_size; i++) {
+		if (b[i] == '\n')
 			counts++;
-	पूर्ण
-	counts++; /* in हाल the last line has no \न */
+	}
+	counts++; /* in case the last line has no \n */
 
-	retkeys = दो_स्मृति(counts * माप(अचिन्हित दीर्घ दीर्घ));
-	निश्चित(retkeys);
+	retkeys = malloc(counts * sizeof(unsigned long long));
+	assert(retkeys);
 
 	counts = 0;
-	क्रम (l = म_मोहर(b, "\n"); l; l = म_मोहर(शून्य, "\n"))
-		retkeys[counts++] = म_से_अदीर्घl(l, शून्य, 10);
-	मुक्त(b);
+	for (l = strtok(b, "\n"); l; l = strtok(NULL, "\n"))
+		retkeys[counts++] = strtoull(l, NULL, 10);
+	free(b);
 
 	*keys = retkeys;
 
-	वापस counts;
-पूर्ण
+	return counts;
+}
 
-अटल पूर्णांक create_map(पूर्णांक map_type, पूर्णांक map_flags, अचिन्हित पूर्णांक size)
-अणु
-	पूर्णांक map_fd;
+static int create_map(int map_type, int map_flags, unsigned int size)
+{
+	int map_fd;
 
-	map_fd = bpf_create_map(map_type, माप(अचिन्हित दीर्घ दीर्घ),
-				माप(अचिन्हित दीर्घ दीर्घ), size, map_flags);
+	map_fd = bpf_create_map(map_type, sizeof(unsigned long long),
+				sizeof(unsigned long long), size, map_flags);
 
-	अगर (map_fd == -1)
-		लिखो_त्रुटि("bpf_create_map");
+	if (map_fd == -1)
+		perror("bpf_create_map");
 
-	वापस map_fd;
-पूर्ण
+	return map_fd;
+}
 
-अटल पूर्णांक sched_next_online(पूर्णांक pid, पूर्णांक next_to_try)
-अणु
+static int sched_next_online(int pid, int next_to_try)
+{
 	cpu_set_t cpuset;
 
-	अगर (next_to_try == nr_cpus)
-		वापस -1;
+	if (next_to_try == nr_cpus)
+		return -1;
 
-	जबतक (next_to_try < nr_cpus) अणु
+	while (next_to_try < nr_cpus) {
 		CPU_ZERO(&cpuset);
 		CPU_SET(next_to_try++, &cpuset);
-		अगर (!sched_setaffinity(pid, माप(cpuset), &cpuset))
-			अवरोध;
-	पूर्ण
+		if (!sched_setaffinity(pid, sizeof(cpuset), &cpuset))
+			break;
+	}
 
-	वापस next_to_try;
-पूर्ण
+	return next_to_try;
+}
 
-अटल व्योम run_parallel(अचिन्हित पूर्णांक tasks, व्योम (*fn)(पूर्णांक i, व्योम *data),
-			 व्योम *data)
-अणु
-	पूर्णांक next_sched_cpu = 0;
+static void run_parallel(unsigned int tasks, void (*fn)(int i, void *data),
+			 void *data)
+{
+	int next_sched_cpu = 0;
 	pid_t pid[tasks];
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < tasks; i++) अणु
-		pid[i] = विभाजन();
-		अगर (pid[i] == 0) अणु
+	for (i = 0; i < tasks; i++) {
+		pid[i] = fork();
+		if (pid[i] == 0) {
 			next_sched_cpu = sched_next_online(0, next_sched_cpu);
 			fn(i, data);
-			निकास(0);
-		पूर्ण अन्यथा अगर (pid[i] == -1) अणु
-			म_लिखो("couldn't spawn #%d process\n", i);
-			निकास(1);
-		पूर्ण
+			exit(0);
+		} else if (pid[i] == -1) {
+			printf("couldn't spawn #%d process\n", i);
+			exit(1);
+		}
 		/* It is mostly redundant and just allow the parent
-		 * process to update next_shced_cpu क्रम the next child
+		 * process to update next_shced_cpu for the next child
 		 * process
 		 */
 		next_sched_cpu = sched_next_online(pid[i], next_sched_cpu);
-	पूर्ण
-	क्रम (i = 0; i < tasks; i++) अणु
-		पूर्णांक status;
+	}
+	for (i = 0; i < tasks; i++) {
+		int status;
 
-		निश्चित(रुकोpid(pid[i], &status, 0) == pid[i]);
-		निश्चित(status == 0);
-	पूर्ण
-पूर्ण
+		assert(waitpid(pid[i], &status, 0) == pid[i]);
+		assert(status == 0);
+	}
+}
 
-अटल व्योम करो_test_lru_dist(पूर्णांक task, व्योम *data)
-अणु
-	अचिन्हित पूर्णांक nr_misses = 0;
-	काष्ठा pfect_lru pfect_lru;
-	अचिन्हित दीर्घ दीर्घ key, value = 1234;
-	अचिन्हित पूर्णांक i;
+static void do_test_lru_dist(int task, void *data)
+{
+	unsigned int nr_misses = 0;
+	struct pfect_lru pfect_lru;
+	unsigned long long key, value = 1234;
+	unsigned int i;
 
-	अचिन्हित पूर्णांक lru_map_fd = ((अचिन्हित पूर्णांक *)data)[0];
-	अचिन्हित पूर्णांक lru_size = ((अचिन्हित पूर्णांक *)data)[1];
-	अचिन्हित दीर्घ दीर्घ key_offset = task * dist_key_counts;
+	unsigned int lru_map_fd = ((unsigned int *)data)[0];
+	unsigned int lru_size = ((unsigned int *)data)[1];
+	unsigned long long key_offset = task * dist_key_counts;
 
 	pfect_lru_init(&pfect_lru, lru_size, dist_key_counts);
 
-	क्रम (i = 0; i < dist_key_counts; i++) अणु
+	for (i = 0; i < dist_key_counts; i++) {
 		key = dist_keys[i] + key_offset;
 
 		pfect_lru_lookup_or_insert(&pfect_lru, key);
 
-		अगर (!bpf_map_lookup_elem(lru_map_fd, &key, &value))
-			जारी;
+		if (!bpf_map_lookup_elem(lru_map_fd, &key, &value))
+			continue;
 
-		अगर (bpf_map_update_elem(lru_map_fd, &key, &value, BPF_NOEXIST)) अणु
-			म_लिखो("bpf_map_update_elem(lru_map_fd, %llu): errno:%d\n",
-			       key, त्रुटि_सं);
-			निश्चित(0);
-		पूर्ण
+		if (bpf_map_update_elem(lru_map_fd, &key, &value, BPF_NOEXIST)) {
+			printf("bpf_map_update_elem(lru_map_fd, %llu): errno:%d\n",
+			       key, errno);
+			assert(0);
+		}
 
 		nr_misses++;
-	पूर्ण
+	}
 
-	म_लिखो("    task:%d BPF LRU: nr_unique:%u(/%u) nr_misses:%u(/%u)\n",
+	printf("    task:%d BPF LRU: nr_unique:%u(/%u) nr_misses:%u(/%u)\n",
 	       task, pfect_lru.nr_unique, dist_key_counts, nr_misses,
 	       dist_key_counts);
-	म_लिखो("    task:%d Perfect LRU: nr_unique:%u(/%u) nr_misses:%u(/%u)\n",
+	printf("    task:%d Perfect LRU: nr_unique:%u(/%u) nr_misses:%u(/%u)\n",
 	       task, pfect_lru.nr_unique, pfect_lru.total,
 	       pfect_lru.nr_misses, pfect_lru.total);
 
 	pfect_lru_destroy(&pfect_lru);
-	बंद(lru_map_fd);
-पूर्ण
+	close(lru_map_fd);
+}
 
-अटल व्योम test_parallel_lru_dist(पूर्णांक map_type, पूर्णांक map_flags,
-				   पूर्णांक nr_tasks, अचिन्हित पूर्णांक lru_size)
-अणु
-	पूर्णांक child_data[2];
-	पूर्णांक lru_map_fd;
+static void test_parallel_lru_dist(int map_type, int map_flags,
+				   int nr_tasks, unsigned int lru_size)
+{
+	int child_data[2];
+	int lru_map_fd;
 
-	म_लिखो("%s (map_type:%d map_flags:0x%X):\n", __func__, map_type,
+	printf("%s (map_type:%d map_flags:0x%X):\n", __func__, map_type,
 	       map_flags);
 
-	अगर (map_flags & BPF_F_NO_COMMON_LRU)
+	if (map_flags & BPF_F_NO_COMMON_LRU)
 		lru_map_fd = create_map(map_type, map_flags,
 					nr_cpus * lru_size);
-	अन्यथा
+	else
 		lru_map_fd = create_map(map_type, map_flags,
 					nr_tasks * lru_size);
-	निश्चित(lru_map_fd != -1);
+	assert(lru_map_fd != -1);
 
 	child_data[0] = lru_map_fd;
 	child_data[1] = lru_size;
 
-	run_parallel(nr_tasks, करो_test_lru_dist, child_data);
+	run_parallel(nr_tasks, do_test_lru_dist, child_data);
 
-	बंद(lru_map_fd);
-पूर्ण
+	close(lru_map_fd);
+}
 
-अटल व्योम test_lru_loss0(पूर्णांक map_type, पूर्णांक map_flags)
-अणु
-	अचिन्हित दीर्घ दीर्घ key, value[nr_cpus];
-	अचिन्हित पूर्णांक old_unused_losses = 0;
-	अचिन्हित पूर्णांक new_unused_losses = 0;
-	अचिन्हित पूर्णांक used_losses = 0;
-	पूर्णांक map_fd;
+static void test_lru_loss0(int map_type, int map_flags)
+{
+	unsigned long long key, value[nr_cpus];
+	unsigned int old_unused_losses = 0;
+	unsigned int new_unused_losses = 0;
+	unsigned int used_losses = 0;
+	int map_fd;
 
-	म_लिखो("%s (map_type:%d map_flags:0x%X): ", __func__, map_type,
+	printf("%s (map_type:%d map_flags:0x%X): ", __func__, map_type,
 	       map_flags);
 
-	निश्चित(sched_next_online(0, 0) != -1);
+	assert(sched_next_online(0, 0) != -1);
 
-	अगर (map_flags & BPF_F_NO_COMMON_LRU)
+	if (map_flags & BPF_F_NO_COMMON_LRU)
 		map_fd = create_map(map_type, map_flags, 900 * nr_cpus);
-	अन्यथा
+	else
 		map_fd = create_map(map_type, map_flags, 900);
 
-	निश्चित(map_fd != -1);
+	assert(map_fd != -1);
 
 	value[0] = 1234;
 
-	क्रम (key = 1; key <= 1000; key++) अणु
-		पूर्णांक start_key, end_key;
+	for (key = 1; key <= 1000; key++) {
+		int start_key, end_key;
 
-		निश्चित(bpf_map_update_elem(map_fd, &key, value, BPF_NOEXIST) == 0);
+		assert(bpf_map_update_elem(map_fd, &key, value, BPF_NOEXIST) == 0);
 
 		start_key = 101;
 		end_key = min(key, 900);
 
-		जबतक (start_key <= end_key) अणु
+		while (start_key <= end_key) {
 			bpf_map_lookup_elem(map_fd, &start_key, value);
 			start_key++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (key = 1; key <= 1000; key++) अणु
-		अगर (bpf_map_lookup_elem(map_fd, &key, value)) अणु
-			अगर (key <= 100)
+	for (key = 1; key <= 1000; key++) {
+		if (bpf_map_lookup_elem(map_fd, &key, value)) {
+			if (key <= 100)
 				old_unused_losses++;
-			अन्यथा अगर (key <= 900)
+			else if (key <= 900)
 				used_losses++;
-			अन्यथा
+			else
 				new_unused_losses++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	बंद(map_fd);
+	close(map_fd);
 
-	म_लिखो("older-elem-losses:%d(/100) active-elem-losses:%d(/800) "
+	printf("older-elem-losses:%d(/100) active-elem-losses:%d(/800) "
 	       "newer-elem-losses:%d(/100)\n",
 	       old_unused_losses, used_losses, new_unused_losses);
-पूर्ण
+}
 
-अटल व्योम test_lru_loss1(पूर्णांक map_type, पूर्णांक map_flags)
-अणु
-	अचिन्हित दीर्घ दीर्घ key, value[nr_cpus];
-	पूर्णांक map_fd;
-	अचिन्हित पूर्णांक nr_losses = 0;
+static void test_lru_loss1(int map_type, int map_flags)
+{
+	unsigned long long key, value[nr_cpus];
+	int map_fd;
+	unsigned int nr_losses = 0;
 
-	म_लिखो("%s (map_type:%d map_flags:0x%X): ", __func__, map_type,
+	printf("%s (map_type:%d map_flags:0x%X): ", __func__, map_type,
 	       map_flags);
 
-	निश्चित(sched_next_online(0, 0) != -1);
+	assert(sched_next_online(0, 0) != -1);
 
-	अगर (map_flags & BPF_F_NO_COMMON_LRU)
+	if (map_flags & BPF_F_NO_COMMON_LRU)
 		map_fd = create_map(map_type, map_flags, 1000 * nr_cpus);
-	अन्यथा
+	else
 		map_fd = create_map(map_type, map_flags, 1000);
 
-	निश्चित(map_fd != -1);
+	assert(map_fd != -1);
 
 	value[0] = 1234;
 
-	क्रम (key = 1; key <= 1000; key++)
-		निश्चित(!bpf_map_update_elem(map_fd, &key, value, BPF_NOEXIST));
+	for (key = 1; key <= 1000; key++)
+		assert(!bpf_map_update_elem(map_fd, &key, value, BPF_NOEXIST));
 
-	क्रम (key = 1; key <= 1000; key++) अणु
-		अगर (bpf_map_lookup_elem(map_fd, &key, value))
+	for (key = 1; key <= 1000; key++) {
+		if (bpf_map_lookup_elem(map_fd, &key, value))
 			nr_losses++;
-	पूर्ण
+	}
 
-	बंद(map_fd);
+	close(map_fd);
 
-	म_लिखो("nr_losses:%d(/1000)\n", nr_losses);
-पूर्ण
+	printf("nr_losses:%d(/1000)\n", nr_losses);
+}
 
-अटल व्योम करो_test_parallel_lru_loss(पूर्णांक task, व्योम *data)
-अणु
-	स्थिर अचिन्हित पूर्णांक nr_stable_elems = 1000;
-	स्थिर अचिन्हित पूर्णांक nr_repeats = 100000;
+static void do_test_parallel_lru_loss(int task, void *data)
+{
+	const unsigned int nr_stable_elems = 1000;
+	const unsigned int nr_repeats = 100000;
 
-	पूर्णांक map_fd = *(पूर्णांक *)data;
-	अचिन्हित दीर्घ दीर्घ stable_base;
-	अचिन्हित दीर्घ दीर्घ key, value[nr_cpus];
-	अचिन्हित दीर्घ दीर्घ next_ins_key;
-	अचिन्हित पूर्णांक nr_losses = 0;
-	अचिन्हित पूर्णांक i;
+	int map_fd = *(int *)data;
+	unsigned long long stable_base;
+	unsigned long long key, value[nr_cpus];
+	unsigned long long next_ins_key;
+	unsigned int nr_losses = 0;
+	unsigned int i;
 
 	stable_base = task * nr_repeats * 2 + 1;
 	next_ins_key = stable_base;
 	value[0] = 1234;
-	क्रम (i = 0; i < nr_stable_elems; i++) अणु
-		निश्चित(bpf_map_update_elem(map_fd, &next_ins_key, value,
+	for (i = 0; i < nr_stable_elems; i++) {
+		assert(bpf_map_update_elem(map_fd, &next_ins_key, value,
 				       BPF_NOEXIST) == 0);
 		next_ins_key++;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < nr_repeats; i++) अणु
-		पूर्णांक rn;
+	for (i = 0; i < nr_repeats; i++) {
+		int rn;
 
-		rn = अक्रम();
+		rn = rand();
 
-		अगर (rn % 10) अणु
+		if (rn % 10) {
 			key = rn % nr_stable_elems + stable_base;
 			bpf_map_lookup_elem(map_fd, &key, value);
-		पूर्ण अन्यथा अणु
+		} else {
 			bpf_map_update_elem(map_fd, &next_ins_key, value,
 					BPF_NOEXIST);
 			next_ins_key++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	key = stable_base;
-	क्रम (i = 0; i < nr_stable_elems; i++) अणु
-		अगर (bpf_map_lookup_elem(map_fd, &key, value))
+	for (i = 0; i < nr_stable_elems; i++) {
+		if (bpf_map_lookup_elem(map_fd, &key, value))
 			nr_losses++;
 		key++;
-	पूर्ण
+	}
 
-	म_लिखो("    task:%d nr_losses:%u\n", task, nr_losses);
-पूर्ण
+	printf("    task:%d nr_losses:%u\n", task, nr_losses);
+}
 
-अटल व्योम test_parallel_lru_loss(पूर्णांक map_type, पूर्णांक map_flags, पूर्णांक nr_tasks)
-अणु
-	पूर्णांक map_fd;
+static void test_parallel_lru_loss(int map_type, int map_flags, int nr_tasks)
+{
+	int map_fd;
 
-	म_लिखो("%s (map_type:%d map_flags:0x%X):\n", __func__, map_type,
+	printf("%s (map_type:%d map_flags:0x%X):\n", __func__, map_type,
 	       map_flags);
 
 	/* Give 20% more than the active working set */
-	अगर (map_flags & BPF_F_NO_COMMON_LRU)
+	if (map_flags & BPF_F_NO_COMMON_LRU)
 		map_fd = create_map(map_type, map_flags,
 				    nr_cpus * (1000 + 200));
-	अन्यथा
+	else
 		map_fd = create_map(map_type, map_flags,
 				    nr_tasks * (1000 + 200));
 
-	निश्चित(map_fd != -1);
+	assert(map_fd != -1);
 
-	run_parallel(nr_tasks, करो_test_parallel_lru_loss, &map_fd);
+	run_parallel(nr_tasks, do_test_parallel_lru_loss, &map_fd);
 
-	बंद(map_fd);
-पूर्ण
+	close(map_fd);
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक map_flags[] = अणु0, BPF_F_NO_COMMON_LRUपूर्ण;
-	स्थिर अक्षर *dist_file;
-	पूर्णांक nr_tasks = 1;
-	पूर्णांक lru_size;
-	पूर्णांक f;
+int main(int argc, char **argv)
+{
+	int map_flags[] = {0, BPF_F_NO_COMMON_LRU};
+	const char *dist_file;
+	int nr_tasks = 1;
+	int lru_size;
+	int f;
 
-	अगर (argc < 4) अणु
-		म_लिखो("Usage: %s <dist-file> <lru-size> <nr-tasks>\n",
+	if (argc < 4) {
+		printf("Usage: %s <dist-file> <lru-size> <nr-tasks>\n",
 		       argv[0]);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
 	dist_file = argv[1];
-	lru_size = म_से_प(argv[2]);
-	nr_tasks = म_से_प(argv[3]);
+	lru_size = atoi(argv[2]);
+	nr_tasks = atoi(argv[3]);
 
-	रखो_बफ(मानक_निकास, शून्य);
+	setbuf(stdout, NULL);
 
-	बेक्रम(समय(शून्य));
+	srand(time(NULL));
 
 	nr_cpus = bpf_num_possible_cpus();
-	निश्चित(nr_cpus != -1);
-	म_लिखो("nr_cpus:%d\n\n", nr_cpus);
+	assert(nr_cpus != -1);
+	printf("nr_cpus:%d\n\n", nr_cpus);
 
 	nr_tasks = min(nr_tasks, nr_cpus);
 
-	dist_key_counts = पढ़ो_keys(dist_file, &dist_keys);
-	अगर (!dist_key_counts) अणु
-		म_लिखो("%s has no key\n", dist_file);
-		वापस -1;
-	पूर्ण
+	dist_key_counts = read_keys(dist_file, &dist_keys);
+	if (!dist_key_counts) {
+		printf("%s has no key\n", dist_file);
+		return -1;
+	}
 
-	क्रम (f = 0; f < माप(map_flags) / माप(*map_flags); f++) अणु
+	for (f = 0; f < sizeof(map_flags) / sizeof(*map_flags); f++) {
 		test_lru_loss0(BPF_MAP_TYPE_LRU_HASH, map_flags[f]);
 		test_lru_loss1(BPF_MAP_TYPE_LRU_HASH, map_flags[f]);
 		test_parallel_lru_loss(BPF_MAP_TYPE_LRU_HASH, map_flags[f],
 				       nr_tasks);
 		test_parallel_lru_dist(BPF_MAP_TYPE_LRU_HASH, map_flags[f],
 				       nr_tasks, lru_size);
-		म_लिखो("\n");
-	पूर्ण
+		printf("\n");
+	}
 
-	मुक्त(dist_keys);
+	free(dist_keys);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

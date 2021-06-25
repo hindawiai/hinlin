@@ -1,180 +1,179 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 
-#समावेश <net/6lowpan.h>
-#समावेश <net/ndisc.h>
-#समावेश <net/ieee802154_netdev.h>
-#समावेश <net/mac802154.h>
+#include <net/6lowpan.h>
+#include <net/ndisc.h>
+#include <net/ieee802154_netdev.h>
+#include <net/mac802154.h>
 
-#समावेश "6lowpan_i.h"
+#include "6lowpan_i.h"
 
-#घोषणा LOWPAN_FRAG1_HEAD_SIZE	0x4
-#घोषणा LOWPAN_FRAGN_HEAD_SIZE	0x5
+#define LOWPAN_FRAG1_HEAD_SIZE	0x4
+#define LOWPAN_FRAGN_HEAD_SIZE	0x5
 
-काष्ठा lowpan_addr_info अणु
-	काष्ठा ieee802154_addr daddr;
-	काष्ठा ieee802154_addr saddr;
-पूर्ण;
+struct lowpan_addr_info {
+	struct ieee802154_addr daddr;
+	struct ieee802154_addr saddr;
+};
 
-अटल अंतरभूत काष्ठा
-lowpan_addr_info *lowpan_skb_priv(स्थिर काष्ठा sk_buff *skb)
-अणु
-	WARN_ON_ONCE(skb_headroom(skb) < माप(काष्ठा lowpan_addr_info));
-	वापस (काष्ठा lowpan_addr_info *)(skb->data -
-			माप(काष्ठा lowpan_addr_info));
-पूर्ण
+static inline struct
+lowpan_addr_info *lowpan_skb_priv(const struct sk_buff *skb)
+{
+	WARN_ON_ONCE(skb_headroom(skb) < sizeof(struct lowpan_addr_info));
+	return (struct lowpan_addr_info *)(skb->data -
+			sizeof(struct lowpan_addr_info));
+}
 
 /* This callback will be called from AF_PACKET and IPv6 stack, the AF_PACKET
- * sockets gives an 8 byte array क्रम addresses only!
+ * sockets gives an 8 byte array for addresses only!
  *
  * TODO I think AF_PACKET DGRAM (sending/receiving) RAW (sending) makes no
- * sense here. We should disable it, the right use-हाल would be AF_INET6
+ * sense here. We should disable it, the right use-case would be AF_INET6
  * RAW/DGRAM sockets.
  */
-पूर्णांक lowpan_header_create(काष्ठा sk_buff *skb, काष्ठा net_device *ldev,
-			 अचिन्हित लघु type, स्थिर व्योम *daddr,
-			 स्थिर व्योम *saddr, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा wpan_dev *wpan_dev = lowpan_802154_dev(ldev)->wdev->ieee802154_ptr;
-	काष्ठा lowpan_addr_info *info = lowpan_skb_priv(skb);
-	काष्ठा lowpan_802154_neigh *llneigh = शून्य;
-	स्थिर काष्ठा ipv6hdr *hdr = ipv6_hdr(skb);
-	काष्ठा neighbour *n;
+int lowpan_header_create(struct sk_buff *skb, struct net_device *ldev,
+			 unsigned short type, const void *daddr,
+			 const void *saddr, unsigned int len)
+{
+	struct wpan_dev *wpan_dev = lowpan_802154_dev(ldev)->wdev->ieee802154_ptr;
+	struct lowpan_addr_info *info = lowpan_skb_priv(skb);
+	struct lowpan_802154_neigh *llneigh = NULL;
+	const struct ipv6hdr *hdr = ipv6_hdr(skb);
+	struct neighbour *n;
 
-	अगर (!daddr)
-		वापस -EINVAL;
+	if (!daddr)
+		return -EINVAL;
 
 	/* TODO:
-	 * अगर this package isn't ipv6 one, where should it be routed?
+	 * if this package isn't ipv6 one, where should it be routed?
 	 */
-	अगर (type != ETH_P_IPV6)
-		वापस 0;
+	if (type != ETH_P_IPV6)
+		return 0;
 
-	/* पूर्णांकra-pan communication */
+	/* intra-pan communication */
 	info->saddr.pan_id = wpan_dev->pan_id;
 	info->daddr.pan_id = info->saddr.pan_id;
 
-	अगर (!स_भेद(daddr, ldev->broadcast, EUI64_ADDR_LEN)) अणु
-		info->daddr.लघु_addr = cpu_to_le16(IEEE802154_ADDR_BROADCAST);
+	if (!memcmp(daddr, ldev->broadcast, EUI64_ADDR_LEN)) {
+		info->daddr.short_addr = cpu_to_le16(IEEE802154_ADDR_BROADCAST);
 		info->daddr.mode = IEEE802154_ADDR_SHORT;
-	पूर्ण अन्यथा अणु
-		__le16 लघु_addr = cpu_to_le16(IEEE802154_ADDR_SHORT_UNSPEC);
+	} else {
+		__le16 short_addr = cpu_to_le16(IEEE802154_ADDR_SHORT_UNSPEC);
 
 		n = neigh_lookup(&nd_tbl, &hdr->daddr, ldev);
-		अगर (n) अणु
+		if (n) {
 			llneigh = lowpan_802154_neigh(neighbour_priv(n));
-			पढ़ो_lock_bh(&n->lock);
-			लघु_addr = llneigh->लघु_addr;
-			पढ़ो_unlock_bh(&n->lock);
-		पूर्ण
+			read_lock_bh(&n->lock);
+			short_addr = llneigh->short_addr;
+			read_unlock_bh(&n->lock);
+		}
 
-		अगर (llneigh &&
-		    lowpan_802154_is_valid_src_लघु_addr(लघु_addr)) अणु
-			info->daddr.लघु_addr = लघु_addr;
+		if (llneigh &&
+		    lowpan_802154_is_valid_src_short_addr(short_addr)) {
+			info->daddr.short_addr = short_addr;
 			info->daddr.mode = IEEE802154_ADDR_SHORT;
-		पूर्ण अन्यथा अणु
+		} else {
 			info->daddr.mode = IEEE802154_ADDR_LONG;
 			ieee802154_be64_to_le64(&info->daddr.extended_addr,
 						daddr);
-		पूर्ण
+		}
 
-		अगर (n)
+		if (n)
 			neigh_release(n);
-	पूर्ण
+	}
 
-	अगर (!saddr) अणु
-		अगर (lowpan_802154_is_valid_src_लघु_addr(wpan_dev->लघु_addr)) अणु
+	if (!saddr) {
+		if (lowpan_802154_is_valid_src_short_addr(wpan_dev->short_addr)) {
 			info->saddr.mode = IEEE802154_ADDR_SHORT;
-			info->saddr.लघु_addr = wpan_dev->लघु_addr;
-		पूर्ण अन्यथा अणु
+			info->saddr.short_addr = wpan_dev->short_addr;
+		} else {
 			info->saddr.mode = IEEE802154_ADDR_LONG;
 			info->saddr.extended_addr = wpan_dev->extended_addr;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		info->saddr.mode = IEEE802154_ADDR_LONG;
 		ieee802154_be64_to_le64(&info->saddr.extended_addr, saddr);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा sk_buff*
-lowpan_alloc_frag(काष्ठा sk_buff *skb, पूर्णांक size,
-		  स्थिर काष्ठा ieee802154_hdr *master_hdr, bool frag1)
-अणु
-	काष्ठा net_device *wdev = lowpan_802154_dev(skb->dev)->wdev;
-	काष्ठा sk_buff *frag;
-	पूर्णांक rc;
+static struct sk_buff*
+lowpan_alloc_frag(struct sk_buff *skb, int size,
+		  const struct ieee802154_hdr *master_hdr, bool frag1)
+{
+	struct net_device *wdev = lowpan_802154_dev(skb->dev)->wdev;
+	struct sk_buff *frag;
+	int rc;
 
 	frag = alloc_skb(wdev->needed_headroom + wdev->needed_tailroom + size,
 			 GFP_ATOMIC);
 
-	अगर (likely(frag)) अणु
+	if (likely(frag)) {
 		frag->dev = wdev;
 		frag->priority = skb->priority;
 		skb_reserve(frag, wdev->needed_headroom);
 		skb_reset_network_header(frag);
 		*mac_cb(frag) = *mac_cb(skb);
 
-		अगर (frag1) अणु
+		if (frag1) {
 			skb_put_data(frag, skb_mac_header(skb), skb->mac_len);
-		पूर्ण अन्यथा अणु
+		} else {
 			rc = wpan_dev_hard_header(frag, wdev,
 						  &master_hdr->dest,
 						  &master_hdr->source, size);
-			अगर (rc < 0) अणु
-				kमुक्त_skb(frag);
-				वापस ERR_PTR(rc);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			if (rc < 0) {
+				kfree_skb(frag);
+				return ERR_PTR(rc);
+			}
+		}
+	} else {
 		frag = ERR_PTR(-ENOMEM);
-	पूर्ण
+	}
 
-	वापस frag;
-पूर्ण
+	return frag;
+}
 
-अटल पूर्णांक
-lowpan_xmit_fragment(काष्ठा sk_buff *skb, स्थिर काष्ठा ieee802154_hdr *wpan_hdr,
-		     u8 *frag_hdr, पूर्णांक frag_hdrlen,
-		     पूर्णांक offset, पूर्णांक len, bool frag1)
-अणु
-	काष्ठा sk_buff *frag;
+static int
+lowpan_xmit_fragment(struct sk_buff *skb, const struct ieee802154_hdr *wpan_hdr,
+		     u8 *frag_hdr, int frag_hdrlen,
+		     int offset, int len, bool frag1)
+{
+	struct sk_buff *frag;
 
-	raw_dump_अंतरभूत(__func__, " fragment header", frag_hdr, frag_hdrlen);
+	raw_dump_inline(__func__, " fragment header", frag_hdr, frag_hdrlen);
 
 	frag = lowpan_alloc_frag(skb, frag_hdrlen + len, wpan_hdr, frag1);
-	अगर (IS_ERR(frag))
-		वापस PTR_ERR(frag);
+	if (IS_ERR(frag))
+		return PTR_ERR(frag);
 
 	skb_put_data(frag, frag_hdr, frag_hdrlen);
 	skb_put_data(frag, skb_network_header(skb) + offset, len);
 
 	raw_dump_table(__func__, " fragment dump", frag->data, frag->len);
 
-	वापस dev_queue_xmit(frag);
-पूर्ण
+	return dev_queue_xmit(frag);
+}
 
-अटल पूर्णांक
-lowpan_xmit_fragmented(काष्ठा sk_buff *skb, काष्ठा net_device *ldev,
-		       स्थिर काष्ठा ieee802154_hdr *wpan_hdr, u16 dgram_size,
+static int
+lowpan_xmit_fragmented(struct sk_buff *skb, struct net_device *ldev,
+		       const struct ieee802154_hdr *wpan_hdr, u16 dgram_size,
 		       u16 dgram_offset)
-अणु
+{
 	__be16 frag_tag;
 	u8 frag_hdr[5];
-	पूर्णांक frag_cap, frag_len, payload_cap, rc;
-	पूर्णांक skb_unprocessed, skb_offset;
+	int frag_cap, frag_len, payload_cap, rc;
+	int skb_unprocessed, skb_offset;
 
 	frag_tag = htons(lowpan_802154_dev(ldev)->fragment_tag);
 	lowpan_802154_dev(ldev)->fragment_tag++;
 
 	frag_hdr[0] = LOWPAN_DISPATCH_FRAG1 | ((dgram_size >> 8) & 0x07);
 	frag_hdr[1] = dgram_size & 0xff;
-	स_नकल(frag_hdr + 2, &frag_tag, माप(frag_tag));
+	memcpy(frag_hdr + 2, &frag_tag, sizeof(frag_tag));
 
 	payload_cap = ieee802154_max_payload(wpan_hdr);
 
-	frag_len = round_करोwn(payload_cap - LOWPAN_FRAG1_HEAD_SIZE -
+	frag_len = round_down(payload_cap - LOWPAN_FRAG1_HEAD_SIZE -
 			      skb_network_header_len(skb), 8);
 
 	skb_offset = skb_network_header_len(skb);
@@ -184,17 +183,17 @@ lowpan_xmit_fragmented(काष्ठा sk_buff *skb, काष्ठा net_d
 				  LOWPAN_FRAG1_HEAD_SIZE, 0,
 				  frag_len + skb_network_header_len(skb),
 				  true);
-	अगर (rc) अणु
+	if (rc) {
 		pr_debug("%s unable to send FRAG1 packet (tag: %d)",
 			 __func__, ntohs(frag_tag));
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	frag_hdr[0] &= ~LOWPAN_DISPATCH_FRAG1;
 	frag_hdr[0] |= LOWPAN_DISPATCH_FRAGN;
-	frag_cap = round_करोwn(payload_cap - LOWPAN_FRAGN_HEAD_SIZE, 8);
+	frag_cap = round_down(payload_cap - LOWPAN_FRAGN_HEAD_SIZE, 8);
 
-	करो अणु
+	do {
 		dgram_offset += frag_len;
 		skb_offset += frag_len;
 		skb_unprocessed -= frag_len;
@@ -205,31 +204,31 @@ lowpan_xmit_fragmented(काष्ठा sk_buff *skb, काष्ठा net_d
 		rc = lowpan_xmit_fragment(skb, wpan_hdr, frag_hdr,
 					  LOWPAN_FRAGN_HEAD_SIZE, skb_offset,
 					  frag_len, false);
-		अगर (rc) अणु
+		if (rc) {
 			pr_debug("%s unable to send a FRAGN packet. (tag: %d, offset: %d)\n",
 				 __func__, ntohs(frag_tag), skb_offset);
-			जाओ err;
-		पूर्ण
-	पूर्ण जबतक (skb_unprocessed > frag_cap);
+			goto err;
+		}
+	} while (skb_unprocessed > frag_cap);
 
 	ldev->stats.tx_packets++;
 	ldev->stats.tx_bytes += dgram_size;
 	consume_skb(skb);
-	वापस NET_XMIT_SUCCESS;
+	return NET_XMIT_SUCCESS;
 
 err:
-	kमुक्त_skb(skb);
-	वापस rc;
-पूर्ण
+	kfree_skb(skb);
+	return rc;
+}
 
-अटल पूर्णांक lowpan_header(काष्ठा sk_buff *skb, काष्ठा net_device *ldev,
+static int lowpan_header(struct sk_buff *skb, struct net_device *ldev,
 			 u16 *dgram_size, u16 *dgram_offset)
-अणु
-	काष्ठा wpan_dev *wpan_dev = lowpan_802154_dev(ldev)->wdev->ieee802154_ptr;
-	काष्ठा ieee802154_mac_cb *cb = mac_cb_init(skb);
-	काष्ठा lowpan_addr_info info;
+{
+	struct wpan_dev *wpan_dev = lowpan_802154_dev(ldev)->wdev->ieee802154_ptr;
+	struct ieee802154_mac_cb *cb = mac_cb_init(skb);
+	struct lowpan_addr_info info;
 
-	स_नकल(&info, lowpan_skb_priv(skb), माप(info));
+	memcpy(&info, lowpan_skb_priv(skb), sizeof(info));
 
 	*dgram_size = skb->len;
 	lowpan_header_compress(skb, ldev, &info.daddr, &info.saddr);
@@ -238,73 +237,73 @@ err:
 
 	cb->type = IEEE802154_FC_TYPE_DATA;
 
-	अगर (info.daddr.mode == IEEE802154_ADDR_SHORT &&
-	    ieee802154_is_broadcast_लघु_addr(info.daddr.लघु_addr))
+	if (info.daddr.mode == IEEE802154_ADDR_SHORT &&
+	    ieee802154_is_broadcast_short_addr(info.daddr.short_addr))
 		cb->ackreq = false;
-	अन्यथा
+	else
 		cb->ackreq = wpan_dev->ackreq;
 
-	वापस wpan_dev_hard_header(skb, lowpan_802154_dev(ldev)->wdev,
+	return wpan_dev_hard_header(skb, lowpan_802154_dev(ldev)->wdev,
 				    &info.daddr, &info.saddr, 0);
-पूर्ण
+}
 
-netdev_tx_t lowpan_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *ldev)
-अणु
-	काष्ठा ieee802154_hdr wpan_hdr;
-	पूर्णांक max_single, ret;
+netdev_tx_t lowpan_xmit(struct sk_buff *skb, struct net_device *ldev)
+{
+	struct ieee802154_hdr wpan_hdr;
+	int max_single, ret;
 	u16 dgram_size, dgram_offset;
 
 	pr_debug("package xmit\n");
 
 	WARN_ON_ONCE(skb->len > IPV6_MIN_MTU);
 
-	/* We must take a copy of the skb beक्रमe we modअगरy/replace the ipv6
-	 * header as the header could be used अन्यथाwhere
+	/* We must take a copy of the skb before we modify/replace the ipv6
+	 * header as the header could be used elsewhere
 	 */
-	अगर (unlikely(skb_headroom(skb) < ldev->needed_headroom ||
-		     skb_tailroom(skb) < ldev->needed_tailroom)) अणु
-		काष्ठा sk_buff *nskb;
+	if (unlikely(skb_headroom(skb) < ldev->needed_headroom ||
+		     skb_tailroom(skb) < ldev->needed_tailroom)) {
+		struct sk_buff *nskb;
 
 		nskb = skb_copy_expand(skb, ldev->needed_headroom,
 				       ldev->needed_tailroom, GFP_ATOMIC);
-		अगर (likely(nskb)) अणु
+		if (likely(nskb)) {
 			consume_skb(skb);
 			skb = nskb;
-		पूर्ण अन्यथा अणु
-			kमुक्त_skb(skb);
-			वापस NET_XMIT_DROP;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		} else {
+			kfree_skb(skb);
+			return NET_XMIT_DROP;
+		}
+	} else {
 		skb = skb_unshare(skb, GFP_ATOMIC);
-		अगर (!skb)
-			वापस NET_XMIT_DROP;
-	पूर्ण
+		if (!skb)
+			return NET_XMIT_DROP;
+	}
 
 	ret = lowpan_header(skb, ldev, &dgram_size, &dgram_offset);
-	अगर (ret < 0) अणु
-		kमुक्त_skb(skb);
-		वापस NET_XMIT_DROP;
-	पूर्ण
+	if (ret < 0) {
+		kfree_skb(skb);
+		return NET_XMIT_DROP;
+	}
 
-	अगर (ieee802154_hdr_peek(skb, &wpan_hdr) < 0) अणु
-		kमुक्त_skb(skb);
-		वापस NET_XMIT_DROP;
-	पूर्ण
+	if (ieee802154_hdr_peek(skb, &wpan_hdr) < 0) {
+		kfree_skb(skb);
+		return NET_XMIT_DROP;
+	}
 
 	max_single = ieee802154_max_payload(&wpan_hdr);
 
-	अगर (skb_tail_poपूर्णांकer(skb) - skb_network_header(skb) <= max_single) अणु
+	if (skb_tail_pointer(skb) - skb_network_header(skb) <= max_single) {
 		skb->dev = lowpan_802154_dev(ldev)->wdev;
 		ldev->stats.tx_packets++;
 		ldev->stats.tx_bytes += dgram_size;
-		वापस dev_queue_xmit(skb);
-	पूर्ण अन्यथा अणु
+		return dev_queue_xmit(skb);
+	} else {
 		netdev_tx_t rc;
 
 		pr_debug("frame is too big, fragmentation is needed\n");
 		rc = lowpan_xmit_fragmented(skb, ldev, &wpan_hdr, dgram_size,
 					    dgram_offset);
 
-		वापस rc < 0 ? NET_XMIT_DROP : rc;
-	पूर्ण
-पूर्ण
+		return rc < 0 ? NET_XMIT_DROP : rc;
+	}
+}

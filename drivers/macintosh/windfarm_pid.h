@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Windfarm PowerMac thermal control. Generic PID helpers
  *
@@ -8,78 +7,78 @@
  *
  * This is a pair of generic PID helpers that can be used by
  * control loops. One is the basic PID implementation, the
- * other one is more specअगरically tailored to the loops used
- * क्रम CPU control with 2 input sample types (temp and घातer)
+ * other one is more specifically tailored to the loops used
+ * for CPU control with 2 input sample types (temp and power)
  */
 
 /*
  * *** Simple PID ***
  */
 
-#घोषणा WF_PID_MAX_HISTORY	32
+#define WF_PID_MAX_HISTORY	32
 
 /* This parameter array is passed to the PID algorithm. Currently,
- * we करोn't support changing parameters on the fly as it's not needed
- * but could be implemented (with necessary adjusपंचांगent of the history
+ * we don't support changing parameters on the fly as it's not needed
+ * but could be implemented (with necessary adjustment of the history
  * buffer
  */
-काष्ठा wf_pid_param अणु
-	पूर्णांक	पूर्णांकerval;	/* Interval between samples in seconds */
-	पूर्णांक	history_len;	/* Size of history buffer */
-	पूर्णांक	additive;	/* 1: target relative to previous value */
+struct wf_pid_param {
+	int	interval;	/* Interval between samples in seconds */
+	int	history_len;	/* Size of history buffer */
+	int	additive;	/* 1: target relative to previous value */
 	s32	gd, gp, gr;	/* PID gains */
 	s32	itarget;	/* PID input target */
 	s32	min,max;	/* min and max target values */
-पूर्ण;
+};
 
-काष्ठा wf_pid_state अणु
-	पूर्णांक	first;				/* first run of the loop */
-	पूर्णांक	index; 				/* index of current sample */
+struct wf_pid_state {
+	int	first;				/* first run of the loop */
+	int	index; 				/* index of current sample */
 	s32	target;				/* current target value */
 	s32	samples[WF_PID_MAX_HISTORY];	/* samples history buffer */
 	s32	errors[WF_PID_MAX_HISTORY];	/* error history buffer */
 
-	काष्ठा wf_pid_param param;
-पूर्ण;
+	struct wf_pid_param param;
+};
 
-बाह्य व्योम wf_pid_init(काष्ठा wf_pid_state *st, काष्ठा wf_pid_param *param);
-बाह्य s32 wf_pid_run(काष्ठा wf_pid_state *st, s32 sample);
+extern void wf_pid_init(struct wf_pid_state *st, struct wf_pid_param *param);
+extern s32 wf_pid_run(struct wf_pid_state *st, s32 sample);
 
 
 /*
  * *** CPU PID ***
  */
 
-#घोषणा WF_CPU_PID_MAX_HISTORY	32
+#define WF_CPU_PID_MAX_HISTORY	32
 
 /* This parameter array is passed to the CPU PID algorithm. Currently,
- * we करोn't support changing parameters on the fly as it's not needed
- * but could be implemented (with necessary adjusपंचांगent of the history
+ * we don't support changing parameters on the fly as it's not needed
+ * but could be implemented (with necessary adjustment of the history
  * buffer
  */
-काष्ठा wf_cpu_pid_param अणु
-	पूर्णांक	पूर्णांकerval;	/* Interval between samples in seconds */
-	पूर्णांक	history_len;	/* Size of history buffer */
+struct wf_cpu_pid_param {
+	int	interval;	/* Interval between samples in seconds */
+	int	history_len;	/* Size of history buffer */
 	s32	gd, gp, gr;	/* PID gains */
-	s32	pmaxadj;	/* PID max घातer adjust */
+	s32	pmaxadj;	/* PID max power adjust */
 	s32	ttarget;	/* PID input target */
-	s32	पंचांगax;		/* PID input max */
+	s32	tmax;		/* PID input max */
 	s32	min,max;	/* min and max target values */
-पूर्ण;
+};
 
-काष्ठा wf_cpu_pid_state अणु
-	पूर्णांक	first;				/* first run of the loop */
-	पूर्णांक	index; 				/* index of current घातer */
-	पूर्णांक	tindex; 			/* index of current temp */
+struct wf_cpu_pid_state {
+	int	first;				/* first run of the loop */
+	int	index; 				/* index of current power */
+	int	tindex; 			/* index of current temp */
 	s32	target;				/* current target value */
 	s32	last_delta;			/* last Tactual - Ttarget */
-	s32	घातers[WF_PID_MAX_HISTORY];	/* घातer history buffer */
+	s32	powers[WF_PID_MAX_HISTORY];	/* power history buffer */
 	s32	errors[WF_PID_MAX_HISTORY];	/* error history buffer */
 	s32	temps[2];			/* temp. history buffer */
 
-	काष्ठा wf_cpu_pid_param param;
-पूर्ण;
+	struct wf_cpu_pid_param param;
+};
 
-बाह्य व्योम wf_cpu_pid_init(काष्ठा wf_cpu_pid_state *st,
-			    काष्ठा wf_cpu_pid_param *param);
-बाह्य s32 wf_cpu_pid_run(काष्ठा wf_cpu_pid_state *st, s32 घातer, s32 temp);
+extern void wf_cpu_pid_init(struct wf_cpu_pid_state *st,
+			    struct wf_cpu_pid_param *param);
+extern s32 wf_cpu_pid_run(struct wf_cpu_pid_state *st, s32 power, s32 temp);

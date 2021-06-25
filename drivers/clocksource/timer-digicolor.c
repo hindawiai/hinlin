@@ -1,17 +1,16 @@
-<शैली गुरु>
 /*
- * Conexant Digicolor समयr driver
+ * Conexant Digicolor timer driver
  *
  * Author: Baruch Siach <baruch@tkos.co.il>
  *
- * Copyright (C) 2014 Paraकरोx Innovation Ltd.
+ * Copyright (C) 2014 Paradox Innovation Ltd.
  *
  * Based on:
- *	Allwinner SoCs hsसमयr driver
+ *	Allwinner SoCs hstimer driver
  *
  * Copyright (C) 2013 Maxime Ripard
  *
- * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
+ * Maxime Ripard <maxime.ripard@free-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
@@ -19,26 +18,26 @@
  */
 
 /*
- * Conexant Digicolor SoCs have 8 configurable समयrs, named from "Timer A" to
- * "Timer H". Timer A is the only one with watchकरोg support, so it is dedicated
- * to the watchकरोg driver. This driver uses Timer B क्रम sched_घड़ी(), and
- * Timer C क्रम घड़ीevents.
+ * Conexant Digicolor SoCs have 8 configurable timers, named from "Timer A" to
+ * "Timer H". Timer A is the only one with watchdog support, so it is dedicated
+ * to the watchdog driver. This driver uses Timer B for sched_clock(), and
+ * Timer C for clockevents.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/clk.h>
-#समावेश <linux/घड़ीchips.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/irqवापस.h>
-#समावेश <linux/sched/घड़ी.h>
-#समावेश <linux/sched_घड़ी.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_irq.h>
+#include <linux/clk.h>
+#include <linux/clockchips.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/irqreturn.h>
+#include <linux/sched/clock.h>
+#include <linux/sched_clock.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_irq.h>
 
-क्रमागत अणु
+enum {
 	TIMER_A,
 	TIMER_B,
 	TIMER_C,
@@ -47,162 +46,162 @@
 	TIMER_F,
 	TIMER_G,
 	TIMER_H,
-पूर्ण;
+};
 
-#घोषणा CONTROL(t)	((t)*8)
-#घोषणा COUNT(t)	((t)*8 + 4)
+#define CONTROL(t)	((t)*8)
+#define COUNT(t)	((t)*8 + 4)
 
-#घोषणा CONTROL_DISABLE		0
-#घोषणा CONTROL_ENABLE		BIT(0)
-#घोषणा CONTROL_MODE(m)		((m) << 4)
-#घोषणा CONTROL_MODE_ONESHOT	CONTROL_MODE(1)
-#घोषणा CONTROL_MODE_PERIODIC	CONTROL_MODE(2)
+#define CONTROL_DISABLE		0
+#define CONTROL_ENABLE		BIT(0)
+#define CONTROL_MODE(m)		((m) << 4)
+#define CONTROL_MODE_ONESHOT	CONTROL_MODE(1)
+#define CONTROL_MODE_PERIODIC	CONTROL_MODE(2)
 
-काष्ठा digicolor_समयr अणु
-	काष्ठा घड़ी_event_device ce;
-	व्योम __iomem *base;
-	u32 ticks_per_jअगरfy;
-	पूर्णांक समयr_id; /* one of TIMER_* */
-पूर्ण;
+struct digicolor_timer {
+	struct clock_event_device ce;
+	void __iomem *base;
+	u32 ticks_per_jiffy;
+	int timer_id; /* one of TIMER_* */
+};
 
-अटल काष्ठा digicolor_समयr *dc_समयr(काष्ठा घड़ी_event_device *ce)
-अणु
-	वापस container_of(ce, काष्ठा digicolor_समयr, ce);
-पूर्ण
+static struct digicolor_timer *dc_timer(struct clock_event_device *ce)
+{
+	return container_of(ce, struct digicolor_timer, ce);
+}
 
-अटल अंतरभूत व्योम dc_समयr_disable(काष्ठा घड़ी_event_device *ce)
-अणु
-	काष्ठा digicolor_समयr *dt = dc_समयr(ce);
-	ग_लिखोb(CONTROL_DISABLE, dt->base + CONTROL(dt->समयr_id));
-पूर्ण
+static inline void dc_timer_disable(struct clock_event_device *ce)
+{
+	struct digicolor_timer *dt = dc_timer(ce);
+	writeb(CONTROL_DISABLE, dt->base + CONTROL(dt->timer_id));
+}
 
-अटल अंतरभूत व्योम dc_समयr_enable(काष्ठा घड़ी_event_device *ce, u32 mode)
-अणु
-	काष्ठा digicolor_समयr *dt = dc_समयr(ce);
-	ग_लिखोb(CONTROL_ENABLE | mode, dt->base + CONTROL(dt->समयr_id));
-पूर्ण
+static inline void dc_timer_enable(struct clock_event_device *ce, u32 mode)
+{
+	struct digicolor_timer *dt = dc_timer(ce);
+	writeb(CONTROL_ENABLE | mode, dt->base + CONTROL(dt->timer_id));
+}
 
-अटल अंतरभूत व्योम dc_समयr_set_count(काष्ठा घड़ी_event_device *ce,
-				      अचिन्हित दीर्घ count)
-अणु
-	काष्ठा digicolor_समयr *dt = dc_समयr(ce);
-	ग_लिखोl(count, dt->base + COUNT(dt->समयr_id));
-पूर्ण
+static inline void dc_timer_set_count(struct clock_event_device *ce,
+				      unsigned long count)
+{
+	struct digicolor_timer *dt = dc_timer(ce);
+	writel(count, dt->base + COUNT(dt->timer_id));
+}
 
-अटल पूर्णांक digicolor_clkevt_shutकरोwn(काष्ठा घड़ी_event_device *ce)
-अणु
-	dc_समयr_disable(ce);
-	वापस 0;
-पूर्ण
+static int digicolor_clkevt_shutdown(struct clock_event_device *ce)
+{
+	dc_timer_disable(ce);
+	return 0;
+}
 
-अटल पूर्णांक digicolor_clkevt_set_oneshot(काष्ठा घड़ी_event_device *ce)
-अणु
-	dc_समयr_disable(ce);
-	dc_समयr_enable(ce, CONTROL_MODE_ONESHOT);
-	वापस 0;
-पूर्ण
+static int digicolor_clkevt_set_oneshot(struct clock_event_device *ce)
+{
+	dc_timer_disable(ce);
+	dc_timer_enable(ce, CONTROL_MODE_ONESHOT);
+	return 0;
+}
 
-अटल पूर्णांक digicolor_clkevt_set_periodic(काष्ठा घड़ी_event_device *ce)
-अणु
-	काष्ठा digicolor_समयr *dt = dc_समयr(ce);
+static int digicolor_clkevt_set_periodic(struct clock_event_device *ce)
+{
+	struct digicolor_timer *dt = dc_timer(ce);
 
-	dc_समयr_disable(ce);
-	dc_समयr_set_count(ce, dt->ticks_per_jअगरfy);
-	dc_समयr_enable(ce, CONTROL_MODE_PERIODIC);
-	वापस 0;
-पूर्ण
+	dc_timer_disable(ce);
+	dc_timer_set_count(ce, dt->ticks_per_jiffy);
+	dc_timer_enable(ce, CONTROL_MODE_PERIODIC);
+	return 0;
+}
 
-अटल पूर्णांक digicolor_clkevt_next_event(अचिन्हित दीर्घ evt,
-				       काष्ठा घड़ी_event_device *ce)
-अणु
-	dc_समयr_disable(ce);
-	dc_समयr_set_count(ce, evt);
-	dc_समयr_enable(ce, CONTROL_MODE_ONESHOT);
+static int digicolor_clkevt_next_event(unsigned long evt,
+				       struct clock_event_device *ce)
+{
+	dc_timer_disable(ce);
+	dc_timer_set_count(ce, evt);
+	dc_timer_enable(ce, CONTROL_MODE_ONESHOT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा digicolor_समयr dc_समयr_dev = अणु
-	.ce = अणु
+static struct digicolor_timer dc_timer_dev = {
+	.ce = {
 		.name = "digicolor_tick",
 		.rating = 340,
 		.features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT,
-		.set_state_shutकरोwn = digicolor_clkevt_shutकरोwn,
+		.set_state_shutdown = digicolor_clkevt_shutdown,
 		.set_state_periodic = digicolor_clkevt_set_periodic,
 		.set_state_oneshot = digicolor_clkevt_set_oneshot,
-		.tick_resume = digicolor_clkevt_shutकरोwn,
+		.tick_resume = digicolor_clkevt_shutdown,
 		.set_next_event = digicolor_clkevt_next_event,
-	पूर्ण,
-	.समयr_id = TIMER_C,
-पूर्ण;
+	},
+	.timer_id = TIMER_C,
+};
 
-अटल irqवापस_t digicolor_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा घड़ी_event_device *evt = dev_id;
+static irqreturn_t digicolor_timer_interrupt(int irq, void *dev_id)
+{
+	struct clock_event_device *evt = dev_id;
 
 	evt->event_handler(evt);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल u64 notrace digicolor_समयr_sched_पढ़ो(व्योम)
-अणु
-	वापस ~पढ़ोl(dc_समयr_dev.base + COUNT(TIMER_B));
-पूर्ण
+static u64 notrace digicolor_timer_sched_read(void)
+{
+	return ~readl(dc_timer_dev.base + COUNT(TIMER_B));
+}
 
-अटल पूर्णांक __init digicolor_समयr_init(काष्ठा device_node *node)
-अणु
-	अचिन्हित दीर्घ rate;
-	काष्ठा clk *clk;
-	पूर्णांक ret, irq;
+static int __init digicolor_timer_init(struct device_node *node)
+{
+	unsigned long rate;
+	struct clk *clk;
+	int ret, irq;
 
 	/*
-	 * समयr रेजिस्टरs are shared with the watchकरोg समयr;
-	 * करोn't map exclusively
+	 * timer registers are shared with the watchdog timer;
+	 * don't map exclusively
 	 */
-	dc_समयr_dev.base = of_iomap(node, 0);
-	अगर (!dc_समयr_dev.base) अणु
+	dc_timer_dev.base = of_iomap(node, 0);
+	if (!dc_timer_dev.base) {
 		pr_err("Can't map registers\n");
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
-	irq = irq_of_parse_and_map(node, dc_समयr_dev.समयr_id);
-	अगर (irq <= 0) अणु
+	irq = irq_of_parse_and_map(node, dc_timer_dev.timer_id);
+	if (irq <= 0) {
 		pr_err("Can't parse IRQ\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	clk = of_clk_get(node, 0);
-	अगर (IS_ERR(clk)) अणु
+	if (IS_ERR(clk)) {
 		pr_err("Can't get timer clock\n");
-		वापस PTR_ERR(clk);
-	पूर्ण
+		return PTR_ERR(clk);
+	}
 	clk_prepare_enable(clk);
 	rate = clk_get_rate(clk);
-	dc_समयr_dev.ticks_per_jअगरfy = DIV_ROUND_UP(rate, HZ);
+	dc_timer_dev.ticks_per_jiffy = DIV_ROUND_UP(rate, HZ);
 
-	ग_लिखोb(CONTROL_DISABLE, dc_समयr_dev.base + CONTROL(TIMER_B));
-	ग_लिखोl(अच_पूर्णांक_उच्च, dc_समयr_dev.base + COUNT(TIMER_B));
-	ग_लिखोb(CONTROL_ENABLE, dc_समयr_dev.base + CONTROL(TIMER_B));
+	writeb(CONTROL_DISABLE, dc_timer_dev.base + CONTROL(TIMER_B));
+	writel(UINT_MAX, dc_timer_dev.base + COUNT(TIMER_B));
+	writeb(CONTROL_ENABLE, dc_timer_dev.base + CONTROL(TIMER_B));
 
-	sched_घड़ी_रेजिस्टर(digicolor_समयr_sched_पढ़ो, 32, rate);
-	घड़ीsource_mmio_init(dc_समयr_dev.base + COUNT(TIMER_B), node->name,
-			      rate, 340, 32, घड़ीsource_mmio_पढ़ोl_करोwn);
+	sched_clock_register(digicolor_timer_sched_read, 32, rate);
+	clocksource_mmio_init(dc_timer_dev.base + COUNT(TIMER_B), node->name,
+			      rate, 340, 32, clocksource_mmio_readl_down);
 
-	ret = request_irq(irq, digicolor_समयr_पूर्णांकerrupt,
+	ret = request_irq(irq, digicolor_timer_interrupt,
 			  IRQF_TIMER | IRQF_IRQPOLL, "digicolor_timerC",
-			  &dc_समयr_dev.ce);
-	अगर (ret) अणु
+			  &dc_timer_dev.ce);
+	if (ret) {
 		pr_warn("request of timer irq %d failed (%d)\n", irq, ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	dc_समयr_dev.ce.cpumask = cpu_possible_mask;
-	dc_समयr_dev.ce.irq = irq;
+	dc_timer_dev.ce.cpumask = cpu_possible_mask;
+	dc_timer_dev.ce.irq = irq;
 
-	घड़ीevents_config_and_रेजिस्टर(&dc_समयr_dev.ce, rate, 0, 0xffffffff);
+	clockevents_config_and_register(&dc_timer_dev.ce, rate, 0, 0xffffffff);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 TIMER_OF_DECLARE(conexant_digicolor, "cnxt,cx92755-timer",
-		       digicolor_समयr_init);
+		       digicolor_timer_init);

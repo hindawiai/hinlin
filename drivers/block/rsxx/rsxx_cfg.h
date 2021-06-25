@@ -1,5 +1,4 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
 * Filename: rsXX_cfg.h
 *
@@ -9,51 +8,51 @@
 * (C) Copyright 2013 IBM Corporation
 */
 
-#अगर_अघोषित __RSXX_CFG_H__
-#घोषणा __RSXX_CFG_H__
+#ifndef __RSXX_CFG_H__
+#define __RSXX_CFG_H__
 
 /* NOTE: Config values will be saved in network byte order (i.e. Big endian) */
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
 /*
- * The card config version must match the driver's expected version. If it करोes
- * not, the DMA पूर्णांकerfaces will not be attached and the user will need to
+ * The card config version must match the driver's expected version. If it does
+ * not, the DMA interfaces will not be attached and the user will need to
  * initialize/upgrade the card configuration using the card config utility.
  */
-#घोषणा RSXX_CFG_VERSION	4
+#define RSXX_CFG_VERSION	4
 
-काष्ठा card_cfg_hdr अणु
+struct card_cfg_hdr {
 	__u32	version;
 	__u32	crc;
-पूर्ण;
+};
 
-काष्ठा card_cfg_data अणु
+struct card_cfg_data {
 	__u32	block_size;
 	__u32	stripe_size;
-	__u32	venकरोr_id;
+	__u32	vendor_id;
 	__u32	cache_order;
-	काष्ठा अणु
-		__u32	mode;	/* Disabled, manual, स्वतः-tune... */
-		__u32	count;	/* Number of पूर्णांकr to coalesce     */
-		__u32	latency;/* Max रुको समय (in ns)          */
-	पूर्ण पूर्णांकr_coal;
-पूर्ण;
+	struct {
+		__u32	mode;	/* Disabled, manual, auto-tune... */
+		__u32	count;	/* Number of intr to coalesce     */
+		__u32	latency;/* Max wait time (in ns)          */
+	} intr_coal;
+};
 
-काष्ठा rsxx_card_cfg अणु
-	काष्ठा card_cfg_hdr	hdr;
-	काष्ठा card_cfg_data	data;
-पूर्ण;
+struct rsxx_card_cfg {
+	struct card_cfg_hdr	hdr;
+	struct card_cfg_data	data;
+};
 
-/* Venकरोr ID Values */
-#घोषणा RSXX_VENDOR_ID_IBM		0
-#घोषणा RSXX_VENDOR_ID_DSI		1
-#घोषणा RSXX_VENDOR_COUNT		2
+/* Vendor ID Values */
+#define RSXX_VENDOR_ID_IBM		0
+#define RSXX_VENDOR_ID_DSI		1
+#define RSXX_VENDOR_COUNT		2
 
 /* Interrupt Coalescing Values */
-#घोषणा RSXX_INTR_COAL_DISABLED           0
-#घोषणा RSXX_INTR_COAL_EXPLICIT           1
-#घोषणा RSXX_INTR_COAL_AUTO_TUNE          2
+#define RSXX_INTR_COAL_DISABLED           0
+#define RSXX_INTR_COAL_EXPLICIT           1
+#define RSXX_INTR_COAL_AUTO_TUNE          2
 
 
-#पूर्ण_अगर /* __RSXX_CFG_H__ */
+#endif /* __RSXX_CFG_H__ */
 

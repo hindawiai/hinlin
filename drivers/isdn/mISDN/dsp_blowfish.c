@@ -1,6 +1,5 @@
-<शैली गुरु>
 /*
- * Blowfish encryption/decryption क्रम mISDN_dsp.
+ * Blowfish encryption/decryption for mISDN_dsp.
  *
  * Copyright Andreas Eversberg (jolly@eversberg.eu)
  *
@@ -9,23 +8,23 @@
  *
  */
 
-#समावेश <linux/mISDNअगर.h>
-#समावेश <linux/mISDNdsp.h>
-#समावेश "core.h"
-#समावेश "dsp.h"
+#include <linux/mISDNif.h>
+#include <linux/mISDNdsp.h>
+#include "core.h"
+#include "dsp.h"
 
 /*
  * how to encode a sample stream to 64-bit blocks that will be encryped
  *
  * first of all, data is collected until a block of 9 samples are received.
  * of course, a packet may have much more than 9 sample, but is may have
- * not excacly the multiple of 9 samples. अगर there is a rest, the next
+ * not excacly the multiple of 9 samples. if there is a rest, the next
  * received data will complete the block.
  *
- * the block is then converted to 9 uLAW samples without the least sigअगरicant
+ * the block is then converted to 9 uLAW samples without the least sigificant
  * bit. the result is a 7-bit encoded sample.
  *
- * the samples will be reoganised to क्रमm 8 bytes of data:
+ * the samples will be reoganised to form 8 bytes of data:
  * (5(6) means: encoded sample no. 5, bit 6)
  *
  * 0(6) 0(5) 0(4) 0(3) 0(2) 0(1) 0(0) 1(6)
@@ -38,12 +37,12 @@
  * 8(6) 8(5) 8(4) 8(3) 8(2) 8(1) 8(0)
  *
  * the missing bit 0 of the last byte is filled with some
- * अक्रमom noise, to fill all 8 bytes.
+ * random noise, to fill all 8 bytes.
  *
  * the 8 bytes will be encrypted using blowfish.
  *
- * the result will be converted पूर्णांकo 9 bytes. the bit 7 is used क्रम
- * checksumme (CS) क्रम sync (0, 1) and क्रम the last bit:
+ * the result will be converted into 9 bytes. the bit 7 is used for
+ * checksumme (CS) for sync (0, 1) and for the last bit:
  * (5(6) means: crypted byte 5, bit 6)
  *
  * 1    0(7) 0(6) 0(5) 0(4) 0(3) 0(2) 0(1)
@@ -58,36 +57,36 @@
  *
  * the checksum is used to detect transmission errors and frame drops.
  *
- * synchronisation of received block is करोne by shअगरting the upper bit of each
- * byte (bit 7) to a shअगरt रेजिस्टर. अगर the rigister has the first five bits
- * (10000), this is used to find the sync. only अगर sync has been found, the
- * current block of 9 received bytes are decrypted. beक्रमe that the check
- * sum is calculated. अगर it is incorrect the block is dropped.
- * this will aव्योम loud noise due to corrupt encrypted data.
+ * synchronisation of received block is done by shifting the upper bit of each
+ * byte (bit 7) to a shift register. if the rigister has the first five bits
+ * (10000), this is used to find the sync. only if sync has been found, the
+ * current block of 9 received bytes are decrypted. before that the check
+ * sum is calculated. if it is incorrect the block is dropped.
+ * this will avoid loud noise due to corrupt encrypted data.
  *
- * अगर the last block is corrupt, the current decoded block is repeated
+ * if the last block is corrupt, the current decoded block is repeated
  * until a valid block has been received.
  */
 
 /*
  *  some blowfish parts are taken from the
- * crypto-api क्रम faster implementation
+ * crypto-api for faster implementation
  */
 
-काष्ठा bf_ctx अणु
+struct bf_ctx {
 	u32 p[18];
 	u32 s[1024];
-पूर्ण;
+};
 
-अटल स्थिर u32 bf_pbox[16 + 2] = अणु
+static const u32 bf_pbox[16 + 2] = {
 	0x243f6a88, 0x85a308d3, 0x13198a2e, 0x03707344,
 	0xa4093822, 0x299f31d0, 0x082efa98, 0xec4e6c89,
 	0x452821e6, 0x38d01377, 0xbe5466cf, 0x34e90c6c,
 	0xc0ac29b7, 0xc97c50dd, 0x3f84d5b5, 0xb5470917,
 	0x9216d5d9, 0x8979fb1b,
-पूर्ण;
+};
 
-अटल स्थिर u32 bf_sbox[256 * 4] = अणु
+static const u32 bf_sbox[256 * 4] = {
 	0xd1310ba6, 0x98dfb5ac, 0x2ffd72db, 0xd01adfb7,
 	0xb8e1afed, 0x6a267e96, 0xba7c9045, 0xf12c7f99,
 	0x24a19947, 0xb3916cf7, 0x0801f2e2, 0x858efc16,
@@ -344,32 +343,32 @@
 	0x1948c25c, 0x02fb8a8c, 0x01c36ae4, 0xd6ebe1f9,
 	0x90d4f869, 0xa65cdea0, 0x3f09252d, 0xc208e69f,
 	0xb74e6132, 0xce77e25b, 0x578fdfe3, 0x3ac372e6,
-पूर्ण;
+};
 
 /*
- * Round loop unrolling macros, S is a poपूर्णांकer to a S-Box array
- * organized in 4 अचिन्हित दीर्घs at a row.
+ * Round loop unrolling macros, S is a pointer to a S-Box array
+ * organized in 4 unsigned longs at a row.
  */
-#घोषणा GET32_3(x) (((x) & 0xff))
-#घोषणा GET32_2(x) (((x) >> (8)) & (0xff))
-#घोषणा GET32_1(x) (((x) >> (16)) & (0xff))
-#घोषणा GET32_0(x) (((x) >> (24)) & (0xff))
+#define GET32_3(x) (((x) & 0xff))
+#define GET32_2(x) (((x) >> (8)) & (0xff))
+#define GET32_1(x) (((x) >> (16)) & (0xff))
+#define GET32_0(x) (((x) >> (24)) & (0xff))
 
-#घोषणा bf_F(x) (((S[GET32_0(x)] + S[256 + GET32_1(x)]) ^	\
+#define bf_F(x) (((S[GET32_0(x)] + S[256 + GET32_1(x)]) ^	\
 		  S[512 + GET32_2(x)]) + S[768 + GET32_3(x)])
 
-#घोषणा EROUND(a, b, n)  करो अणु b ^= P[n]; a ^= bf_F(b); पूर्ण जबतक (0)
-#घोषणा DROUND(a, b, n)  करो अणु a ^= bf_F(b); b ^= P[n]; पूर्ण जबतक (0)
+#define EROUND(a, b, n)  do { b ^= P[n]; a ^= bf_F(b); } while (0)
+#define DROUND(a, b, n)  do { a ^= bf_F(b); b ^= P[n]; } while (0)
 
 
 /*
  * encrypt isdn data frame
  * every block with 9 samples is encrypted
  */
-व्योम
-dsp_bf_encrypt(काष्ठा dsp *dsp, u8 *data, पूर्णांक len)
-अणु
-	पूर्णांक i = 0, j = dsp->bf_crypt_pos;
+void
+dsp_bf_encrypt(struct dsp *dsp, u8 *data, int len)
+{
+	int i = 0, j = dsp->bf_crypt_pos;
 	u8 *bf_data_in = dsp->bf_data_in;
 	u8 *bf_crypt_out = dsp->bf_crypt_out;
 	u32 *P = dsp->bf_p;
@@ -378,14 +377,14 @@ dsp_bf_encrypt(काष्ठा dsp *dsp, u8 *data, पूर्णांक l
 	u32 cs;
 	u8 nibble;
 
-	जबतक (i < len) अणु
+	while (i < len) {
 		/* collect a block of 9 samples */
-		अगर (j < 9) अणु
+		if (j < 9) {
 			bf_data_in[j] = *data;
 			*data++ = bf_crypt_out[j++];
 			i++;
-			जारी;
-		पूर्ण
+			continue;
+		}
 		j = 0;
 		/* transcode 9 samples xlaw to 8 bytes */
 		yl = dsp_audio_law2seven[bf_data_in[0]];
@@ -401,7 +400,7 @@ dsp_bf_encrypt(काष्ठा dsp *dsp, u8 *data, पूर्णांक l
 		yr = (yr << 7) | dsp_audio_law2seven[bf_data_in[8]];
 		yr = (yr << 1) | (bf_data_in[0] & 1);
 
-		/* fill unused bit with अक्रमom noise of audio input */
+		/* fill unused bit with random noise of audio input */
 		/* encrypt */
 
 		EROUND(yr, yl, 0);
@@ -432,7 +431,7 @@ dsp_bf_encrypt(काष्ठा dsp *dsp, u8 *data, पूर्णांक l
 
 		/*
 		 * transcode 8 crypted bytes to 9 data bytes with sync
-		 * and checksum inक्रमmation
+		 * and checksum information
 		 */
 		bf_crypt_out[0] = (yl >> 25) | 0x80;
 		bf_crypt_out[1] = (yl >> 18) & 0x7f;
@@ -443,22 +442,22 @@ dsp_bf_encrypt(काष्ठा dsp *dsp, u8 *data, पूर्णांक l
 		bf_crypt_out[6] = ((yr >> 15) & 0x7f) | ((cs << 6) & 0x80);
 		bf_crypt_out[7] = ((yr >> 8) & 0x7f) | (cs << 7);
 		bf_crypt_out[8] = yr;
-	पूर्ण
+	}
 
-	/* ग_लिखो current count */
+	/* write current count */
 	dsp->bf_crypt_pos = j;
 
-पूर्ण
+}
 
 
 /*
  * decrypt isdn data frame
  * every block with 9 bytes is decrypted
  */
-व्योम
-dsp_bf_decrypt(काष्ठा dsp *dsp, u8 *data, पूर्णांक len)
-अणु
-	पूर्णांक i = 0;
+void
+dsp_bf_decrypt(struct dsp *dsp, u8 *data, int len)
+{
+	int i = 0;
 	u8 j = dsp->bf_decrypt_in_pos;
 	u8 k = dsp->bf_decrypt_out_pos;
 	u8 *bf_crypt_inring = dsp->bf_crypt_inring;
@@ -470,20 +469,20 @@ dsp_bf_decrypt(काष्ठा dsp *dsp, u8 *data, पूर्णांक l
 	u8 nibble;
 	u8 cs, cs0, cs1, cs2;
 
-	जबतक (i < len) अणु
+	while (i < len) {
 		/*
-		 * shअगरt upper bit and rotate data to buffer ring
+		 * shift upper bit and rotate data to buffer ring
 		 * send current decrypted data
 		 */
 		sync = (sync << 1) | ((*data) >> 7);
 		bf_crypt_inring[j++ & 15] = *data;
 		*data++ = bf_data_out[k++];
 		i++;
-		अगर (k == 9)
-			k = 0; /* repeat अगर no sync has been found */
-		/* check अगर not in sync */
-		अगर ((sync & 0x1f0) != 0x100)
-			जारी;
+		if (k == 9)
+			k = 0; /* repeat if no sync has been found */
+		/* check if not in sync */
+		if ((sync & 0x1f0) != 0x100)
+			continue;
 		j -= 9;
 		/* transcode receive data to 64 bit block of encrypted data */
 		yl = bf_crypt_inring[j++ & 15];
@@ -508,14 +507,14 @@ dsp_bf_decrypt(काष्ठा dsp *dsp, u8 *data, पूर्णांक l
 			^ (yr >> 13) ^ (yr >> 16) ^ (yr >> 19) ^ (yr >> 22) ^ (yr >> 25)
 			^ (yr >> 28) ^ (yr >> 31);
 
-		/* check अगर frame is valid */
-		अगर ((cs & 0x7) != (((cs2 >> 5) & 4) | ((cs1 >> 6) & 2) | (cs0 >> 7))) अणु
-			अगर (dsp_debug & DEBUG_DSP_BLOWFISH)
-				prपूर्णांकk(KERN_DEBUG
+		/* check if frame is valid */
+		if ((cs & 0x7) != (((cs2 >> 5) & 4) | ((cs1 >> 6) & 2) | (cs0 >> 7))) {
+			if (dsp_debug & DEBUG_DSP_BLOWFISH)
+				printk(KERN_DEBUG
 				       "DSP BLOWFISH: received corrupt frame, "
 				       "checksumme is not correct\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* decrypt */
 		yr ^= P[17];
@@ -550,19 +549,19 @@ dsp_bf_decrypt(काष्ठा dsp *dsp, u8 *data, पूर्णांक l
 		bf_data_out[7] = dsp_audio_seven2law[(yr >> 8) & 0x7f];
 		bf_data_out[8] = dsp_audio_seven2law[(yr >> 1) & 0x7f];
 		k = 0; /* start with new decoded frame */
-	पूर्ण
+	}
 
-	/* ग_लिखो current count and sync */
+	/* write current count and sync */
 	dsp->bf_decrypt_in_pos = j;
 	dsp->bf_decrypt_out_pos = k;
 	dsp->bf_sync = sync;
-पूर्ण
+}
 
 
 /* used to encrypt S and P boxes */
-अटल अंतरभूत व्योम
-encrypt_block(स्थिर u32 *P, स्थिर u32 *S, u32 *dst, u32 *src)
-अणु
+static inline void
+encrypt_block(const u32 *P, const u32 *S, u32 *dst, u32 *src)
+{
 	u32 yl = src[0];
 	u32 yr = src[1];
 
@@ -588,32 +587,32 @@ encrypt_block(स्थिर u32 *P, स्थिर u32 *S, u32 *dst, u32 *src
 
 	dst[0] = yr;
 	dst[1] = yl;
-पूर्ण
+}
 
 /*
- * initialize the dsp क्रम encryption and decryption using the same key
- * Calculates the blowfish S and P boxes क्रम encryption and decryption.
+ * initialize the dsp for encryption and decryption using the same key
+ * Calculates the blowfish S and P boxes for encryption and decryption.
  * The margin of keylen must be 4-56 bytes.
- * वापसs 0 अगर ok.
+ * returns 0 if ok.
  */
-पूर्णांक
-dsp_bf_init(काष्ठा dsp *dsp, स्थिर u8 *key, uपूर्णांक keylen)
-अणु
-	लघु i, j, count;
+int
+dsp_bf_init(struct dsp *dsp, const u8 *key, uint keylen)
+{
+	short i, j, count;
 	u32 data[2], temp;
 	u32 *P = (u32 *)dsp->bf_p;
 	u32 *S = (u32 *)dsp->bf_s;
 
-	अगर (keylen < 4 || keylen > 56)
-		वापस 1;
+	if (keylen < 4 || keylen > 56)
+		return 1;
 
 	/* Set dsp states */
 	i = 0;
-	जबतक (i < 9) अणु
+	while (i < 9) {
 		dsp->bf_crypt_out[i] = 0xff;
 		dsp->bf_data_out[i] = dsp_silence;
 		i++;
-	पूर्ण
+	}
 	dsp->bf_crypt_pos = 0;
 	dsp->bf_decrypt_in_pos = 0;
 	dsp->bf_decrypt_out_pos = 0;
@@ -621,16 +620,16 @@ dsp_bf_init(काष्ठा dsp *dsp, स्थिर u8 *key, uपूर्�
 	dsp->bf_enable = 1;
 
 	/* Copy the initialization s-boxes */
-	क्रम (i = 0, count = 0; i < 256; i++)
-		क्रम (j = 0; j < 4; j++, count++)
+	for (i = 0, count = 0; i < 256; i++)
+		for (j = 0; j < 4; j++, count++)
 			S[count] = bf_sbox[count];
 
 	/* Set the p-boxes */
-	क्रम (i = 0; i < 16 + 2; i++)
+	for (i = 0; i < 16 + 2; i++)
 		P[i] = bf_pbox[i];
 
 	/* Actual subkey generation */
-	क्रम (j = 0, i = 0; i < 16 + 2; i++) अणु
+	for (j = 0, i = 0; i < 16 + 2; i++) {
 		temp = (((u32)key[j] << 24) |
 			((u32)key[(j + 1) % keylen] << 16) |
 			((u32)key[(j + 2) % keylen] << 8) |
@@ -638,36 +637,36 @@ dsp_bf_init(काष्ठा dsp *dsp, स्थिर u8 *key, uपूर्�
 
 		P[i] = P[i] ^ temp;
 		j = (j + 4) % keylen;
-	पूर्ण
+	}
 
 	data[0] = 0x00000000;
 	data[1] = 0x00000000;
 
-	क्रम (i = 0; i < 16 + 2; i += 2) अणु
+	for (i = 0; i < 16 + 2; i += 2) {
 		encrypt_block(P, S, data, data);
 
 		P[i] = data[0];
 		P[i + 1] = data[1];
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < 4; i++) अणु
-		क्रम (j = 0, count = i * 256; j < 256; j += 2, count += 2) अणु
+	for (i = 0; i < 4; i++) {
+		for (j = 0, count = i * 256; j < 256; j += 2, count += 2) {
 			encrypt_block(P, S, data, data);
 
 			S[count] = data[0];
 			S[count + 1] = data[1];
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  * turn encryption off
  */
-व्योम
-dsp_bf_cleanup(काष्ठा dsp *dsp)
-अणु
+void
+dsp_bf_cleanup(struct dsp *dsp)
+{
 	dsp->bf_enable = 0;
-पूर्ण
+}

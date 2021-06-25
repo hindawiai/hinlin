@@ -1,428 +1,427 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
-#अगर_अघोषित LINUX_KEXEC_H
-#घोषणा LINUX_KEXEC_H
+/* SPDX-License-Identifier: GPL-2.0 */
+#ifndef LINUX_KEXEC_H
+#define LINUX_KEXEC_H
 
-#घोषणा IND_DESTINATION_BIT 0
-#घोषणा IND_INसूचीECTION_BIT 1
-#घोषणा IND_DONE_BIT        2
-#घोषणा IND_SOURCE_BIT      3
+#define IND_DESTINATION_BIT 0
+#define IND_INDIRECTION_BIT 1
+#define IND_DONE_BIT        2
+#define IND_SOURCE_BIT      3
 
-#घोषणा IND_DESTINATION  (1 << IND_DESTINATION_BIT)
-#घोषणा IND_INसूचीECTION  (1 << IND_INसूचीECTION_BIT)
-#घोषणा IND_DONE         (1 << IND_DONE_BIT)
-#घोषणा IND_SOURCE       (1 << IND_SOURCE_BIT)
-#घोषणा IND_FLAGS (IND_DESTINATION | IND_INसूचीECTION | IND_DONE | IND_SOURCE)
+#define IND_DESTINATION  (1 << IND_DESTINATION_BIT)
+#define IND_INDIRECTION  (1 << IND_INDIRECTION_BIT)
+#define IND_DONE         (1 << IND_DONE_BIT)
+#define IND_SOURCE       (1 << IND_SOURCE_BIT)
+#define IND_FLAGS (IND_DESTINATION | IND_INDIRECTION | IND_DONE | IND_SOURCE)
 
-#अगर !defined(__ASSEMBLY__)
+#if !defined(__ASSEMBLY__)
 
-#समावेश <linux/crash_core.h>
-#समावेश <यंत्र/पन.स>
+#include <linux/crash_core.h>
+#include <asm/io.h>
 
-#समावेश <uapi/linux/kexec.h>
+#include <uapi/linux/kexec.h>
 
-#अगर_घोषित CONFIG_KEXEC_CORE
-#समावेश <linux/list.h>
-#समावेश <linux/compat.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/kexec.h>
+#ifdef CONFIG_KEXEC_CORE
+#include <linux/list.h>
+#include <linux/compat.h>
+#include <linux/ioport.h>
+#include <linux/module.h>
+#include <asm/kexec.h>
 
-/* Verअगरy architecture specअगरic macros are defined */
+/* Verify architecture specific macros are defined */
 
-#अगर_अघोषित KEXEC_SOURCE_MEMORY_LIMIT
-#त्रुटि KEXEC_SOURCE_MEMORY_LIMIT not defined
-#पूर्ण_अगर
+#ifndef KEXEC_SOURCE_MEMORY_LIMIT
+#error KEXEC_SOURCE_MEMORY_LIMIT not defined
+#endif
 
-#अगर_अघोषित KEXEC_DESTINATION_MEMORY_LIMIT
-#त्रुटि KEXEC_DESTINATION_MEMORY_LIMIT not defined
-#पूर्ण_अगर
+#ifndef KEXEC_DESTINATION_MEMORY_LIMIT
+#error KEXEC_DESTINATION_MEMORY_LIMIT not defined
+#endif
 
-#अगर_अघोषित KEXEC_CONTROL_MEMORY_LIMIT
-#त्रुटि KEXEC_CONTROL_MEMORY_LIMIT not defined
-#पूर्ण_अगर
+#ifndef KEXEC_CONTROL_MEMORY_LIMIT
+#error KEXEC_CONTROL_MEMORY_LIMIT not defined
+#endif
 
-#अगर_अघोषित KEXEC_CONTROL_MEMORY_GFP
-#घोषणा KEXEC_CONTROL_MEMORY_GFP (GFP_KERNEL | __GFP_NORETRY)
-#पूर्ण_अगर
+#ifndef KEXEC_CONTROL_MEMORY_GFP
+#define KEXEC_CONTROL_MEMORY_GFP (GFP_KERNEL | __GFP_NORETRY)
+#endif
 
-#अगर_अघोषित KEXEC_CONTROL_PAGE_SIZE
-#त्रुटि KEXEC_CONTROL_PAGE_SIZE not defined
-#पूर्ण_अगर
+#ifndef KEXEC_CONTROL_PAGE_SIZE
+#error KEXEC_CONTROL_PAGE_SIZE not defined
+#endif
 
-#अगर_अघोषित KEXEC_ARCH
-#त्रुटि KEXEC_ARCH not defined
-#पूर्ण_अगर
+#ifndef KEXEC_ARCH
+#error KEXEC_ARCH not defined
+#endif
 
-#अगर_अघोषित KEXEC_CRASH_CONTROL_MEMORY_LIMIT
-#घोषणा KEXEC_CRASH_CONTROL_MEMORY_LIMIT KEXEC_CONTROL_MEMORY_LIMIT
-#पूर्ण_अगर
+#ifndef KEXEC_CRASH_CONTROL_MEMORY_LIMIT
+#define KEXEC_CRASH_CONTROL_MEMORY_LIMIT KEXEC_CONTROL_MEMORY_LIMIT
+#endif
 
-#अगर_अघोषित KEXEC_CRASH_MEM_ALIGN
-#घोषणा KEXEC_CRASH_MEM_ALIGN PAGE_SIZE
-#पूर्ण_अगर
+#ifndef KEXEC_CRASH_MEM_ALIGN
+#define KEXEC_CRASH_MEM_ALIGN PAGE_SIZE
+#endif
 
-#घोषणा KEXEC_CORE_NOTE_NAME	CRASH_CORE_NOTE_NAME
+#define KEXEC_CORE_NOTE_NAME	CRASH_CORE_NOTE_NAME
 
 /*
- * This काष्ठाure is used to hold the arguments that are used when loading
+ * This structure is used to hold the arguments that are used when loading
  * kernel binaries.
  */
 
-प्रकार अचिन्हित दीर्घ kimage_entry_t;
+typedef unsigned long kimage_entry_t;
 
-काष्ठा kexec_segment अणु
+struct kexec_segment {
 	/*
-	 * This poपूर्णांकer can poपूर्णांक to user memory अगर kexec_load() प्रणाली
-	 * call is used or will poपूर्णांक to kernel memory अगर
-	 * kexec_file_load() प्रणाली call is used.
+	 * This pointer can point to user memory if kexec_load() system
+	 * call is used or will point to kernel memory if
+	 * kexec_file_load() system call is used.
 	 *
 	 * Use ->buf when expecting to deal with user memory and use ->kbuf
 	 * when expecting to deal with kernel memory.
 	 */
-	जोड़ अणु
-		व्योम __user *buf;
-		व्योम *kbuf;
-	पूर्ण;
-	माप_प्रकार bufsz;
-	अचिन्हित दीर्घ mem;
-	माप_प्रकार memsz;
-पूर्ण;
+	union {
+		void __user *buf;
+		void *kbuf;
+	};
+	size_t bufsz;
+	unsigned long mem;
+	size_t memsz;
+};
 
-#अगर_घोषित CONFIG_COMPAT
-काष्ठा compat_kexec_segment अणु
+#ifdef CONFIG_COMPAT
+struct compat_kexec_segment {
 	compat_uptr_t buf;
-	compat_माप_प्रकार bufsz;
-	compat_uदीर्घ_t mem;	/* User space sees this as a (व्योम *) ... */
-	compat_माप_प्रकार memsz;
-पूर्ण;
-#पूर्ण_अगर
+	compat_size_t bufsz;
+	compat_ulong_t mem;	/* User space sees this as a (void *) ... */
+	compat_size_t memsz;
+};
+#endif
 
-#अगर_घोषित CONFIG_KEXEC_खाता
-काष्ठा purgatory_info अणु
+#ifdef CONFIG_KEXEC_FILE
+struct purgatory_info {
 	/*
-	 * Poपूर्णांकer to elf header at the beginning of kexec_purgatory.
-	 * Note: kexec_purgatory is पढ़ो only
+	 * Pointer to elf header at the beginning of kexec_purgatory.
+	 * Note: kexec_purgatory is read only
 	 */
-	स्थिर Elf_Ehdr *ehdr;
+	const Elf_Ehdr *ehdr;
 	/*
-	 * Temporary, modअगरiable buffer क्रम sechdrs used क्रम relocation.
-	 * This memory can be मुक्तd post image load.
+	 * Temporary, modifiable buffer for sechdrs used for relocation.
+	 * This memory can be freed post image load.
 	 */
 	Elf_Shdr *sechdrs;
 	/*
-	 * Temporary, modअगरiable buffer क्रम stripped purgatory used क्रम
-	 * relocation. This memory can be मुक्तd post image load.
+	 * Temporary, modifiable buffer for stripped purgatory used for
+	 * relocation. This memory can be freed post image load.
 	 */
-	व्योम *purgatory_buf;
-पूर्ण;
+	void *purgatory_buf;
+};
 
-काष्ठा kimage;
+struct kimage;
 
-प्रकार पूर्णांक (kexec_probe_t)(स्थिर अक्षर *kernel_buf, अचिन्हित दीर्घ kernel_size);
-प्रकार व्योम *(kexec_load_t)(काष्ठा kimage *image, अक्षर *kernel_buf,
-			     अचिन्हित दीर्घ kernel_len, अक्षर *initrd,
-			     अचिन्हित दीर्घ initrd_len, अक्षर *cmdline,
-			     अचिन्हित दीर्घ cmdline_len);
-प्रकार पूर्णांक (kexec_cleanup_t)(व्योम *loader_data);
+typedef int (kexec_probe_t)(const char *kernel_buf, unsigned long kernel_size);
+typedef void *(kexec_load_t)(struct kimage *image, char *kernel_buf,
+			     unsigned long kernel_len, char *initrd,
+			     unsigned long initrd_len, char *cmdline,
+			     unsigned long cmdline_len);
+typedef int (kexec_cleanup_t)(void *loader_data);
 
-#अगर_घोषित CONFIG_KEXEC_SIG
-प्रकार पूर्णांक (kexec_verअगरy_sig_t)(स्थिर अक्षर *kernel_buf,
-				 अचिन्हित दीर्घ kernel_len);
-#पूर्ण_अगर
+#ifdef CONFIG_KEXEC_SIG
+typedef int (kexec_verify_sig_t)(const char *kernel_buf,
+				 unsigned long kernel_len);
+#endif
 
-काष्ठा kexec_file_ops अणु
+struct kexec_file_ops {
 	kexec_probe_t *probe;
 	kexec_load_t *load;
 	kexec_cleanup_t *cleanup;
-#अगर_घोषित CONFIG_KEXEC_SIG
-	kexec_verअगरy_sig_t *verअगरy_sig;
-#पूर्ण_अगर
-पूर्ण;
+#ifdef CONFIG_KEXEC_SIG
+	kexec_verify_sig_t *verify_sig;
+#endif
+};
 
-बाह्य स्थिर काष्ठा kexec_file_ops * स्थिर kexec_file_loaders[];
+extern const struct kexec_file_ops * const kexec_file_loaders[];
 
-पूर्णांक kexec_image_probe_शेष(काष्ठा kimage *image, व्योम *buf,
-			      अचिन्हित दीर्घ buf_len);
-पूर्णांक kexec_image_post_load_cleanup_शेष(काष्ठा kimage *image);
+int kexec_image_probe_default(struct kimage *image, void *buf,
+			      unsigned long buf_len);
+int kexec_image_post_load_cleanup_default(struct kimage *image);
 
 /*
  * If kexec_buf.mem is set to this value, kexec_locate_mem_hole()
- * will try to allocate मुक्त memory. Arch may overग_लिखो it.
+ * will try to allocate free memory. Arch may overwrite it.
  */
-#अगर_अघोषित KEXEC_BUF_MEM_UNKNOWN
-#घोषणा KEXEC_BUF_MEM_UNKNOWN 0
-#पूर्ण_अगर
+#ifndef KEXEC_BUF_MEM_UNKNOWN
+#define KEXEC_BUF_MEM_UNKNOWN 0
+#endif
 
 /**
- * काष्ठा kexec_buf - parameters क्रम finding a place क्रम a buffer in memory
+ * struct kexec_buf - parameters for finding a place for a buffer in memory
  * @image:	kexec image in which memory to search.
  * @buffer:	Contents which will be copied to the allocated memory.
  * @bufsz:	Size of @buffer.
- * @mem:	On वापस will have address of the buffer in memory.
- * @memsz:	Size क्रम the buffer in memory.
+ * @mem:	On return will have address of the buffer in memory.
+ * @memsz:	Size for the buffer in memory.
  * @buf_align:	Minimum alignment needed.
  * @buf_min:	The buffer can't be placed below this address.
  * @buf_max:	The buffer can't be placed above this address.
- * @top_करोwn:	Allocate from top of memory.
+ * @top_down:	Allocate from top of memory.
  */
-काष्ठा kexec_buf अणु
-	काष्ठा kimage *image;
-	व्योम *buffer;
-	अचिन्हित दीर्घ bufsz;
-	अचिन्हित दीर्घ mem;
-	अचिन्हित दीर्घ memsz;
-	अचिन्हित दीर्घ buf_align;
-	अचिन्हित दीर्घ buf_min;
-	अचिन्हित दीर्घ buf_max;
-	bool top_करोwn;
-पूर्ण;
+struct kexec_buf {
+	struct kimage *image;
+	void *buffer;
+	unsigned long bufsz;
+	unsigned long mem;
+	unsigned long memsz;
+	unsigned long buf_align;
+	unsigned long buf_min;
+	unsigned long buf_max;
+	bool top_down;
+};
 
-पूर्णांक kexec_load_purgatory(काष्ठा kimage *image, काष्ठा kexec_buf *kbuf);
-पूर्णांक kexec_purgatory_get_set_symbol(काष्ठा kimage *image, स्थिर अक्षर *name,
-				   व्योम *buf, अचिन्हित पूर्णांक size,
+int kexec_load_purgatory(struct kimage *image, struct kexec_buf *kbuf);
+int kexec_purgatory_get_set_symbol(struct kimage *image, const char *name,
+				   void *buf, unsigned int size,
 				   bool get_value);
-व्योम *kexec_purgatory_get_symbol_addr(काष्ठा kimage *image, स्थिर अक्षर *name);
+void *kexec_purgatory_get_symbol_addr(struct kimage *image, const char *name);
 
 /* Architectures may override the below functions */
-पूर्णांक arch_kexec_kernel_image_probe(काष्ठा kimage *image, व्योम *buf,
-				  अचिन्हित दीर्घ buf_len);
-व्योम *arch_kexec_kernel_image_load(काष्ठा kimage *image);
-पूर्णांक arch_kexec_apply_relocations_add(काष्ठा purgatory_info *pi,
+int arch_kexec_kernel_image_probe(struct kimage *image, void *buf,
+				  unsigned long buf_len);
+void *arch_kexec_kernel_image_load(struct kimage *image);
+int arch_kexec_apply_relocations_add(struct purgatory_info *pi,
 				     Elf_Shdr *section,
-				     स्थिर Elf_Shdr *rअन्यथाc,
-				     स्थिर Elf_Shdr *symtab);
-पूर्णांक arch_kexec_apply_relocations(काष्ठा purgatory_info *pi,
+				     const Elf_Shdr *relsec,
+				     const Elf_Shdr *symtab);
+int arch_kexec_apply_relocations(struct purgatory_info *pi,
 				 Elf_Shdr *section,
-				 स्थिर Elf_Shdr *rअन्यथाc,
-				 स्थिर Elf_Shdr *symtab);
-पूर्णांक arch_kimage_file_post_load_cleanup(काष्ठा kimage *image);
-#अगर_घोषित CONFIG_KEXEC_SIG
-पूर्णांक arch_kexec_kernel_verअगरy_sig(काष्ठा kimage *image, व्योम *buf,
-				 अचिन्हित दीर्घ buf_len);
-#पूर्ण_अगर
-पूर्णांक arch_kexec_locate_mem_hole(काष्ठा kexec_buf *kbuf);
+				 const Elf_Shdr *relsec,
+				 const Elf_Shdr *symtab);
+int arch_kimage_file_post_load_cleanup(struct kimage *image);
+#ifdef CONFIG_KEXEC_SIG
+int arch_kexec_kernel_verify_sig(struct kimage *image, void *buf,
+				 unsigned long buf_len);
+#endif
+int arch_kexec_locate_mem_hole(struct kexec_buf *kbuf);
 
-बाह्य पूर्णांक kexec_add_buffer(काष्ठा kexec_buf *kbuf);
-पूर्णांक kexec_locate_mem_hole(काष्ठा kexec_buf *kbuf);
+extern int kexec_add_buffer(struct kexec_buf *kbuf);
+int kexec_locate_mem_hole(struct kexec_buf *kbuf);
 
-/* Alignment required क्रम elf header segment */
-#घोषणा ELF_CORE_HEADER_ALIGN   4096
+/* Alignment required for elf header segment */
+#define ELF_CORE_HEADER_ALIGN   4096
 
-काष्ठा crash_mem_range अणु
+struct crash_mem_range {
 	u64 start, end;
-पूर्ण;
+};
 
-काष्ठा crash_mem अणु
-	अचिन्हित पूर्णांक max_nr_ranges;
-	अचिन्हित पूर्णांक nr_ranges;
-	काष्ठा crash_mem_range ranges[];
-पूर्ण;
+struct crash_mem {
+	unsigned int max_nr_ranges;
+	unsigned int nr_ranges;
+	struct crash_mem_range ranges[];
+};
 
-बाह्य पूर्णांक crash_exclude_mem_range(काष्ठा crash_mem *mem,
-				   अचिन्हित दीर्घ दीर्घ mstart,
-				   अचिन्हित दीर्घ दीर्घ mend);
-बाह्य पूर्णांक crash_prepare_elf64_headers(काष्ठा crash_mem *mem, पूर्णांक kernel_map,
-				       व्योम **addr, अचिन्हित दीर्घ *sz);
-#पूर्ण_अगर /* CONFIG_KEXEC_खाता */
+extern int crash_exclude_mem_range(struct crash_mem *mem,
+				   unsigned long long mstart,
+				   unsigned long long mend);
+extern int crash_prepare_elf64_headers(struct crash_mem *mem, int kernel_map,
+				       void **addr, unsigned long *sz);
+#endif /* CONFIG_KEXEC_FILE */
 
-#अगर_घोषित CONFIG_KEXEC_ELF
-काष्ठा kexec_elf_info अणु
+#ifdef CONFIG_KEXEC_ELF
+struct kexec_elf_info {
 	/*
 	 * Where the ELF binary contents are kept.
-	 * Memory managed by the user of the काष्ठा.
+	 * Memory managed by the user of the struct.
 	 */
-	स्थिर अक्षर *buffer;
+	const char *buffer;
 
-	स्थिर काष्ठा elfhdr *ehdr;
-	स्थिर काष्ठा elf_phdr *proghdrs;
-पूर्ण;
+	const struct elfhdr *ehdr;
+	const struct elf_phdr *proghdrs;
+};
 
-पूर्णांक kexec_build_elf_info(स्थिर अक्षर *buf, माप_प्रकार len, काष्ठा elfhdr *ehdr,
-			       काष्ठा kexec_elf_info *elf_info);
+int kexec_build_elf_info(const char *buf, size_t len, struct elfhdr *ehdr,
+			       struct kexec_elf_info *elf_info);
 
-पूर्णांक kexec_elf_load(काष्ठा kimage *image, काष्ठा elfhdr *ehdr,
-			 काष्ठा kexec_elf_info *elf_info,
-			 काष्ठा kexec_buf *kbuf,
-			 अचिन्हित दीर्घ *lowest_load_addr);
+int kexec_elf_load(struct kimage *image, struct elfhdr *ehdr,
+			 struct kexec_elf_info *elf_info,
+			 struct kexec_buf *kbuf,
+			 unsigned long *lowest_load_addr);
 
-व्योम kexec_मुक्त_elf_info(काष्ठा kexec_elf_info *elf_info);
-पूर्णांक kexec_elf_probe(स्थिर अक्षर *buf, अचिन्हित दीर्घ len);
-#पूर्ण_अगर
-काष्ठा kimage अणु
+void kexec_free_elf_info(struct kexec_elf_info *elf_info);
+int kexec_elf_probe(const char *buf, unsigned long len);
+#endif
+struct kimage {
 	kimage_entry_t head;
 	kimage_entry_t *entry;
 	kimage_entry_t *last_entry;
 
-	अचिन्हित दीर्घ start;
-	काष्ठा page *control_code_page;
-	काष्ठा page *swap_page;
-	व्योम *vmcoreinfo_data_copy; /* locates in the crash memory */
+	unsigned long start;
+	struct page *control_code_page;
+	struct page *swap_page;
+	void *vmcoreinfo_data_copy; /* locates in the crash memory */
 
-	अचिन्हित दीर्घ nr_segments;
-	काष्ठा kexec_segment segment[KEXEC_SEGMENT_MAX];
+	unsigned long nr_segments;
+	struct kexec_segment segment[KEXEC_SEGMENT_MAX];
 
-	काष्ठा list_head control_pages;
-	काष्ठा list_head dest_pages;
-	काष्ठा list_head unusable_pages;
+	struct list_head control_pages;
+	struct list_head dest_pages;
+	struct list_head unusable_pages;
 
-	/* Address of next control page to allocate क्रम crash kernels. */
-	अचिन्हित दीर्घ control_page;
+	/* Address of next control page to allocate for crash kernels. */
+	unsigned long control_page;
 
 	/* Flags to indicate special processing */
-	अचिन्हित पूर्णांक type : 1;
-#घोषणा KEXEC_TYPE_DEFAULT 0
-#घोषणा KEXEC_TYPE_CRASH   1
-	अचिन्हित पूर्णांक preserve_context : 1;
+	unsigned int type : 1;
+#define KEXEC_TYPE_DEFAULT 0
+#define KEXEC_TYPE_CRASH   1
+	unsigned int preserve_context : 1;
 	/* If set, we are using file mode kexec syscall */
-	अचिन्हित पूर्णांक file_mode:1;
+	unsigned int file_mode:1;
 
-#अगर_घोषित ARCH_HAS_KIMAGE_ARCH
-	काष्ठा kimage_arch arch;
-#पूर्ण_अगर
+#ifdef ARCH_HAS_KIMAGE_ARCH
+	struct kimage_arch arch;
+#endif
 
-#अगर_घोषित CONFIG_KEXEC_खाता
-	/* Additional fields क्रम file based kexec syscall */
-	व्योम *kernel_buf;
-	अचिन्हित दीर्घ kernel_buf_len;
+#ifdef CONFIG_KEXEC_FILE
+	/* Additional fields for file based kexec syscall */
+	void *kernel_buf;
+	unsigned long kernel_buf_len;
 
-	व्योम *initrd_buf;
-	अचिन्हित दीर्घ initrd_buf_len;
+	void *initrd_buf;
+	unsigned long initrd_buf_len;
 
-	अक्षर *cmdline_buf;
-	अचिन्हित दीर्घ cmdline_buf_len;
+	char *cmdline_buf;
+	unsigned long cmdline_buf_len;
 
 	/* File operations provided by image loader */
-	स्थिर काष्ठा kexec_file_ops *fops;
+	const struct kexec_file_ops *fops;
 
-	/* Image loader handling the kernel can store a poपूर्णांकer here */
-	व्योम *image_loader_data;
+	/* Image loader handling the kernel can store a pointer here */
+	void *image_loader_data;
 
-	/* Inक्रमmation क्रम loading purgatory */
-	काष्ठा purgatory_info purgatory_info;
-#पूर्ण_अगर
+	/* Information for loading purgatory */
+	struct purgatory_info purgatory_info;
+#endif
 
-#अगर_घोषित CONFIG_IMA_KEXEC
-	/* Virtual address of IMA measurement buffer क्रम kexec syscall */
-	व्योम *ima_buffer;
+#ifdef CONFIG_IMA_KEXEC
+	/* Virtual address of IMA measurement buffer for kexec syscall */
+	void *ima_buffer;
 
 	phys_addr_t ima_buffer_addr;
-	माप_प्रकार ima_buffer_size;
-#पूर्ण_अगर
+	size_t ima_buffer_size;
+#endif
 
 	/* Core ELF header buffer */
-	व्योम *elf_headers;
-	अचिन्हित दीर्घ elf_headers_sz;
-	अचिन्हित दीर्घ elf_load_addr;
-पूर्ण;
+	void *elf_headers;
+	unsigned long elf_headers_sz;
+	unsigned long elf_load_addr;
+};
 
-/* kexec पूर्णांकerface functions */
-बाह्य व्योम machine_kexec(काष्ठा kimage *image);
-बाह्य पूर्णांक machine_kexec_prepare(काष्ठा kimage *image);
-बाह्य व्योम machine_kexec_cleanup(काष्ठा kimage *image);
-बाह्य पूर्णांक kernel_kexec(व्योम);
-बाह्य काष्ठा page *kimage_alloc_control_pages(काष्ठा kimage *image,
-						अचिन्हित पूर्णांक order);
-पूर्णांक machine_kexec_post_load(काष्ठा kimage *image);
+/* kexec interface functions */
+extern void machine_kexec(struct kimage *image);
+extern int machine_kexec_prepare(struct kimage *image);
+extern void machine_kexec_cleanup(struct kimage *image);
+extern int kernel_kexec(void);
+extern struct page *kimage_alloc_control_pages(struct kimage *image,
+						unsigned int order);
+int machine_kexec_post_load(struct kimage *image);
 
-बाह्य व्योम __crash_kexec(काष्ठा pt_regs *);
-बाह्य व्योम crash_kexec(काष्ठा pt_regs *);
-पूर्णांक kexec_should_crash(काष्ठा task_काष्ठा *);
-पूर्णांक kexec_crash_loaded(व्योम);
-व्योम crash_save_cpu(काष्ठा pt_regs *regs, पूर्णांक cpu);
-बाह्य पूर्णांक kimage_crash_copy_vmcoreinfo(काष्ठा kimage *image);
+extern void __crash_kexec(struct pt_regs *);
+extern void crash_kexec(struct pt_regs *);
+int kexec_should_crash(struct task_struct *);
+int kexec_crash_loaded(void);
+void crash_save_cpu(struct pt_regs *regs, int cpu);
+extern int kimage_crash_copy_vmcoreinfo(struct kimage *image);
 
-बाह्य काष्ठा kimage *kexec_image;
-बाह्य काष्ठा kimage *kexec_crash_image;
-बाह्य पूर्णांक kexec_load_disabled;
+extern struct kimage *kexec_image;
+extern struct kimage *kexec_crash_image;
+extern int kexec_load_disabled;
 
-#अगर_अघोषित kexec_flush_icache_page
-#घोषणा kexec_flush_icache_page(page)
-#पूर्ण_अगर
+#ifndef kexec_flush_icache_page
+#define kexec_flush_icache_page(page)
+#endif
 
 /* List of defined/legal kexec flags */
-#अगर_अघोषित CONFIG_KEXEC_JUMP
-#घोषणा KEXEC_FLAGS    KEXEC_ON_CRASH
-#अन्यथा
-#घोषणा KEXEC_FLAGS    (KEXEC_ON_CRASH | KEXEC_PRESERVE_CONTEXT)
-#पूर्ण_अगर
+#ifndef CONFIG_KEXEC_JUMP
+#define KEXEC_FLAGS    KEXEC_ON_CRASH
+#else
+#define KEXEC_FLAGS    (KEXEC_ON_CRASH | KEXEC_PRESERVE_CONTEXT)
+#endif
 
 /* List of defined/legal kexec file flags */
-#घोषणा KEXEC_खाता_FLAGS	(KEXEC_खाता_UNLOAD | KEXEC_खाता_ON_CRASH | \
-				 KEXEC_खाता_NO_INITRAMFS)
+#define KEXEC_FILE_FLAGS	(KEXEC_FILE_UNLOAD | KEXEC_FILE_ON_CRASH | \
+				 KEXEC_FILE_NO_INITRAMFS)
 
 /* Location of a reserved region to hold the crash kernel.
  */
-बाह्य काष्ठा resource crashk_res;
-बाह्य काष्ठा resource crashk_low_res;
-बाह्य note_buf_t __percpu *crash_notes;
+extern struct resource crashk_res;
+extern struct resource crashk_low_res;
+extern note_buf_t __percpu *crash_notes;
 
-/* flag to track अगर kexec reboot is in progress */
-बाह्य bool kexec_in_progress;
+/* flag to track if kexec reboot is in progress */
+extern bool kexec_in_progress;
 
-पूर्णांक crash_shrink_memory(अचिन्हित दीर्घ new_size);
-माप_प्रकार crash_get_memory_size(व्योम);
-व्योम crash_मुक्त_reserved_phys_range(अचिन्हित दीर्घ begin, अचिन्हित दीर्घ end);
+int crash_shrink_memory(unsigned long new_size);
+size_t crash_get_memory_size(void);
+void crash_free_reserved_phys_range(unsigned long begin, unsigned long end);
 
-व्योम arch_kexec_protect_crashkres(व्योम);
-व्योम arch_kexec_unprotect_crashkres(व्योम);
+void arch_kexec_protect_crashkres(void);
+void arch_kexec_unprotect_crashkres(void);
 
-#अगर_अघोषित page_to_boot_pfn
-अटल अंतरभूत अचिन्हित दीर्घ page_to_boot_pfn(काष्ठा page *page)
-अणु
-	वापस page_to_pfn(page);
-पूर्ण
-#पूर्ण_अगर
+#ifndef page_to_boot_pfn
+static inline unsigned long page_to_boot_pfn(struct page *page)
+{
+	return page_to_pfn(page);
+}
+#endif
 
-#अगर_अघोषित boot_pfn_to_page
-अटल अंतरभूत काष्ठा page *boot_pfn_to_page(अचिन्हित दीर्घ boot_pfn)
-अणु
-	वापस pfn_to_page(boot_pfn);
-पूर्ण
-#पूर्ण_अगर
+#ifndef boot_pfn_to_page
+static inline struct page *boot_pfn_to_page(unsigned long boot_pfn)
+{
+	return pfn_to_page(boot_pfn);
+}
+#endif
 
-#अगर_अघोषित phys_to_boot_phys
-अटल अंतरभूत अचिन्हित दीर्घ phys_to_boot_phys(phys_addr_t phys)
-अणु
-	वापस phys;
-पूर्ण
-#पूर्ण_अगर
+#ifndef phys_to_boot_phys
+static inline unsigned long phys_to_boot_phys(phys_addr_t phys)
+{
+	return phys;
+}
+#endif
 
-#अगर_अघोषित boot_phys_to_phys
-अटल अंतरभूत phys_addr_t boot_phys_to_phys(अचिन्हित दीर्घ boot_phys)
-अणु
-	वापस boot_phys;
-पूर्ण
-#पूर्ण_अगर
+#ifndef boot_phys_to_phys
+static inline phys_addr_t boot_phys_to_phys(unsigned long boot_phys)
+{
+	return boot_phys;
+}
+#endif
 
-अटल अंतरभूत अचिन्हित दीर्घ virt_to_boot_phys(व्योम *addr)
-अणु
-	वापस phys_to_boot_phys(__pa((अचिन्हित दीर्घ)addr));
-पूर्ण
+static inline unsigned long virt_to_boot_phys(void *addr)
+{
+	return phys_to_boot_phys(__pa((unsigned long)addr));
+}
 
-अटल अंतरभूत व्योम *boot_phys_to_virt(अचिन्हित दीर्घ entry)
-अणु
-	वापस phys_to_virt(boot_phys_to_phys(entry));
-पूर्ण
+static inline void *boot_phys_to_virt(unsigned long entry)
+{
+	return phys_to_virt(boot_phys_to_phys(entry));
+}
 
-#अगर_अघोषित arch_kexec_post_alloc_pages
-अटल अंतरभूत पूर्णांक arch_kexec_post_alloc_pages(व्योम *vaddr, अचिन्हित पूर्णांक pages, gfp_t gfp) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#ifndef arch_kexec_post_alloc_pages
+static inline int arch_kexec_post_alloc_pages(void *vaddr, unsigned int pages, gfp_t gfp) { return 0; }
+#endif
 
-#अगर_अघोषित arch_kexec_pre_मुक्त_pages
-अटल अंतरभूत व्योम arch_kexec_pre_मुक्त_pages(व्योम *vaddr, अचिन्हित पूर्णांक pages) अणु पूर्ण
-#पूर्ण_अगर
+#ifndef arch_kexec_pre_free_pages
+static inline void arch_kexec_pre_free_pages(void *vaddr, unsigned int pages) { }
+#endif
 
-#अन्यथा /* !CONFIG_KEXEC_CORE */
-काष्ठा pt_regs;
-काष्ठा task_काष्ठा;
-अटल अंतरभूत व्योम __crash_kexec(काष्ठा pt_regs *regs) अणु पूर्ण
-अटल अंतरभूत व्योम crash_kexec(काष्ठा pt_regs *regs) अणु पूर्ण
-अटल अंतरभूत पूर्णांक kexec_should_crash(काष्ठा task_काष्ठा *p) अणु वापस 0; पूर्ण
-अटल अंतरभूत पूर्णांक kexec_crash_loaded(व्योम) अणु वापस 0; पूर्ण
-#घोषणा kexec_in_progress false
-#पूर्ण_अगर /* CONFIG_KEXEC_CORE */
+#else /* !CONFIG_KEXEC_CORE */
+struct pt_regs;
+struct task_struct;
+static inline void __crash_kexec(struct pt_regs *regs) { }
+static inline void crash_kexec(struct pt_regs *regs) { }
+static inline int kexec_should_crash(struct task_struct *p) { return 0; }
+static inline int kexec_crash_loaded(void) { return 0; }
+#define kexec_in_progress false
+#endif /* CONFIG_KEXEC_CORE */
 
-#पूर्ण_अगर /* !defined(__ASSEBMLY__) */
+#endif /* !defined(__ASSEBMLY__) */
 
-#पूर्ण_अगर /* LINUX_KEXEC_H */
+#endif /* LINUX_KEXEC_H */

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2015 Red Hat Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,158 +21,158 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#समावेश <core/oproxy.h>
+#include <core/oproxy.h>
 
-अटल पूर्णांक
-nvkm_oproxy_mthd(काष्ठा nvkm_object *object, u32 mthd, व्योम *data, u32 size)
-अणु
-	वापस nvkm_object_mthd(nvkm_oproxy(object)->object, mthd, data, size);
-पूर्ण
+static int
+nvkm_oproxy_mthd(struct nvkm_object *object, u32 mthd, void *data, u32 size)
+{
+	return nvkm_object_mthd(nvkm_oproxy(object)->object, mthd, data, size);
+}
 
-अटल पूर्णांक
-nvkm_oproxy_ntfy(काष्ठा nvkm_object *object, u32 mthd,
-		 काष्ठा nvkm_event **pevent)
-अणु
-	वापस nvkm_object_ntfy(nvkm_oproxy(object)->object, mthd, pevent);
-पूर्ण
+static int
+nvkm_oproxy_ntfy(struct nvkm_object *object, u32 mthd,
+		 struct nvkm_event **pevent)
+{
+	return nvkm_object_ntfy(nvkm_oproxy(object)->object, mthd, pevent);
+}
 
-अटल पूर्णांक
-nvkm_oproxy_map(काष्ठा nvkm_object *object, व्योम *argv, u32 argc,
-		क्रमागत nvkm_object_map *type, u64 *addr, u64 *size)
-अणु
-	काष्ठा nvkm_oproxy *oproxy = nvkm_oproxy(object);
-	वापस nvkm_object_map(oproxy->object, argv, argc, type, addr, size);
-पूर्ण
+static int
+nvkm_oproxy_map(struct nvkm_object *object, void *argv, u32 argc,
+		enum nvkm_object_map *type, u64 *addr, u64 *size)
+{
+	struct nvkm_oproxy *oproxy = nvkm_oproxy(object);
+	return nvkm_object_map(oproxy->object, argv, argc, type, addr, size);
+}
 
-अटल पूर्णांक
-nvkm_oproxy_unmap(काष्ठा nvkm_object *object)
-अणु
-	वापस nvkm_object_unmap(nvkm_oproxy(object)->object);
-पूर्ण
+static int
+nvkm_oproxy_unmap(struct nvkm_object *object)
+{
+	return nvkm_object_unmap(nvkm_oproxy(object)->object);
+}
 
-अटल पूर्णांक
-nvkm_oproxy_rd08(काष्ठा nvkm_object *object, u64 addr, u8 *data)
-अणु
-	वापस nvkm_object_rd08(nvkm_oproxy(object)->object, addr, data);
-पूर्ण
+static int
+nvkm_oproxy_rd08(struct nvkm_object *object, u64 addr, u8 *data)
+{
+	return nvkm_object_rd08(nvkm_oproxy(object)->object, addr, data);
+}
 
-अटल पूर्णांक
-nvkm_oproxy_rd16(काष्ठा nvkm_object *object, u64 addr, u16 *data)
-अणु
-	वापस nvkm_object_rd16(nvkm_oproxy(object)->object, addr, data);
-पूर्ण
+static int
+nvkm_oproxy_rd16(struct nvkm_object *object, u64 addr, u16 *data)
+{
+	return nvkm_object_rd16(nvkm_oproxy(object)->object, addr, data);
+}
 
-अटल पूर्णांक
-nvkm_oproxy_rd32(काष्ठा nvkm_object *object, u64 addr, u32 *data)
-अणु
-	वापस nvkm_object_rd32(nvkm_oproxy(object)->object, addr, data);
-पूर्ण
+static int
+nvkm_oproxy_rd32(struct nvkm_object *object, u64 addr, u32 *data)
+{
+	return nvkm_object_rd32(nvkm_oproxy(object)->object, addr, data);
+}
 
-अटल पूर्णांक
-nvkm_oproxy_wr08(काष्ठा nvkm_object *object, u64 addr, u8 data)
-अणु
-	वापस nvkm_object_wr08(nvkm_oproxy(object)->object, addr, data);
-पूर्ण
+static int
+nvkm_oproxy_wr08(struct nvkm_object *object, u64 addr, u8 data)
+{
+	return nvkm_object_wr08(nvkm_oproxy(object)->object, addr, data);
+}
 
-अटल पूर्णांक
-nvkm_oproxy_wr16(काष्ठा nvkm_object *object, u64 addr, u16 data)
-अणु
-	वापस nvkm_object_wr16(nvkm_oproxy(object)->object, addr, data);
-पूर्ण
+static int
+nvkm_oproxy_wr16(struct nvkm_object *object, u64 addr, u16 data)
+{
+	return nvkm_object_wr16(nvkm_oproxy(object)->object, addr, data);
+}
 
-अटल पूर्णांक
-nvkm_oproxy_wr32(काष्ठा nvkm_object *object, u64 addr, u32 data)
-अणु
-	वापस nvkm_object_wr32(nvkm_oproxy(object)->object, addr, data);
-पूर्ण
+static int
+nvkm_oproxy_wr32(struct nvkm_object *object, u64 addr, u32 data)
+{
+	return nvkm_object_wr32(nvkm_oproxy(object)->object, addr, data);
+}
 
-अटल पूर्णांक
-nvkm_oproxy_bind(काष्ठा nvkm_object *object, काष्ठा nvkm_gpuobj *parent,
-		 पूर्णांक align, काष्ठा nvkm_gpuobj **pgpuobj)
-अणु
-	वापस nvkm_object_bind(nvkm_oproxy(object)->object,
+static int
+nvkm_oproxy_bind(struct nvkm_object *object, struct nvkm_gpuobj *parent,
+		 int align, struct nvkm_gpuobj **pgpuobj)
+{
+	return nvkm_object_bind(nvkm_oproxy(object)->object,
 				parent, align, pgpuobj);
-पूर्ण
+}
 
-अटल पूर्णांक
-nvkm_oproxy_sclass(काष्ठा nvkm_object *object, पूर्णांक index,
-		   काष्ठा nvkm_oclass *oclass)
-अणु
-	काष्ठा nvkm_oproxy *oproxy = nvkm_oproxy(object);
+static int
+nvkm_oproxy_sclass(struct nvkm_object *object, int index,
+		   struct nvkm_oclass *oclass)
+{
+	struct nvkm_oproxy *oproxy = nvkm_oproxy(object);
 	oclass->parent = oproxy->object;
-	अगर (!oproxy->object->func->sclass)
-		वापस -ENODEV;
-	वापस oproxy->object->func->sclass(oproxy->object, index, oclass);
-पूर्ण
+	if (!oproxy->object->func->sclass)
+		return -ENODEV;
+	return oproxy->object->func->sclass(oproxy->object, index, oclass);
+}
 
-अटल पूर्णांक
-nvkm_oproxy_fini(काष्ठा nvkm_object *object, bool suspend)
-अणु
-	काष्ठा nvkm_oproxy *oproxy = nvkm_oproxy(object);
-	पूर्णांक ret;
+static int
+nvkm_oproxy_fini(struct nvkm_object *object, bool suspend)
+{
+	struct nvkm_oproxy *oproxy = nvkm_oproxy(object);
+	int ret;
 
-	अगर (oproxy->func->fini[0]) अणु
+	if (oproxy->func->fini[0]) {
 		ret = oproxy->func->fini[0](oproxy, suspend);
-		अगर (ret && suspend)
-			वापस ret;
-	पूर्ण
+		if (ret && suspend)
+			return ret;
+	}
 
-	अगर (oproxy->object->func->fini) अणु
+	if (oproxy->object->func->fini) {
 		ret = oproxy->object->func->fini(oproxy->object, suspend);
-		अगर (ret && suspend)
-			वापस ret;
-	पूर्ण
+		if (ret && suspend)
+			return ret;
+	}
 
-	अगर (oproxy->func->fini[1]) अणु
+	if (oproxy->func->fini[1]) {
 		ret = oproxy->func->fini[1](oproxy, suspend);
-		अगर (ret && suspend)
-			वापस ret;
-	पूर्ण
+		if (ret && suspend)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-nvkm_oproxy_init(काष्ठा nvkm_object *object)
-अणु
-	काष्ठा nvkm_oproxy *oproxy = nvkm_oproxy(object);
-	पूर्णांक ret;
+static int
+nvkm_oproxy_init(struct nvkm_object *object)
+{
+	struct nvkm_oproxy *oproxy = nvkm_oproxy(object);
+	int ret;
 
-	अगर (oproxy->func->init[0]) अणु
+	if (oproxy->func->init[0]) {
 		ret = oproxy->func->init[0](oproxy);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (oproxy->object->func->init) अणु
+	if (oproxy->object->func->init) {
 		ret = oproxy->object->func->init(oproxy->object);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (oproxy->func->init[1]) अणु
+	if (oproxy->func->init[1]) {
 		ret = oproxy->func->init[1](oproxy);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम *
-nvkm_oproxy_dtor(काष्ठा nvkm_object *object)
-अणु
-	काष्ठा nvkm_oproxy *oproxy = nvkm_oproxy(object);
-	अगर (oproxy->func->dtor[0])
+static void *
+nvkm_oproxy_dtor(struct nvkm_object *object)
+{
+	struct nvkm_oproxy *oproxy = nvkm_oproxy(object);
+	if (oproxy->func->dtor[0])
 		oproxy->func->dtor[0](oproxy);
 	nvkm_object_del(&oproxy->object);
-	अगर (oproxy->func->dtor[1])
+	if (oproxy->func->dtor[1])
 		oproxy->func->dtor[1](oproxy);
-	वापस oproxy;
-पूर्ण
+	return oproxy;
+}
 
-अटल स्थिर काष्ठा nvkm_object_func
-nvkm_oproxy_func = अणु
+static const struct nvkm_object_func
+nvkm_oproxy_func = {
 	.dtor = nvkm_oproxy_dtor,
 	.init = nvkm_oproxy_init,
 	.fini = nvkm_oproxy_fini,
@@ -189,22 +188,22 @@ nvkm_oproxy_func = अणु
 	.wr32 = nvkm_oproxy_wr32,
 	.bind = nvkm_oproxy_bind,
 	.sclass = nvkm_oproxy_sclass,
-पूर्ण;
+};
 
-व्योम
-nvkm_oproxy_ctor(स्थिर काष्ठा nvkm_oproxy_func *func,
-		 स्थिर काष्ठा nvkm_oclass *oclass, काष्ठा nvkm_oproxy *oproxy)
-अणु
+void
+nvkm_oproxy_ctor(const struct nvkm_oproxy_func *func,
+		 const struct nvkm_oclass *oclass, struct nvkm_oproxy *oproxy)
+{
 	nvkm_object_ctor(&nvkm_oproxy_func, oclass, &oproxy->base);
 	oproxy->func = func;
-पूर्ण
+}
 
-पूर्णांक
-nvkm_oproxy_new_(स्थिर काष्ठा nvkm_oproxy_func *func,
-		 स्थिर काष्ठा nvkm_oclass *oclass, काष्ठा nvkm_oproxy **poproxy)
-अणु
-	अगर (!(*poproxy = kzalloc(माप(**poproxy), GFP_KERNEL)))
-		वापस -ENOMEM;
+int
+nvkm_oproxy_new_(const struct nvkm_oproxy_func *func,
+		 const struct nvkm_oclass *oclass, struct nvkm_oproxy **poproxy)
+{
+	if (!(*poproxy = kzalloc(sizeof(**poproxy), GFP_KERNEL)))
+		return -ENOMEM;
 	nvkm_oproxy_ctor(func, oclass, *poproxy);
-	वापस 0;
-पूर्ण
+	return 0;
+}

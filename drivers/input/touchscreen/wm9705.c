@@ -1,7 +1,6 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * wm9705.c  --  Codec driver क्रम Wolfson WM9705 AC97 Codec.
+ * wm9705.c  --  Codec driver for Wolfson WM9705 AC97 Codec.
  *
  * Copyright 2003, 2004, 2005, 2006, 2007 Wolfson Microelectronics PLC.
  * Author: Liam Girdwood <lrg@slimlogic.co.uk>
@@ -10,81 +9,81 @@
  *                   Russell King <rmk@arm.linux.org.uk>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/input.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/wm97xx.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/kernel.h>
+#include <linux/input.h>
+#include <linux/delay.h>
+#include <linux/bitops.h>
+#include <linux/wm97xx.h>
 
-#घोषणा TS_NAME			"wm97xx"
-#घोषणा WM9705_VERSION		"1.00"
-#घोषणा DEFAULT_PRESSURE	0xb0c0
+#define TS_NAME			"wm97xx"
+#define WM9705_VERSION		"1.00"
+#define DEFAULT_PRESSURE	0xb0c0
 
 /*
  * Module parameters
  */
 
 /*
- * Set current used क्रम pressure measurement.
+ * Set current used for pressure measurement.
  *
  * Set pil = 2 to use 400uA
  *     pil = 1 to use 200uA and
  *     pil = 0 to disable pressure measurement.
  *
- * This is used to increase the range of values वापसed by the adc
+ * This is used to increase the range of values returned by the adc
  * when measureing touchpanel pressure.
  */
-अटल पूर्णांक pil;
-module_param(pil, पूर्णांक, 0);
+static int pil;
+module_param(pil, int, 0);
 MODULE_PARM_DESC(pil, "Set current used for pressure measurement.");
 
 /*
- * Set threshold क्रम pressure measurement.
+ * Set threshold for pressure measurement.
  *
- * Pen करोwn pressure below threshold is ignored.
+ * Pen down pressure below threshold is ignored.
  */
-अटल पूर्णांक pressure = DEFAULT_PRESSURE & 0xfff;
-module_param(pressure, पूर्णांक, 0);
+static int pressure = DEFAULT_PRESSURE & 0xfff;
+module_param(pressure, int, 0);
 MODULE_PARM_DESC(pressure, "Set threshold for pressure measurement.");
 
 /*
  * Set adc sample delay.
  *
- * For accurate touchpanel measurements, some settling समय may be
- * required between the चयन matrix applying a voltage across the
- * touchpanel plate and the ADC sampling the संकेत.
+ * For accurate touchpanel measurements, some settling time may be
+ * required between the switch matrix applying a voltage across the
+ * touchpanel plate and the ADC sampling the signal.
  *
  * This delay can be set by setting delay = n, where n is the array
  * position of the delay in the array delay_table below.
- * Long delays > 1ms are supported क्रम completeness, but are not
+ * Long delays > 1ms are supported for completeness, but are not
  * recommended.
  */
-अटल पूर्णांक delay = 4;
-module_param(delay, पूर्णांक, 0);
+static int delay = 4;
+module_param(delay, int, 0);
 MODULE_PARM_DESC(delay, "Set adc sample delay.");
 
 /*
  * Pen detect comparator threshold.
  *
- * 0 to Vmid in 15 steps, 0 = use zero घातer comparator with Vmid threshold
+ * 0 to Vmid in 15 steps, 0 = use zero power comparator with Vmid threshold
  * i.e. 1 =  Vmid/15 threshold
  *      15 =  Vmid/1 threshold
  *
- * Adjust this value अगर you are having problems with pen detect not
- * detecting any करोwn events.
+ * Adjust this value if you are having problems with pen detect not
+ * detecting any down events.
  */
-अटल पूर्णांक pdd = 8;
-module_param(pdd, पूर्णांक, 0);
+static int pdd = 8;
+module_param(pdd, int, 0);
 MODULE_PARM_DESC(pdd, "Set pen detect comparator threshold");
 
 /*
  * Set adc mask function.
  *
- * Sources of glitch noise, such as संकेतs driving an LCD display, may feed
+ * Sources of glitch noise, such as signals driving an LCD display, may feed
  * through to the touch screen plates and affect measurement accuracy. In
- * order to minimise this, a संकेत may be applied to the MASK pin to delay or
+ * order to minimise this, a signal may be applied to the MASK pin to delay or
  * synchronise the sampling.
  *
  * 0 = No delay or sync
@@ -92,14 +91,14 @@ MODULE_PARM_DESC(pdd, "Set pen detect comparator threshold");
  * 2 = Edge triggered, edge on pin delays conversion by delay param (above)
  * 3 = Edge triggered, edge on pin starts conversion after delay param
  */
-अटल पूर्णांक mask;
-module_param(mask, पूर्णांक, 0);
+static int mask;
+module_param(mask, int, 0);
 MODULE_PARM_DESC(mask, "Set adc mask function.");
 
 /*
- * ADC sample delay बार in uS
+ * ADC sample delay times in uS
  */
-अटल स्थिर पूर्णांक delay_table[] = अणु
+static const int delay_table[] = {
 	21,    /* 1 AC97 Link frames */
 	42,    /* 2                  */
 	84,    /* 4                  */
@@ -115,51 +114,51 @@ MODULE_PARM_DESC(mask, "Set adc mask function.");
 	4667,  /* 224                */
 	5333,  /* 256                */
 	6000,  /* 288                */
-	0      /* No delay, चयन matrix always on */
-पूर्ण;
+	0      /* No delay, switch matrix always on */
+};
 
 /*
  * Delay after issuing a POLL command.
  *
  * The delay is 3 AC97 link frames + the touchpanel settling delay
  */
-अटल अंतरभूत व्योम poll_delay(पूर्णांक d)
-अणु
+static inline void poll_delay(int d)
+{
 	udelay(3 * AC97_LINK_FRAME + delay_table[d]);
-पूर्ण
+}
 
 /*
  * set up the physical settings of the WM9705
  */
-अटल व्योम wm9705_phy_init(काष्ठा wm97xx *wm)
-अणु
+static void wm9705_phy_init(struct wm97xx *wm)
+{
 	u16 dig1 = 0, dig2 = WM97XX_RPR;
 
 	/*
 	* mute VIDEO and AUX as they share X and Y touchscreen
-	* inमाला_दो on the WM9705
+	* inputs on the WM9705
 	*/
-	wm97xx_reg_ग_लिखो(wm, AC97_AUX, 0x8000);
-	wm97xx_reg_ग_लिखो(wm, AC97_VIDEO, 0x8000);
+	wm97xx_reg_write(wm, AC97_AUX, 0x8000);
+	wm97xx_reg_write(wm, AC97_VIDEO, 0x8000);
 
 	/* touchpanel pressure current*/
-	अगर (pil == 2) अणु
+	if (pil == 2) {
 		dig2 |= WM9705_PIL;
 		dev_dbg(wm->dev,
 			"setting pressure measurement current to 400uA.");
-	पूर्ण अन्यथा अगर (pil)
+	} else if (pil)
 		dev_dbg(wm->dev,
 			"setting pressure measurement current to 200uA.");
-	अगर (!pil)
+	if (!pil)
 		pressure = 0;
 
 	/* polling mode sample settling delay */
-	अगर (delay != 4) अणु
-		अगर (delay < 0 || delay > 15) अणु
+	if (delay != 4) {
+		if (delay < 0 || delay > 15) {
 			dev_dbg(wm->dev, "supplied delay out of range.");
 			delay = 4;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	dig1 &= 0xff0f;
 	dig1 |= WM97XX_DELAY(delay);
 	dev_dbg(wm->dev, "setting adc sample delay to %d u Secs.",
@@ -172,162 +171,162 @@ MODULE_PARM_DESC(mask, "Set adc mask function.");
 	/* mask */
 	dig2 |= ((mask & 0x3) << 4);
 
-	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER1, dig1);
-	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER2, dig2);
-पूर्ण
+	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER1, dig1);
+	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER2, dig2);
+}
 
-अटल व्योम wm9705_dig_enable(काष्ठा wm97xx *wm, पूर्णांक enable)
-अणु
-	अगर (enable) अणु
-		wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER2,
+static void wm9705_dig_enable(struct wm97xx *wm, int enable)
+{
+	if (enable) {
+		wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER2,
 				 wm->dig[2] | WM97XX_PRP_DET_DIG);
-		wm97xx_reg_पढ़ो(wm, AC97_WM97XX_DIGITISER_RD); /* dummy पढ़ो */
-	पूर्ण अन्यथा
-		wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER2,
+		wm97xx_reg_read(wm, AC97_WM97XX_DIGITISER_RD); /* dummy read */
+	} else
+		wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER2,
 				 wm->dig[2] & ~WM97XX_PRP_DET_DIG);
-पूर्ण
+}
 
-अटल व्योम wm9705_aux_prepare(काष्ठा wm97xx *wm)
-अणु
-	स_नकल(wm->dig_save, wm->dig, माप(wm->dig));
-	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER1, 0);
-	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER2, WM97XX_PRP_DET_DIG);
-पूर्ण
+static void wm9705_aux_prepare(struct wm97xx *wm)
+{
+	memcpy(wm->dig_save, wm->dig, sizeof(wm->dig));
+	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER1, 0);
+	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER2, WM97XX_PRP_DET_DIG);
+}
 
-अटल व्योम wm9705_dig_restore(काष्ठा wm97xx *wm)
-अणु
-	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER1, wm->dig_save[1]);
-	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER2, wm->dig_save[2]);
-पूर्ण
+static void wm9705_dig_restore(struct wm97xx *wm)
+{
+	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER1, wm->dig_save[1]);
+	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER2, wm->dig_save[2]);
+}
 
-अटल अंतरभूत पूर्णांक is_pden(काष्ठा wm97xx *wm)
-अणु
-	वापस wm->dig[2] & WM9705_PDEN;
-पूर्ण
+static inline int is_pden(struct wm97xx *wm)
+{
+	return wm->dig[2] & WM9705_PDEN;
+}
 
 /*
  * Read a sample from the WM9705 adc in polling mode.
  */
-अटल पूर्णांक wm9705_poll_sample(काष्ठा wm97xx *wm, पूर्णांक adcsel, पूर्णांक *sample)
-अणु
-	पूर्णांक समयout = 5 * delay;
+static int wm9705_poll_sample(struct wm97xx *wm, int adcsel, int *sample)
+{
+	int timeout = 5 * delay;
 	bool wants_pen = adcsel & WM97XX_PEN_DOWN;
 
-	अगर (wants_pen && !wm->pen_probably_करोwn) अणु
-		u16 data = wm97xx_reg_पढ़ो(wm, AC97_WM97XX_DIGITISER_RD);
-		अगर (!(data & WM97XX_PEN_DOWN))
-			वापस RC_PENUP;
-		wm->pen_probably_करोwn = 1;
-	पूर्ण
+	if (wants_pen && !wm->pen_probably_down) {
+		u16 data = wm97xx_reg_read(wm, AC97_WM97XX_DIGITISER_RD);
+		if (!(data & WM97XX_PEN_DOWN))
+			return RC_PENUP;
+		wm->pen_probably_down = 1;
+	}
 
 	/* set up digitiser */
-	अगर (wm->mach_ops && wm->mach_ops->pre_sample)
+	if (wm->mach_ops && wm->mach_ops->pre_sample)
 		wm->mach_ops->pre_sample(adcsel);
-	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER1, (adcsel & WM97XX_ADCSEL_MASK)
+	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER1, (adcsel & WM97XX_ADCSEL_MASK)
 				| WM97XX_POLL | WM97XX_DELAY(delay));
 
-	/* रुको 3 AC97 समय slots + delay क्रम conversion */
+	/* wait 3 AC97 time slots + delay for conversion */
 	poll_delay(delay);
 
-	/* रुको क्रम POLL to go low */
-	जबतक ((wm97xx_reg_पढ़ो(wm, AC97_WM97XX_DIGITISER1) & WM97XX_POLL)
-	       && समयout) अणु
+	/* wait for POLL to go low */
+	while ((wm97xx_reg_read(wm, AC97_WM97XX_DIGITISER1) & WM97XX_POLL)
+	       && timeout) {
 		udelay(AC97_LINK_FRAME);
-		समयout--;
-	पूर्ण
+		timeout--;
+	}
 
-	अगर (समयout == 0) अणु
-		/* If PDEN is set, we can get a समयout when pen goes up */
-		अगर (is_pden(wm))
-			wm->pen_probably_करोwn = 0;
-		अन्यथा
+	if (timeout == 0) {
+		/* If PDEN is set, we can get a timeout when pen goes up */
+		if (is_pden(wm))
+			wm->pen_probably_down = 0;
+		else
 			dev_dbg(wm->dev, "adc sample timeout");
-		वापस RC_PENUP;
-	पूर्ण
+		return RC_PENUP;
+	}
 
-	*sample = wm97xx_reg_पढ़ो(wm, AC97_WM97XX_DIGITISER_RD);
-	अगर (wm->mach_ops && wm->mach_ops->post_sample)
+	*sample = wm97xx_reg_read(wm, AC97_WM97XX_DIGITISER_RD);
+	if (wm->mach_ops && wm->mach_ops->post_sample)
 		wm->mach_ops->post_sample(adcsel);
 
 	/* check we have correct sample */
-	अगर ((*sample ^ adcsel) & WM97XX_ADCSEL_MASK) अणु
+	if ((*sample ^ adcsel) & WM97XX_ADCSEL_MASK) {
 		dev_dbg(wm->dev, "adc wrong sample, wanted %x got %x",
 			adcsel & WM97XX_ADCSEL_MASK,
 			*sample & WM97XX_ADCSEL_MASK);
-		वापस RC_PENUP;
-	पूर्ण
+		return RC_PENUP;
+	}
 
-	अगर (wants_pen && !(*sample & WM97XX_PEN_DOWN)) अणु
-		wm->pen_probably_करोwn = 0;
-		वापस RC_PENUP;
-	पूर्ण
+	if (wants_pen && !(*sample & WM97XX_PEN_DOWN)) {
+		wm->pen_probably_down = 0;
+		return RC_PENUP;
+	}
 
-	वापस RC_VALID;
-पूर्ण
+	return RC_VALID;
+}
 
 /*
  * Sample the WM9705 touchscreen in polling mode
  */
-अटल पूर्णांक wm9705_poll_touch(काष्ठा wm97xx *wm, काष्ठा wm97xx_data *data)
-अणु
-	पूर्णांक rc;
+static int wm9705_poll_touch(struct wm97xx *wm, struct wm97xx_data *data)
+{
+	int rc;
 
 	rc = wm9705_poll_sample(wm, WM97XX_ADCSEL_X | WM97XX_PEN_DOWN, &data->x);
-	अगर (rc != RC_VALID)
-		वापस rc;
+	if (rc != RC_VALID)
+		return rc;
 	rc = wm9705_poll_sample(wm, WM97XX_ADCSEL_Y | WM97XX_PEN_DOWN, &data->y);
-	अगर (rc != RC_VALID)
-		वापस rc;
-	अगर (pil) अणु
+	if (rc != RC_VALID)
+		return rc;
+	if (pil) {
 		rc = wm9705_poll_sample(wm, WM97XX_ADCSEL_PRES | WM97XX_PEN_DOWN, &data->p);
-		अगर (rc != RC_VALID)
-			वापस rc;
-	पूर्ण अन्यथा
+		if (rc != RC_VALID)
+			return rc;
+	} else
 		data->p = DEFAULT_PRESSURE;
 
-	वापस RC_VALID;
-पूर्ण
+	return RC_VALID;
+}
 
 /*
  * Enable WM9705 continuous mode, i.e. touch data is streamed across
  * an AC97 slot
  */
-अटल पूर्णांक wm9705_acc_enable(काष्ठा wm97xx *wm, पूर्णांक enable)
-अणु
+static int wm9705_acc_enable(struct wm97xx *wm, int enable)
+{
 	u16 dig1, dig2;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	dig1 = wm->dig[1];
 	dig2 = wm->dig[2];
 
-	अगर (enable) अणु
+	if (enable) {
 		/* continuous mode */
-		अगर (wm->mach_ops->acc_startup &&
+		if (wm->mach_ops->acc_startup &&
 		    (ret = wm->mach_ops->acc_startup(wm)) < 0)
-			वापस ret;
+			return ret;
 		dig1 &= ~(WM97XX_CM_RATE_MASK | WM97XX_ADCSEL_MASK |
 			  WM97XX_DELAY_MASK | WM97XX_SLT_MASK);
 		dig1 |= WM97XX_CTC | WM97XX_COO | WM97XX_SLEN |
 			WM97XX_DELAY(delay) |
 			WM97XX_SLT(wm->acc_slot) |
 			WM97XX_RATE(wm->acc_rate);
-		अगर (pil)
+		if (pil)
 			dig1 |= WM97XX_ADCSEL_PRES;
 		dig2 |= WM9705_PDEN;
-	पूर्ण अन्यथा अणु
+	} else {
 		dig1 &= ~(WM97XX_CTC | WM97XX_COO | WM97XX_SLEN);
 		dig2 &= ~WM9705_PDEN;
-		अगर (wm->mach_ops->acc_shutकरोwn)
-			wm->mach_ops->acc_shutकरोwn(wm);
-	पूर्ण
+		if (wm->mach_ops->acc_shutdown)
+			wm->mach_ops->acc_shutdown(wm);
+	}
 
-	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER1, dig1);
-	wm97xx_reg_ग_लिखो(wm, AC97_WM97XX_DIGITISER2, dig2);
+	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER1, dig1);
+	wm97xx_reg_write(wm, AC97_WM97XX_DIGITISER2, dig2);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-काष्ठा wm97xx_codec_drv wm9705_codec = अणु
+struct wm97xx_codec_drv wm9705_codec = {
 	.id = WM9705_ID2,
 	.name = "wm9705",
 	.poll_sample = wm9705_poll_sample,
@@ -337,10 +336,10 @@ MODULE_PARM_DESC(mask, "Set adc mask function.");
 	.dig_enable = wm9705_dig_enable,
 	.dig_restore = wm9705_dig_restore,
 	.aux_prepare = wm9705_aux_prepare,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(wm9705_codec);
 
-/* Module inक्रमmation */
+/* Module information */
 MODULE_AUTHOR("Liam Girdwood <lrg@slimlogic.co.uk>");
 MODULE_DESCRIPTION("WM9705 Touch Screen Driver");
 MODULE_LICENSE("GPL");

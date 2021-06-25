@@ -1,560 +1,559 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <linux/माला.स>
-#समावेश <sys/समय.स>
-#समावेश <linux/समय64.h>
-#समावेश <समय.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <गणित.स>
-#समावेश <linux/प्रकार.स>
+// SPDX-License-Identifier: GPL-2.0
+#include <stdlib.h>
+#include <string.h>
+#include <linux/string.h>
+#include <sys/time.h>
+#include <linux/time64.h>
+#include <time.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <math.h>
+#include <linux/ctype.h>
 
-#समावेश "debug.h"
-#समावेश "time-utils.h"
-#समावेश "session.h"
-#समावेश "evlist.h"
+#include "debug.h"
+#include "time-utils.h"
+#include "session.h"
+#include "evlist.h"
 
-पूर्णांक parse_nsec_समय(स्थिर अक्षर *str, u64 *pसमय)
-अणु
-	u64 समय_sec, समय_nsec;
-	अक्षर *end;
+int parse_nsec_time(const char *str, u64 *ptime)
+{
+	u64 time_sec, time_nsec;
+	char *end;
 
-	समय_sec = म_से_अदीर्घ(str, &end, 10);
-	अगर (*end != '.' && *end != '\0')
-		वापस -1;
+	time_sec = strtoul(str, &end, 10);
+	if (*end != '.' && *end != '\0')
+		return -1;
 
-	अगर (*end == '.') अणु
-		पूर्णांक i;
-		अक्षर nsec_buf[10];
+	if (*end == '.') {
+		int i;
+		char nsec_buf[10];
 
-		अगर (म_माप(++end) > 9)
-			वापस -1;
+		if (strlen(++end) > 9)
+			return -1;
 
-		म_नकलन(nsec_buf, end, 9);
+		strncpy(nsec_buf, end, 9);
 		nsec_buf[9] = '\0';
 
 		/* make it nsec precision */
-		क्रम (i = म_माप(nsec_buf); i < 9; i++)
+		for (i = strlen(nsec_buf); i < 9; i++)
 			nsec_buf[i] = '0';
 
-		समय_nsec = म_से_अदीर्घ(nsec_buf, &end, 10);
-		अगर (*end != '\0')
-			वापस -1;
-	पूर्ण अन्यथा
-		समय_nsec = 0;
+		time_nsec = strtoul(nsec_buf, &end, 10);
+		if (*end != '\0')
+			return -1;
+	} else
+		time_nsec = 0;
 
-	*pसमय = समय_sec * NSEC_PER_SEC + समय_nsec;
-	वापस 0;
-पूर्ण
+	*ptime = time_sec * NSEC_PER_SEC + time_nsec;
+	return 0;
+}
 
-अटल पूर्णांक parse_बारtr_sec_nsec(काष्ठा perf_समय_पूर्णांकerval *pसमय,
-				  अक्षर *start_str, अक्षर *end_str)
-अणु
-	अगर (start_str && (*start_str != '\0') &&
-	    (parse_nsec_समय(start_str, &pसमय->start) != 0)) अणु
-		वापस -1;
-	पूर्ण
+static int parse_timestr_sec_nsec(struct perf_time_interval *ptime,
+				  char *start_str, char *end_str)
+{
+	if (start_str && (*start_str != '\0') &&
+	    (parse_nsec_time(start_str, &ptime->start) != 0)) {
+		return -1;
+	}
 
-	अगर (end_str && (*end_str != '\0') &&
-	    (parse_nsec_समय(end_str, &pसमय->end) != 0)) अणु
-		वापस -1;
-	पूर्ण
+	if (end_str && (*end_str != '\0') &&
+	    (parse_nsec_time(end_str, &ptime->end) != 0)) {
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक split_start_end(अक्षर **start, अक्षर **end, स्थिर अक्षर *ostr, अक्षर ch)
-अणु
-	अक्षर *start_str, *end_str;
-	अक्षर *d, *str;
+static int split_start_end(char **start, char **end, const char *ostr, char ch)
+{
+	char *start_str, *end_str;
+	char *d, *str;
 
-	अगर (ostr == शून्य || *ostr == '\0')
-		वापस 0;
+	if (ostr == NULL || *ostr == '\0')
+		return 0;
 
-	/* copy original string because we need to modअगरy it */
+	/* copy original string because we need to modify it */
 	str = strdup(ostr);
-	अगर (str == शून्य)
-		वापस -ENOMEM;
+	if (str == NULL)
+		return -ENOMEM;
 
 	start_str = str;
-	d = म_अक्षर(start_str, ch);
-	अगर (d) अणु
+	d = strchr(start_str, ch);
+	if (d) {
 		*d = '\0';
 		++d;
-	पूर्ण
+	}
 	end_str = d;
 
 	*start = start_str;
 	*end = end_str;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक perf_समय__parse_str(काष्ठा perf_समय_पूर्णांकerval *pसमय, स्थिर अक्षर *ostr)
-अणु
-	अक्षर *start_str = शून्य, *end_str;
-	पूर्णांक rc;
+int perf_time__parse_str(struct perf_time_interval *ptime, const char *ostr)
+{
+	char *start_str = NULL, *end_str;
+	int rc;
 
 	rc = split_start_end(&start_str, &end_str, ostr, ',');
-	अगर (rc || !start_str)
-		वापस rc;
+	if (rc || !start_str)
+		return rc;
 
-	pसमय->start = 0;
-	pसमय->end = 0;
+	ptime->start = 0;
+	ptime->end = 0;
 
-	rc = parse_बारtr_sec_nsec(pसमय, start_str, end_str);
+	rc = parse_timestr_sec_nsec(ptime, start_str, end_str);
 
-	मुक्त(start_str);
+	free(start_str);
 
-	/* make sure end समय is after start समय अगर it was given */
-	अगर (rc == 0 && pसमय->end && pसमय->end < pसमय->start)
-		वापस -EINVAL;
+	/* make sure end time is after start time if it was given */
+	if (rc == 0 && ptime->end && ptime->end < ptime->start)
+		return -EINVAL;
 
-	pr_debug("start time %" PRIu64 ", ", pसमय->start);
-	pr_debug("end time %" PRIu64 "\n", pसमय->end);
+	pr_debug("start time %" PRIu64 ", ", ptime->start);
+	pr_debug("end time %" PRIu64 "\n", ptime->end);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक perf_समय__parse_strs(काष्ठा perf_समय_पूर्णांकerval *pसमय,
-				 स्थिर अक्षर *ostr, पूर्णांक size)
-अणु
-	स्थिर अक्षर *cp;
-	अक्षर *str, *arg, *p;
-	पूर्णांक i, num = 0, rc = 0;
+static int perf_time__parse_strs(struct perf_time_interval *ptime,
+				 const char *ostr, int size)
+{
+	const char *cp;
+	char *str, *arg, *p;
+	int i, num = 0, rc = 0;
 
 	/* Count the commas */
-	क्रम (cp = ostr; *cp; cp++)
+	for (cp = ostr; *cp; cp++)
 		num += !!(*cp == ',');
 
-	अगर (!num)
-		वापस -EINVAL;
+	if (!num)
+		return -EINVAL;
 
 	BUG_ON(num > size);
 
 	str = strdup(ostr);
-	अगर (!str)
-		वापस -ENOMEM;
+	if (!str)
+		return -ENOMEM;
 
 	/* Split the string and parse each piece, except the last */
-	क्रम (i = 0, p = str; i < num - 1; i++) अणु
+	for (i = 0, p = str; i < num - 1; i++) {
 		arg = p;
 		/* Find next comma, there must be one */
-		p = skip_spaces(म_अक्षर(p, ',') + 1);
+		p = skip_spaces(strchr(p, ',') + 1);
 		/* Skip the value, must not contain space or comma */
-		जबतक (*p && !है_खाली(*p)) अणु
-			अगर (*p++ == ',') अणु
+		while (*p && !isspace(*p)) {
+			if (*p++ == ',') {
 				rc = -EINVAL;
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 		/* Split and parse */
-		अगर (*p)
+		if (*p)
 			*p++ = 0;
-		rc = perf_समय__parse_str(pसमय + i, arg);
-		अगर (rc < 0)
-			जाओ out;
-	पूर्ण
+		rc = perf_time__parse_str(ptime + i, arg);
+		if (rc < 0)
+			goto out;
+	}
 
 	/* Parse the last piece */
-	rc = perf_समय__parse_str(pसमय + i, p);
-	अगर (rc < 0)
-		जाओ out;
+	rc = perf_time__parse_str(ptime + i, p);
+	if (rc < 0)
+		goto out;
 
 	/* Check there is no overlap */
-	क्रम (i = 0; i < num - 1; i++) अणु
-		अगर (pसमय[i].end >= pसमय[i + 1].start) अणु
+	for (i = 0; i < num - 1; i++) {
+		if (ptime[i].end >= ptime[i + 1].start) {
 			rc = -EINVAL;
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	rc = num;
 out:
-	मुक्त(str);
+	free(str);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक parse_percent(द्विगुन *pcnt, अक्षर *str)
-अणु
-	अक्षर *c, *endptr;
-	द्विगुन d;
+static int parse_percent(double *pcnt, char *str)
+{
+	char *c, *endptr;
+	double d;
 
-	c = म_अक्षर(str, '%');
-	अगर (c)
+	c = strchr(str, '%');
+	if (c)
 		*c = '\0';
-	अन्यथा
-		वापस -1;
+	else
+		return -1;
 
-	d = म_से_भग्न(str, &endptr);
-	अगर (endptr != str + म_माप(str))
-		वापस -1;
+	d = strtod(str, &endptr);
+	if (endptr != str + strlen(str))
+		return -1;
 
 	*pcnt = d / 100.0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक set_percent_समय(काष्ठा perf_समय_पूर्णांकerval *pसमय, द्विगुन start_pcnt,
-			    द्विगुन end_pcnt, u64 start, u64 end)
-अणु
+static int set_percent_time(struct perf_time_interval *ptime, double start_pcnt,
+			    double end_pcnt, u64 start, u64 end)
+{
 	u64 total = end - start;
 
-	अगर (start_pcnt < 0.0 || start_pcnt > 1.0 ||
-	    end_pcnt < 0.0 || end_pcnt > 1.0) अणु
-		वापस -1;
-	पूर्ण
+	if (start_pcnt < 0.0 || start_pcnt > 1.0 ||
+	    end_pcnt < 0.0 || end_pcnt > 1.0) {
+		return -1;
+	}
 
-	pसमय->start = start + round(start_pcnt * total);
-	pसमय->end = start + round(end_pcnt * total);
+	ptime->start = start + round(start_pcnt * total);
+	ptime->end = start + round(end_pcnt * total);
 
-	अगर (pसमय->end > pसमय->start && pसमय->end != end)
-		pसमय->end -= 1;
+	if (ptime->end > ptime->start && ptime->end != end)
+		ptime->end -= 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक percent_slash_split(अक्षर *str, काष्ठा perf_समय_पूर्णांकerval *pसमय,
+static int percent_slash_split(char *str, struct perf_time_interval *ptime,
 			       u64 start, u64 end)
-अणु
-	अक्षर *p, *end_str;
-	द्विगुन pcnt, start_pcnt, end_pcnt;
-	पूर्णांक i;
+{
+	char *p, *end_str;
+	double pcnt, start_pcnt, end_pcnt;
+	int i;
 
 	/*
 	 * Example:
 	 * 10%/2: select the second 10% slice and the third 10% slice
 	 */
 
-	/* We can modअगरy this string since the original one is copied */
-	p = म_अक्षर(str, '/');
-	अगर (!p)
-		वापस -1;
+	/* We can modify this string since the original one is copied */
+	p = strchr(str, '/');
+	if (!p)
+		return -1;
 
 	*p = '\0';
-	अगर (parse_percent(&pcnt, str) < 0)
-		वापस -1;
+	if (parse_percent(&pcnt, str) < 0)
+		return -1;
 
 	p++;
-	i = (पूर्णांक)म_से_दीर्घ(p, &end_str, 10);
-	अगर (*end_str)
-		वापस -1;
+	i = (int)strtol(p, &end_str, 10);
+	if (*end_str)
+		return -1;
 
-	अगर (pcnt <= 0.0)
-		वापस -1;
+	if (pcnt <= 0.0)
+		return -1;
 
 	start_pcnt = pcnt * (i - 1);
 	end_pcnt = pcnt * i;
 
-	वापस set_percent_समय(pसमय, start_pcnt, end_pcnt, start, end);
-पूर्ण
+	return set_percent_time(ptime, start_pcnt, end_pcnt, start, end);
+}
 
-अटल पूर्णांक percent_dash_split(अक्षर *str, काष्ठा perf_समय_पूर्णांकerval *pसमय,
+static int percent_dash_split(char *str, struct perf_time_interval *ptime,
 			      u64 start, u64 end)
-अणु
-	अक्षर *start_str = शून्य, *end_str;
-	द्विगुन start_pcnt, end_pcnt;
-	पूर्णांक ret;
+{
+	char *start_str = NULL, *end_str;
+	double start_pcnt, end_pcnt;
+	int ret;
 
 	/*
 	 * Example: 0%-10%
 	 */
 
 	ret = split_start_end(&start_str, &end_str, str, '-');
-	अगर (ret || !start_str)
-		वापस ret;
+	if (ret || !start_str)
+		return ret;
 
-	अगर ((parse_percent(&start_pcnt, start_str) != 0) ||
-	    (parse_percent(&end_pcnt, end_str) != 0)) अणु
-		मुक्त(start_str);
-		वापस -1;
-	पूर्ण
+	if ((parse_percent(&start_pcnt, start_str) != 0) ||
+	    (parse_percent(&end_pcnt, end_str) != 0)) {
+		free(start_str);
+		return -1;
+	}
 
-	मुक्त(start_str);
+	free(start_str);
 
-	वापस set_percent_समय(pसमय, start_pcnt, end_pcnt, start, end);
-पूर्ण
+	return set_percent_time(ptime, start_pcnt, end_pcnt, start, end);
+}
 
-प्रकार पूर्णांक (*समय_pecent_split)(अक्षर *, काष्ठा perf_समय_पूर्णांकerval *,
+typedef int (*time_pecent_split)(char *, struct perf_time_interval *,
 				 u64 start, u64 end);
 
-अटल पूर्णांक percent_comma_split(काष्ठा perf_समय_पूर्णांकerval *pसमय_buf, पूर्णांक num,
-			       स्थिर अक्षर *ostr, u64 start, u64 end,
-			       समय_pecent_split func)
-अणु
-	अक्षर *str, *p1, *p2;
-	पूर्णांक len, ret, i = 0;
+static int percent_comma_split(struct perf_time_interval *ptime_buf, int num,
+			       const char *ostr, u64 start, u64 end,
+			       time_pecent_split func)
+{
+	char *str, *p1, *p2;
+	int len, ret, i = 0;
 
 	str = strdup(ostr);
-	अगर (str == शून्य)
-		वापस -ENOMEM;
+	if (str == NULL)
+		return -ENOMEM;
 
-	len = म_माप(str);
+	len = strlen(str);
 	p1 = str;
 
-	जबतक (p1 < str + len) अणु
-		अगर (i >= num) अणु
-			मुक्त(str);
-			वापस -1;
-		पूर्ण
+	while (p1 < str + len) {
+		if (i >= num) {
+			free(str);
+			return -1;
+		}
 
-		p2 = म_अक्षर(p1, ',');
-		अगर (p2)
+		p2 = strchr(p1, ',');
+		if (p2)
 			*p2 = '\0';
 
-		ret = (func)(p1, &pसमय_buf[i], start, end);
-		अगर (ret < 0) अणु
-			मुक्त(str);
-			वापस -1;
-		पूर्ण
+		ret = (func)(p1, &ptime_buf[i], start, end);
+		if (ret < 0) {
+			free(str);
+			return -1;
+		}
 
-		pr_debug("start time %d: %" PRIu64 ", ", i, pसमय_buf[i].start);
-		pr_debug("end time %d: %" PRIu64 "\n", i, pसमय_buf[i].end);
+		pr_debug("start time %d: %" PRIu64 ", ", i, ptime_buf[i].start);
+		pr_debug("end time %d: %" PRIu64 "\n", i, ptime_buf[i].end);
 
 		i++;
 
-		अगर (p2)
+		if (p2)
 			p1 = p2 + 1;
-		अन्यथा
-			अवरोध;
-	पूर्ण
+		else
+			break;
+	}
 
-	मुक्त(str);
-	वापस i;
-पूर्ण
+	free(str);
+	return i;
+}
 
-अटल पूर्णांक one_percent_convert(काष्ठा perf_समय_पूर्णांकerval *pसमय_buf,
-			       स्थिर अक्षर *ostr, u64 start, u64 end, अक्षर *c)
-अणु
-	अक्षर *str;
-	पूर्णांक len = म_माप(ostr), ret;
-
-	/*
-	 * c poपूर्णांकs to '%'.
-	 * '%' should be the last अक्षरacter
-	 */
-	अगर (ostr + len - 1 != c)
-		वापस -1;
+static int one_percent_convert(struct perf_time_interval *ptime_buf,
+			       const char *ostr, u64 start, u64 end, char *c)
+{
+	char *str;
+	int len = strlen(ostr), ret;
 
 	/*
-	 * Conकाष्ठा a string like "xx%/1"
+	 * c points to '%'.
+	 * '%' should be the last character
 	 */
-	str = दो_स्मृति(len + 3);
-	अगर (str == शून्य)
-		वापस -ENOMEM;
+	if (ostr + len - 1 != c)
+		return -1;
 
-	स_नकल(str, ostr, len);
-	म_नकल(str + len, "/1");
+	/*
+	 * Construct a string like "xx%/1"
+	 */
+	str = malloc(len + 3);
+	if (str == NULL)
+		return -ENOMEM;
 
-	ret = percent_slash_split(str, pसमय_buf, start, end);
-	अगर (ret == 0)
+	memcpy(str, ostr, len);
+	strcpy(str + len, "/1");
+
+	ret = percent_slash_split(str, ptime_buf, start, end);
+	if (ret == 0)
 		ret = 1;
 
-	मुक्त(str);
-	वापस ret;
-पूर्ण
+	free(str);
+	return ret;
+}
 
-पूर्णांक perf_समय__percent_parse_str(काष्ठा perf_समय_पूर्णांकerval *pसमय_buf, पूर्णांक num,
-				 स्थिर अक्षर *ostr, u64 start, u64 end)
-अणु
-	अक्षर *c;
+int perf_time__percent_parse_str(struct perf_time_interval *ptime_buf, int num,
+				 const char *ostr, u64 start, u64 end)
+{
+	char *c;
 
 	/*
 	 * ostr example:
 	 * 10%/2,10%/3: select the second 10% slice and the third 10% slice
-	 * 0%-10%,30%-40%: multiple समय range
+	 * 0%-10%,30%-40%: multiple time range
 	 * 50%: just one percent
 	 */
 
-	स_रखो(pसमय_buf, 0, माप(*pसमय_buf) * num);
+	memset(ptime_buf, 0, sizeof(*ptime_buf) * num);
 
-	c = म_अक्षर(ostr, '/');
-	अगर (c) अणु
-		वापस percent_comma_split(pसमय_buf, num, ostr, start,
+	c = strchr(ostr, '/');
+	if (c) {
+		return percent_comma_split(ptime_buf, num, ostr, start,
 					   end, percent_slash_split);
-	पूर्ण
+	}
 
-	c = म_अक्षर(ostr, '-');
-	अगर (c) अणु
-		वापस percent_comma_split(pसमय_buf, num, ostr, start,
+	c = strchr(ostr, '-');
+	if (c) {
+		return percent_comma_split(ptime_buf, num, ostr, start,
 					   end, percent_dash_split);
-	पूर्ण
+	}
 
-	c = म_अक्षर(ostr, '%');
-	अगर (c)
-		वापस one_percent_convert(pसमय_buf, ostr, start, end, c);
+	c = strchr(ostr, '%');
+	if (c)
+		return one_percent_convert(ptime_buf, ostr, start, end, c);
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-काष्ठा perf_समय_पूर्णांकerval *perf_समय__range_alloc(स्थिर अक्षर *ostr, पूर्णांक *size)
-अणु
-	स्थिर अक्षर *p1, *p2;
-	पूर्णांक i = 1;
-	काष्ठा perf_समय_पूर्णांकerval *pसमय;
+struct perf_time_interval *perf_time__range_alloc(const char *ostr, int *size)
+{
+	const char *p1, *p2;
+	int i = 1;
+	struct perf_time_interval *ptime;
 
 	/*
-	 * At least allocate one समय range.
+	 * At least allocate one time range.
 	 */
-	अगर (!ostr)
-		जाओ alloc;
+	if (!ostr)
+		goto alloc;
 
 	p1 = ostr;
-	जबतक (p1 < ostr + म_माप(ostr)) अणु
-		p2 = म_अक्षर(p1, ',');
-		अगर (!p2)
-			अवरोध;
+	while (p1 < ostr + strlen(ostr)) {
+		p2 = strchr(p1, ',');
+		if (!p2)
+			break;
 
 		p1 = p2 + 1;
 		i++;
-	पूर्ण
+	}
 
 alloc:
 	*size = i;
-	pसमय = सुस्मृति(i, माप(*pसमय));
-	वापस pसमय;
-पूर्ण
+	ptime = calloc(i, sizeof(*ptime));
+	return ptime;
+}
 
-bool perf_समय__skip_sample(काष्ठा perf_समय_पूर्णांकerval *pसमय, u64 बारtamp)
-अणु
-	/* अगर समय is not set करोn't drop sample */
-	अगर (बारtamp == 0)
-		वापस false;
+bool perf_time__skip_sample(struct perf_time_interval *ptime, u64 timestamp)
+{
+	/* if time is not set don't drop sample */
+	if (timestamp == 0)
+		return false;
 
-	/* otherwise compare sample समय to समय winकरोw */
-	अगर ((pसमय->start && बारtamp < pसमय->start) ||
-	    (pसमय->end && बारtamp > pसमय->end)) अणु
-		वापस true;
-	पूर्ण
+	/* otherwise compare sample time to time window */
+	if ((ptime->start && timestamp < ptime->start) ||
+	    (ptime->end && timestamp > ptime->end)) {
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-bool perf_समय__ranges_skip_sample(काष्ठा perf_समय_पूर्णांकerval *pसमय_buf,
-				   पूर्णांक num, u64 बारtamp)
-अणु
-	काष्ठा perf_समय_पूर्णांकerval *pसमय;
-	पूर्णांक i;
+bool perf_time__ranges_skip_sample(struct perf_time_interval *ptime_buf,
+				   int num, u64 timestamp)
+{
+	struct perf_time_interval *ptime;
+	int i;
 
-	अगर ((!pसमय_buf) || (बारtamp == 0) || (num == 0))
-		वापस false;
+	if ((!ptime_buf) || (timestamp == 0) || (num == 0))
+		return false;
 
-	अगर (num == 1)
-		वापस perf_समय__skip_sample(&pसमय_buf[0], बारtamp);
+	if (num == 1)
+		return perf_time__skip_sample(&ptime_buf[0], timestamp);
 
 	/*
-	 * start/end of multiple समय ranges must be valid.
+	 * start/end of multiple time ranges must be valid.
 	 */
-	क्रम (i = 0; i < num; i++) अणु
-		pसमय = &pसमय_buf[i];
+	for (i = 0; i < num; i++) {
+		ptime = &ptime_buf[i];
 
-		अगर (बारtamp >= pसमय->start &&
-		    (बारtamp <= pसमय->end || !pसमय->end)) अणु
-			वापस false;
-		पूर्ण
-	पूर्ण
+		if (timestamp >= ptime->start &&
+		    (timestamp <= ptime->end || !ptime->end)) {
+			return false;
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-पूर्णांक perf_समय__parse_क्रम_ranges_relसमय(स्थिर अक्षर *समय_str,
-				काष्ठा perf_session *session,
-				काष्ठा perf_समय_पूर्णांकerval **ranges,
-				पूर्णांक *range_size, पूर्णांक *range_num,
-				bool relसमय)
-अणु
-	bool has_percent = म_अक्षर(समय_str, '%');
-	काष्ठा perf_समय_पूर्णांकerval *pसमय_range;
-	पूर्णांक size, num, ret = -EINVAL;
+int perf_time__parse_for_ranges_reltime(const char *time_str,
+				struct perf_session *session,
+				struct perf_time_interval **ranges,
+				int *range_size, int *range_num,
+				bool reltime)
+{
+	bool has_percent = strchr(time_str, '%');
+	struct perf_time_interval *ptime_range;
+	int size, num, ret = -EINVAL;
 
-	pसमय_range = perf_समय__range_alloc(समय_str, &size);
-	अगर (!pसमय_range)
-		वापस -ENOMEM;
+	ptime_range = perf_time__range_alloc(time_str, &size);
+	if (!ptime_range)
+		return -ENOMEM;
 
-	अगर (has_percent || relसमय) अणु
-		अगर (session->evlist->first_sample_समय == 0 &&
-		    session->evlist->last_sample_समय == 0) अणु
+	if (has_percent || reltime) {
+		if (session->evlist->first_sample_time == 0 &&
+		    session->evlist->last_sample_time == 0) {
 			pr_err("HINT: no first/last sample time found in perf data.\n"
 			       "Please use latest perf binary to execute 'perf record'\n"
 			       "(if '--buildid-all' is enabled, please set '--timestamp-boundary').\n");
-			जाओ error;
-		पूर्ण
-	पूर्ण
+			goto error;
+		}
+	}
 
-	अगर (has_percent) अणु
-		num = perf_समय__percent_parse_str(
-				pसमय_range, size,
-				समय_str,
-				session->evlist->first_sample_समय,
-				session->evlist->last_sample_समय);
-	पूर्ण अन्यथा अणु
-		num = perf_समय__parse_strs(pसमय_range, समय_str, size);
-	पूर्ण
+	if (has_percent) {
+		num = perf_time__percent_parse_str(
+				ptime_range, size,
+				time_str,
+				session->evlist->first_sample_time,
+				session->evlist->last_sample_time);
+	} else {
+		num = perf_time__parse_strs(ptime_range, time_str, size);
+	}
 
-	अगर (num < 0)
-		जाओ error_invalid;
+	if (num < 0)
+		goto error_invalid;
 
-	अगर (relसमय) अणु
-		पूर्णांक i;
+	if (reltime) {
+		int i;
 
-		क्रम (i = 0; i < num; i++) अणु
-			pसमय_range[i].start += session->evlist->first_sample_समय;
-			pसमय_range[i].end += session->evlist->first_sample_समय;
-		पूर्ण
-	पूर्ण
+		for (i = 0; i < num; i++) {
+			ptime_range[i].start += session->evlist->first_sample_time;
+			ptime_range[i].end += session->evlist->first_sample_time;
+		}
+	}
 
 	*range_size = size;
 	*range_num = num;
-	*ranges = pसमय_range;
-	वापस 0;
+	*ranges = ptime_range;
+	return 0;
 
 error_invalid:
 	pr_err("Invalid time string\n");
 error:
-	मुक्त(pसमय_range);
-	वापस ret;
-पूर्ण
+	free(ptime_range);
+	return ret;
+}
 
-पूर्णांक perf_समय__parse_क्रम_ranges(स्थिर अक्षर *समय_str,
-				काष्ठा perf_session *session,
-				काष्ठा perf_समय_पूर्णांकerval **ranges,
-				पूर्णांक *range_size, पूर्णांक *range_num)
-अणु
-	वापस perf_समय__parse_क्रम_ranges_relसमय(समय_str, session, ranges,
+int perf_time__parse_for_ranges(const char *time_str,
+				struct perf_session *session,
+				struct perf_time_interval **ranges,
+				int *range_size, int *range_num)
+{
+	return perf_time__parse_for_ranges_reltime(time_str, session, ranges,
 					range_size, range_num, false);
-पूर्ण
+}
 
-पूर्णांक बारtamp__scnम_लिखो_usec(u64 बारtamp, अक्षर *buf, माप_प्रकार sz)
-अणु
-	u64  sec = बारtamp / NSEC_PER_SEC;
-	u64 usec = (बारtamp % NSEC_PER_SEC) / NSEC_PER_USEC;
+int timestamp__scnprintf_usec(u64 timestamp, char *buf, size_t sz)
+{
+	u64  sec = timestamp / NSEC_PER_SEC;
+	u64 usec = (timestamp % NSEC_PER_SEC) / NSEC_PER_USEC;
 
-	वापस scnम_लिखो(buf, sz, "%"PRIu64".%06"PRIu64, sec, usec);
-पूर्ण
+	return scnprintf(buf, sz, "%"PRIu64".%06"PRIu64, sec, usec);
+}
 
-पूर्णांक बारtamp__scnम_लिखो_nsec(u64 बारtamp, अक्षर *buf, माप_प्रकार sz)
-अणु
-	u64 sec  = बारtamp / NSEC_PER_SEC,
-	    nsec = बारtamp % NSEC_PER_SEC;
+int timestamp__scnprintf_nsec(u64 timestamp, char *buf, size_t sz)
+{
+	u64 sec  = timestamp / NSEC_PER_SEC,
+	    nsec = timestamp % NSEC_PER_SEC;
 
-	वापस scnम_लिखो(buf, sz, "%" PRIu64 ".%09" PRIu64, sec, nsec);
-पूर्ण
+	return scnprintf(buf, sz, "%" PRIu64 ".%09" PRIu64, sec, nsec);
+}
 
-पूर्णांक fetch_current_बारtamp(अक्षर *buf, माप_प्रकार sz)
-अणु
-	काष्ठा समयval tv;
-	काष्ठा पंचांग पंचांग;
-	अक्षर dt[32];
+int fetch_current_timestamp(char *buf, size_t sz)
+{
+	struct timeval tv;
+	struct tm tm;
+	char dt[32];
 
-	अगर (समय_लोofday(&tv, शून्य) || !स_स्थानीय_r(&tv.tv_sec, &पंचांग))
-		वापस -1;
+	if (gettimeofday(&tv, NULL) || !localtime_r(&tv.tv_sec, &tm))
+		return -1;
 
-	अगर (!स_माला(dt, माप(dt), "%Y%m%d%H%M%S", &पंचांग))
-		वापस -1;
+	if (!strftime(dt, sizeof(dt), "%Y%m%d%H%M%S", &tm))
+		return -1;
 
-	scnम_लिखो(buf, sz, "%s%02u", dt, (अचिन्हित)tv.tv_usec / 10000);
+	scnprintf(buf, sz, "%s%02u", dt, (unsigned)tv.tv_usec / 10000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

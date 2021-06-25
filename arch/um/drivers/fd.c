@@ -1,96 +1,95 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2001 - 2007 Jeff Dike (jdike@अणुlinux.पूर्णांकel,addtoitपूर्ण.com)
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{linux.intel,addtoit}.com)
  */
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <unistd.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <termios.h>
-#समावेश "chan_user.h"
-#समावेश <os.h>
-#समावेश <um_दो_स्मृति.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <termios.h>
+#include "chan_user.h"
+#include <os.h>
+#include <um_malloc.h>
 
-काष्ठा fd_chan अणु
-	पूर्णांक fd;
-	पूर्णांक raw;
-	काष्ठा termios tt;
-	अक्षर str[माप("1234567890\0")];
-पूर्ण;
+struct fd_chan {
+	int fd;
+	int raw;
+	struct termios tt;
+	char str[sizeof("1234567890\0")];
+};
 
-अटल व्योम *fd_init(अक्षर *str, पूर्णांक device, स्थिर काष्ठा chan_opts *opts)
-अणु
-	काष्ठा fd_chan *data;
-	अक्षर *end;
-	पूर्णांक n;
+static void *fd_init(char *str, int device, const struct chan_opts *opts)
+{
+	struct fd_chan *data;
+	char *end;
+	int n;
 
-	अगर (*str != ':') अणु
-		prपूर्णांकk(UM_KERN_ERR "fd_init : channel type 'fd' must specify a "
+	if (*str != ':') {
+		printk(UM_KERN_ERR "fd_init : channel type 'fd' must specify a "
 		       "file descriptor\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	str++;
-	n = म_से_अदीर्घ(str, &end, 0);
-	अगर ((*end != '\0') || (end == str)) अणु
-		prपूर्णांकk(UM_KERN_ERR "fd_init : couldn't parse file descriptor "
+	n = strtoul(str, &end, 0);
+	if ((*end != '\0') || (end == str)) {
+		printk(UM_KERN_ERR "fd_init : couldn't parse file descriptor "
 		       "'%s'\n", str);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	data = uml_kदो_स्मृति(माप(*data), UM_GFP_KERNEL);
-	अगर (data == शून्य)
-		वापस शून्य;
+	data = uml_kmalloc(sizeof(*data), UM_GFP_KERNEL);
+	if (data == NULL)
+		return NULL;
 
-	*data = ((काष्ठा fd_chan) अणु .fd  	= n,
-				    .raw  	= opts->raw पूर्ण);
-	वापस data;
-पूर्ण
+	*data = ((struct fd_chan) { .fd  	= n,
+				    .raw  	= opts->raw });
+	return data;
+}
 
-अटल पूर्णांक fd_खोलो(पूर्णांक input, पूर्णांक output, पूर्णांक primary, व्योम *d, अक्षर **dev_out)
-अणु
-	काष्ठा fd_chan *data = d;
-	पूर्णांक err;
+static int fd_open(int input, int output, int primary, void *d, char **dev_out)
+{
+	struct fd_chan *data = d;
+	int err;
 
-	अगर (data->raw && isatty(data->fd)) अणु
+	if (data->raw && isatty(data->fd)) {
 		CATCH_EINTR(err = tcgetattr(data->fd, &data->tt));
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		err = raw(data->fd);
-		अगर (err)
-			वापस err;
-	पूर्ण
-	प्र_लिखो(data->str, "%d", data->fd);
+		if (err)
+			return err;
+	}
+	sprintf(data->str, "%d", data->fd);
 	*dev_out = data->str;
-	वापस data->fd;
-पूर्ण
+	return data->fd;
+}
 
-अटल व्योम fd_बंद(पूर्णांक fd, व्योम *d)
-अणु
-	काष्ठा fd_chan *data = d;
-	पूर्णांक err;
+static void fd_close(int fd, void *d)
+{
+	struct fd_chan *data = d;
+	int err;
 
-	अगर (!data->raw || !isatty(fd))
-		वापस;
+	if (!data->raw || !isatty(fd))
+		return;
 
 	CATCH_EINTR(err = tcsetattr(fd, TCSAFLUSH, &data->tt));
-	अगर (err)
-		prपूर्णांकk(UM_KERN_ERR "Failed to restore terminal state - "
+	if (err)
+		printk(UM_KERN_ERR "Failed to restore terminal state - "
 		       "errno = %d\n", -err);
 	data->raw = 0;
-पूर्ण
+}
 
-स्थिर काष्ठा chan_ops fd_ops = अणु
+const struct chan_ops fd_ops = {
 	.type		= "fd",
 	.init		= fd_init,
-	.खोलो		= fd_खोलो,
-	.बंद		= fd_बंद,
-	.पढ़ो		= generic_पढ़ो,
-	.ग_लिखो		= generic_ग_लिखो,
-	.console_ग_लिखो	= generic_console_ग_लिखो,
-	.winकरोw_size	= generic_winकरोw_size,
-	.मुक्त		= generic_मुक्त,
+	.open		= fd_open,
+	.close		= fd_close,
+	.read		= generic_read,
+	.write		= generic_write,
+	.console_write	= generic_console_write,
+	.window_size	= generic_window_size,
+	.free		= generic_free,
 	.winch		= 1,
-पूर्ण;
+};

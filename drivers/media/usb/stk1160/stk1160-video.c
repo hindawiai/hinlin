@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * STK1160 driver
  *
@@ -11,415 +10,415 @@
  *	<rmthomas--a.t--sciolus.org>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/ratelimit.h>
+#include <linux/module.h>
+#include <linux/usb.h>
+#include <linux/slab.h>
+#include <linux/ratelimit.h>
 
-#समावेश "stk1160.h"
+#include "stk1160.h"
 
-अटल अचिन्हित पूर्णांक debug;
-module_param(debug, पूर्णांक, 0644);
+static unsigned int debug;
+module_param(debug, int, 0644);
 MODULE_PARM_DESC(debug, "enable debug messages");
 
-अटल अंतरभूत व्योम prपूर्णांक_err_status(काष्ठा stk1160 *dev,
-				     पूर्णांक packet, पूर्णांक status)
-अणु
-	अक्षर *errmsg = "Unknown";
+static inline void print_err_status(struct stk1160 *dev,
+				     int packet, int status)
+{
+	char *errmsg = "Unknown";
 
-	चयन (status) अणु
-	हाल -ENOENT:
+	switch (status) {
+	case -ENOENT:
 		errmsg = "unlinked synchronously";
-		अवरोध;
-	हाल -ECONNRESET:
+		break;
+	case -ECONNRESET:
 		errmsg = "unlinked asynchronously";
-		अवरोध;
-	हाल -ENOSR:
+		break;
+	case -ENOSR:
 		errmsg = "Buffer error (overrun)";
-		अवरोध;
-	हाल -EPIPE:
+		break;
+	case -EPIPE:
 		errmsg = "Stalled (device not responding)";
-		अवरोध;
-	हाल -EOVERFLOW:
+		break;
+	case -EOVERFLOW:
 		errmsg = "Babble (bad cable?)";
-		अवरोध;
-	हाल -EPROTO:
+		break;
+	case -EPROTO:
 		errmsg = "Bit-stuff error (bad cable?)";
-		अवरोध;
-	हाल -EILSEQ:
+		break;
+	case -EILSEQ:
 		errmsg = "CRC/Timeout (could be anything)";
-		अवरोध;
-	हाल -ETIME:
+		break;
+	case -ETIME:
 		errmsg = "Device does not respond";
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (packet < 0)
-		prपूर्णांकk_ratelimited(KERN_WARNING "URB status %d [%s].\n",
+	if (packet < 0)
+		printk_ratelimited(KERN_WARNING "URB status %d [%s].\n",
 				status, errmsg);
-	अन्यथा
-		prपूर्णांकk_ratelimited(KERN_INFO "URB packet %d, status %d [%s].\n",
+	else
+		printk_ratelimited(KERN_INFO "URB packet %d, status %d [%s].\n",
 			       packet, status, errmsg);
-पूर्ण
+}
 
-अटल अंतरभूत
-काष्ठा stk1160_buffer *stk1160_next_buffer(काष्ठा stk1160 *dev)
-अणु
-	काष्ठा stk1160_buffer *buf = शून्य;
-	अचिन्हित दीर्घ flags = 0;
+static inline
+struct stk1160_buffer *stk1160_next_buffer(struct stk1160 *dev)
+{
+	struct stk1160_buffer *buf = NULL;
+	unsigned long flags = 0;
 
-	/* Current buffer must be शून्य when this functions माला_लो called */
+	/* Current buffer must be NULL when this functions gets called */
 	WARN_ON(dev->isoc_ctl.buf);
 
 	spin_lock_irqsave(&dev->buf_lock, flags);
-	अगर (!list_empty(&dev->avail_bufs)) अणु
+	if (!list_empty(&dev->avail_bufs)) {
 		buf = list_first_entry(&dev->avail_bufs,
-				काष्ठा stk1160_buffer, list);
+				struct stk1160_buffer, list);
 		list_del(&buf->list);
-	पूर्ण
+	}
 	spin_unlock_irqrestore(&dev->buf_lock, flags);
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-अटल अंतरभूत
-व्योम stk1160_buffer_करोne(काष्ठा stk1160 *dev)
-अणु
-	काष्ठा stk1160_buffer *buf = dev->isoc_ctl.buf;
+static inline
+void stk1160_buffer_done(struct stk1160 *dev)
+{
+	struct stk1160_buffer *buf = dev->isoc_ctl.buf;
 
 	buf->vb.sequence = dev->sequence++;
 	buf->vb.field = V4L2_FIELD_INTERLACED;
-	buf->vb.vb2_buf.बारtamp = kसमय_get_ns();
+	buf->vb.vb2_buf.timestamp = ktime_get_ns();
 
 	vb2_set_plane_payload(&buf->vb.vb2_buf, 0, buf->bytesused);
-	vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_DONE);
+	vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_DONE);
 
-	dev->isoc_ctl.buf = शून्य;
-पूर्ण
+	dev->isoc_ctl.buf = NULL;
+}
 
-अटल अंतरभूत
-व्योम stk1160_copy_video(काष्ठा stk1160 *dev, u8 *src, पूर्णांक len)
-अणु
-	पूर्णांक linesकरोne, lineoff, lencopy;
-	पूर्णांक bytesperline = dev->width * 2;
-	काष्ठा stk1160_buffer *buf = dev->isoc_ctl.buf;
+static inline
+void stk1160_copy_video(struct stk1160 *dev, u8 *src, int len)
+{
+	int linesdone, lineoff, lencopy;
+	int bytesperline = dev->width * 2;
+	struct stk1160_buffer *buf = dev->isoc_ctl.buf;
 	u8 *dst = buf->mem;
-	पूर्णांक reमुख्य;
+	int remain;
 
 	/*
 	 * TODO: These stk1160_dbg are very spammy!
 	 * We should 1) check why we are getting them
 	 * and 2) add ratelimit.
 	 *
-	 * UPDATE: One of the reasons (the only one?) क्रम getting these
+	 * UPDATE: One of the reasons (the only one?) for getting these
 	 * is incorrect standard (mismatch between expected and configured).
-	 * So perhaps, we could add a counter क्रम errors. When the counter
+	 * So perhaps, we could add a counter for errors. When the counter
 	 * reaches some value, we simply stop streaming.
 	 */
 
 	len -= 4;
 	src += 4;
 
-	reमुख्य = len;
+	remain = len;
 
-	linesकरोne = buf->pos / bytesperline;
+	linesdone = buf->pos / bytesperline;
 	lineoff = buf->pos % bytesperline; /* offset in current line */
 
-	अगर (!buf->odd)
+	if (!buf->odd)
 		dst += bytesperline;
 
-	/* Multiply linesकरोne by two, to take account of the other field */
-	dst += linesकरोne * bytesperline * 2 + lineoff;
+	/* Multiply linesdone by two, to take account of the other field */
+	dst += linesdone * bytesperline * 2 + lineoff;
 
-	/* Copy the reमुख्यing of current line */
-	अगर (reमुख्य < (bytesperline - lineoff))
-		lencopy = reमुख्य;
-	अन्यथा
+	/* Copy the remaining of current line */
+	if (remain < (bytesperline - lineoff))
+		lencopy = remain;
+	else
 		lencopy = bytesperline - lineoff;
 
 	/*
-	 * Check अगर we have enough space left in the buffer.
-	 * In that हाल, we क्रमce loop निकास after copy.
+	 * Check if we have enough space left in the buffer.
+	 * In that case, we force loop exit after copy.
 	 */
-	अगर (lencopy > buf->bytesused - buf->length) अणु
+	if (lencopy > buf->bytesused - buf->length) {
 		lencopy = buf->bytesused - buf->length;
-		reमुख्य = lencopy;
-	पूर्ण
+		remain = lencopy;
+	}
 
-	/* Check अगर the copy is करोne */
-	अगर (lencopy == 0 || reमुख्य == 0)
-		वापस;
+	/* Check if the copy is done */
+	if (lencopy == 0 || remain == 0)
+		return;
 
 	/* Let the bug hunt begin! sanity checks! */
-	अगर (lencopy < 0) अणु
+	if (lencopy < 0) {
 		stk1160_dbg("copy skipped: negative lencopy\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर ((अचिन्हित दीर्घ)dst + lencopy >
-		(अचिन्हित दीर्घ)buf->mem + buf->length) अणु
-		prपूर्णांकk_ratelimited(KERN_WARNING "stk1160: buffer overflow detected\n");
-		वापस;
-	पूर्ण
+	if ((unsigned long)dst + lencopy >
+		(unsigned long)buf->mem + buf->length) {
+		printk_ratelimited(KERN_WARNING "stk1160: buffer overflow detected\n");
+		return;
+	}
 
-	स_नकल(dst, src, lencopy);
+	memcpy(dst, src, lencopy);
 
 	buf->bytesused += lencopy;
 	buf->pos += lencopy;
-	reमुख्य -= lencopy;
+	remain -= lencopy;
 
-	/* Copy current field line by line, पूर्णांकerlacing with the other field */
-	जबतक (reमुख्य > 0) अणु
+	/* Copy current field line by line, interlacing with the other field */
+	while (remain > 0) {
 
 		dst += lencopy + bytesperline;
 		src += lencopy;
 
-		/* Copy one line at a समय */
-		अगर (reमुख्य < bytesperline)
-			lencopy = reमुख्य;
-		अन्यथा
+		/* Copy one line at a time */
+		if (remain < bytesperline)
+			lencopy = remain;
+		else
 			lencopy = bytesperline;
 
 		/*
-		 * Check अगर we have enough space left in the buffer.
-		 * In that हाल, we क्रमce loop निकास after copy.
+		 * Check if we have enough space left in the buffer.
+		 * In that case, we force loop exit after copy.
 		 */
-		अगर (lencopy > buf->bytesused - buf->length) अणु
+		if (lencopy > buf->bytesused - buf->length) {
 			lencopy = buf->bytesused - buf->length;
-			reमुख्य = lencopy;
-		पूर्ण
+			remain = lencopy;
+		}
 
-		/* Check अगर the copy is करोne */
-		अगर (lencopy == 0 || reमुख्य == 0)
-			वापस;
+		/* Check if the copy is done */
+		if (lencopy == 0 || remain == 0)
+			return;
 
-		अगर (lencopy < 0) अणु
-			prपूर्णांकk_ratelimited(KERN_WARNING "stk1160: negative lencopy detected\n");
-			वापस;
-		पूर्ण
+		if (lencopy < 0) {
+			printk_ratelimited(KERN_WARNING "stk1160: negative lencopy detected\n");
+			return;
+		}
 
-		अगर ((अचिन्हित दीर्घ)dst + lencopy >
-			(अचिन्हित दीर्घ)buf->mem + buf->length) अणु
-			prपूर्णांकk_ratelimited(KERN_WARNING "stk1160: buffer overflow detected\n");
-			वापस;
-		पूर्ण
+		if ((unsigned long)dst + lencopy >
+			(unsigned long)buf->mem + buf->length) {
+			printk_ratelimited(KERN_WARNING "stk1160: buffer overflow detected\n");
+			return;
+		}
 
-		स_नकल(dst, src, lencopy);
-		reमुख्य -= lencopy;
+		memcpy(dst, src, lencopy);
+		remain -= lencopy;
 
 		buf->bytesused += lencopy;
 		buf->pos += lencopy;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Controls the isoc copy of each urb packet
  */
-अटल व्योम stk1160_process_isoc(काष्ठा stk1160 *dev, काष्ठा urb *urb)
-अणु
-	पूर्णांक i, len, status;
+static void stk1160_process_isoc(struct stk1160 *dev, struct urb *urb)
+{
+	int i, len, status;
 	u8 *p;
 
-	अगर (!dev) अणु
+	if (!dev) {
 		stk1160_warn("%s called with null device\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (urb->status < 0) अणु
-		/* Prपूर्णांक status and drop current packet (or field?) */
-		prपूर्णांक_err_status(dev, -1, urb->status);
-		वापस;
-	पूर्ण
+	if (urb->status < 0) {
+		/* Print status and drop current packet (or field?) */
+		print_err_status(dev, -1, urb->status);
+		return;
+	}
 
-	क्रम (i = 0; i < urb->number_of_packets; i++) अणु
+	for (i = 0; i < urb->number_of_packets; i++) {
 		status = urb->iso_frame_desc[i].status;
-		अगर (status < 0) अणु
-			prपूर्णांक_err_status(dev, i, status);
-			जारी;
-		पूर्ण
+		if (status < 0) {
+			print_err_status(dev, i, status);
+			continue;
+		}
 
-		/* Get packet actual length and poपूर्णांकer to data */
+		/* Get packet actual length and pointer to data */
 		p = urb->transfer_buffer + urb->iso_frame_desc[i].offset;
 		len = urb->iso_frame_desc[i].actual_length;
 
 		/* Empty packet */
-		अगर (len <= 4)
-			जारी;
+		if (len <= 4)
+			continue;
 
 		/*
 		 * An 8-byte packet sequence means end of field.
-		 * So अगर we करोn't have any packet, we start receiving one now
-		 * and अगर we करो have a packet, then we are करोne with it.
+		 * So if we don't have any packet, we start receiving one now
+		 * and if we do have a packet, then we are done with it.
 		 *
 		 * These end of field packets are always 0xc0 or 0x80,
-		 * but not always 8-byte दीर्घ so we करोn't check packet length.
+		 * but not always 8-byte long so we don't check packet length.
 		 */
-		अगर (p[0] == 0xc0) अणु
+		if (p[0] == 0xc0) {
 
 			/*
 			 * If first byte is 0xc0 then we received
 			 * second field, and frame has ended.
 			 */
-			अगर (dev->isoc_ctl.buf != शून्य)
-				stk1160_buffer_करोne(dev);
+			if (dev->isoc_ctl.buf != NULL)
+				stk1160_buffer_done(dev);
 
 			dev->isoc_ctl.buf = stk1160_next_buffer(dev);
-			अगर (dev->isoc_ctl.buf == शून्य)
-				वापस;
-		पूर्ण
+			if (dev->isoc_ctl.buf == NULL)
+				return;
+		}
 
 		/*
-		 * If we करोn't have a buffer here, then it means we
+		 * If we don't have a buffer here, then it means we
 		 * haven't found the start mark sequence.
 		 */
-		अगर (dev->isoc_ctl.buf == शून्य)
-			जारी;
+		if (dev->isoc_ctl.buf == NULL)
+			continue;
 
-		अगर (p[0] == 0xc0 || p[0] == 0x80) अणु
+		if (p[0] == 0xc0 || p[0] == 0x80) {
 
 			/* We set next packet parity and
-			 * जारी to get next one
+			 * continue to get next one
 			 */
 			dev->isoc_ctl.buf->odd = *p & 0x40;
 			dev->isoc_ctl.buf->pos = 0;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		stk1160_copy_video(dev, p, len);
-	पूर्ण
-पूर्ण
+	}
+}
 
 
 /*
  * IRQ callback, called by URB callback
  */
-अटल व्योम stk1160_isoc_irq(काष्ठा urb *urb)
-अणु
-	पूर्णांक i, rc;
-	काष्ठा stk1160 *dev = urb->context;
+static void stk1160_isoc_irq(struct urb *urb)
+{
+	int i, rc;
+	struct stk1160 *dev = urb->context;
 
-	चयन (urb->status) अणु
-	हाल 0:
-		अवरोध;
-	हाल -ECONNRESET:   /* समाप्त */
-	हाल -ENOENT:
-	हाल -ESHUTDOWN:
-		/* TODO: check uvc driver: he मुक्तs the queue here */
-		वापस;
-	शेष:
+	switch (urb->status) {
+	case 0:
+		break;
+	case -ECONNRESET:   /* kill */
+	case -ENOENT:
+	case -ESHUTDOWN:
+		/* TODO: check uvc driver: he frees the queue here */
+		return;
+	default:
 		stk1160_err("urb error! status %d\n", urb->status);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	stk1160_process_isoc(dev, urb);
 
 	/* Reset urb buffers */
-	क्रम (i = 0; i < urb->number_of_packets; i++) अणु
+	for (i = 0; i < urb->number_of_packets; i++) {
 		urb->iso_frame_desc[i].status = 0;
 		urb->iso_frame_desc[i].actual_length = 0;
-	पूर्ण
+	}
 
 	rc = usb_submit_urb(urb, GFP_ATOMIC);
-	अगर (rc)
+	if (rc)
 		stk1160_err("urb re-submit failed (%d)\n", rc);
-पूर्ण
+}
 
 /*
  * Cancel urbs
  * This function can't be called in atomic context
  */
-व्योम stk1160_cancel_isoc(काष्ठा stk1160 *dev)
-अणु
-	पूर्णांक i, num_bufs = dev->isoc_ctl.num_bufs;
+void stk1160_cancel_isoc(struct stk1160 *dev)
+{
+	int i, num_bufs = dev->isoc_ctl.num_bufs;
 
 	/*
 	 * This check is not necessary, but we add it
-	 * to aव्योम a spurious debug message
+	 * to avoid a spurious debug message
 	 */
-	अगर (!num_bufs)
-		वापस;
+	if (!num_bufs)
+		return;
 
 	stk1160_dbg("killing %d urbs...\n", num_bufs);
 
-	क्रम (i = 0; i < num_bufs; i++) अणु
+	for (i = 0; i < num_bufs; i++) {
 
 		/*
-		 * To समाप्त urbs we can't be in atomic context.
-		 * We करोn't care क्रम शून्य poपूर्णांकer since
-		 * usb_समाप्त_urb allows it.
+		 * To kill urbs we can't be in atomic context.
+		 * We don't care for NULL pointer since
+		 * usb_kill_urb allows it.
 		 */
-		usb_समाप्त_urb(dev->isoc_ctl.urb[i]);
-	पूर्ण
+		usb_kill_urb(dev->isoc_ctl.urb[i]);
+	}
 
 	stk1160_dbg("all urbs killed\n");
-पूर्ण
+}
 
 /*
  * Releases urb and transfer buffers
- * Obviusly, associated urb must be समाप्तed beक्रमe releasing it.
+ * Obviusly, associated urb must be killed before releasing it.
  */
-व्योम stk1160_मुक्त_isoc(काष्ठा stk1160 *dev)
-अणु
-	काष्ठा urb *urb;
-	पूर्णांक i, num_bufs = dev->isoc_ctl.num_bufs;
+void stk1160_free_isoc(struct stk1160 *dev)
+{
+	struct urb *urb;
+	int i, num_bufs = dev->isoc_ctl.num_bufs;
 
 	stk1160_dbg("freeing %d urb buffers...\n", num_bufs);
 
-	क्रम (i = 0; i < num_bufs; i++) अणु
+	for (i = 0; i < num_bufs; i++) {
 
 		urb = dev->isoc_ctl.urb[i];
-		अगर (urb) अणु
+		if (urb) {
 
-			अगर (dev->isoc_ctl.transfer_buffer[i]) अणु
-#अगर_अघोषित CONFIG_DMA_NONCOHERENT
-				usb_मुक्त_coherent(dev->udev,
+			if (dev->isoc_ctl.transfer_buffer[i]) {
+#ifndef CONFIG_DMA_NONCOHERENT
+				usb_free_coherent(dev->udev,
 					urb->transfer_buffer_length,
 					dev->isoc_ctl.transfer_buffer[i],
 					urb->transfer_dma);
-#अन्यथा
-				kमुक्त(dev->isoc_ctl.transfer_buffer[i]);
-#पूर्ण_अगर
-			पूर्ण
-			usb_मुक्त_urb(urb);
-			dev->isoc_ctl.urb[i] = शून्य;
-		पूर्ण
-		dev->isoc_ctl.transfer_buffer[i] = शून्य;
-	पूर्ण
+#else
+				kfree(dev->isoc_ctl.transfer_buffer[i]);
+#endif
+			}
+			usb_free_urb(urb);
+			dev->isoc_ctl.urb[i] = NULL;
+		}
+		dev->isoc_ctl.transfer_buffer[i] = NULL;
+	}
 
-	kमुक्त(dev->isoc_ctl.urb);
-	kमुक्त(dev->isoc_ctl.transfer_buffer);
+	kfree(dev->isoc_ctl.urb);
+	kfree(dev->isoc_ctl.transfer_buffer);
 
-	dev->isoc_ctl.urb = शून्य;
-	dev->isoc_ctl.transfer_buffer = शून्य;
+	dev->isoc_ctl.urb = NULL;
+	dev->isoc_ctl.transfer_buffer = NULL;
 	dev->isoc_ctl.num_bufs = 0;
 
 	stk1160_dbg("all urb buffers freed\n");
-पूर्ण
+}
 
 /*
- * Helper क्रम cancelling and मुक्तing urbs
+ * Helper for cancelling and freeing urbs
  * This function can't be called in atomic context
  */
-व्योम stk1160_uninit_isoc(काष्ठा stk1160 *dev)
-अणु
+void stk1160_uninit_isoc(struct stk1160 *dev)
+{
 	stk1160_cancel_isoc(dev);
-	stk1160_मुक्त_isoc(dev);
-पूर्ण
+	stk1160_free_isoc(dev);
+}
 
 /*
  * Allocate URBs
  */
-पूर्णांक stk1160_alloc_isoc(काष्ठा stk1160 *dev)
-अणु
-	काष्ठा urb *urb;
-	पूर्णांक i, j, k, sb_size, max_packets, num_bufs;
+int stk1160_alloc_isoc(struct stk1160 *dev)
+{
+	struct urb *urb;
+	int i, j, k, sb_size, max_packets, num_bufs;
 
 	/*
 	 * It may be necessary to release isoc here,
 	 * since isoc are only released on disconnection.
 	 * (see new_pkt_size flag)
 	 */
-	अगर (dev->isoc_ctl.num_bufs)
+	if (dev->isoc_ctl.num_bufs)
 		stk1160_uninit_isoc(dev);
 
 	stk1160_dbg("allocating urbs...\n");
@@ -428,49 +427,49 @@ MODULE_PARM_DESC(debug, "enable debug messages");
 	max_packets = STK1160_NUM_PACKETS;
 	sb_size = max_packets * dev->max_pkt_size;
 
-	dev->isoc_ctl.buf = शून्य;
+	dev->isoc_ctl.buf = NULL;
 	dev->isoc_ctl.max_pkt_size = dev->max_pkt_size;
-	dev->isoc_ctl.urb = kसुस्मृति(num_bufs, माप(व्योम *), GFP_KERNEL);
-	अगर (!dev->isoc_ctl.urb) अणु
+	dev->isoc_ctl.urb = kcalloc(num_bufs, sizeof(void *), GFP_KERNEL);
+	if (!dev->isoc_ctl.urb) {
 		stk1160_err("out of memory for urb array\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	dev->isoc_ctl.transfer_buffer = kसुस्मृति(num_bufs, माप(व्योम *),
+	dev->isoc_ctl.transfer_buffer = kcalloc(num_bufs, sizeof(void *),
 						GFP_KERNEL);
-	अगर (!dev->isoc_ctl.transfer_buffer) अणु
+	if (!dev->isoc_ctl.transfer_buffer) {
 		stk1160_err("out of memory for usb transfers\n");
-		kमुक्त(dev->isoc_ctl.urb);
-		वापस -ENOMEM;
-	पूर्ण
+		kfree(dev->isoc_ctl.urb);
+		return -ENOMEM;
+	}
 
 	/* allocate urbs and transfer buffers */
-	क्रम (i = 0; i < num_bufs; i++) अणु
+	for (i = 0; i < num_bufs; i++) {
 
 		urb = usb_alloc_urb(max_packets, GFP_KERNEL);
-		अगर (!urb)
-			जाओ मुक्त_i_bufs;
+		if (!urb)
+			goto free_i_bufs;
 		dev->isoc_ctl.urb[i] = urb;
 
-#अगर_अघोषित CONFIG_DMA_NONCOHERENT
+#ifndef CONFIG_DMA_NONCOHERENT
 		dev->isoc_ctl.transfer_buffer[i] = usb_alloc_coherent(dev->udev,
 			sb_size, GFP_KERNEL, &urb->transfer_dma);
-#अन्यथा
-		dev->isoc_ctl.transfer_buffer[i] = kदो_स्मृति(sb_size, GFP_KERNEL);
-#पूर्ण_अगर
-		अगर (!dev->isoc_ctl.transfer_buffer[i]) अणु
+#else
+		dev->isoc_ctl.transfer_buffer[i] = kmalloc(sb_size, GFP_KERNEL);
+#endif
+		if (!dev->isoc_ctl.transfer_buffer[i]) {
 			stk1160_err("cannot alloc %d bytes for tx[%d] buffer\n",
 				sb_size, i);
 
 			/* Not enough transfer buffers, so just give up */
-			अगर (i < STK1160_MIN_BUFS)
-				जाओ मुक्त_i_bufs;
-			जाओ nomore_tx_bufs;
-		पूर्ण
-		स_रखो(dev->isoc_ctl.transfer_buffer[i], 0, sb_size);
+			if (i < STK1160_MIN_BUFS)
+				goto free_i_bufs;
+			goto nomore_tx_bufs;
+		}
+		memset(dev->isoc_ctl.transfer_buffer[i], 0, sb_size);
 
 		/*
-		 * FIXME: Where can I get the endpoपूर्णांक?
+		 * FIXME: Where can I get the endpoint?
 		 */
 		urb->dev = dev->udev;
 		urb->pipe = usb_rcvisocpipe(dev->udev, STK1160_EP_VIDEO);
@@ -478,50 +477,50 @@ MODULE_PARM_DESC(debug, "enable debug messages");
 		urb->transfer_buffer_length = sb_size;
 		urb->complete = stk1160_isoc_irq;
 		urb->context = dev;
-		urb->पूर्णांकerval = 1;
+		urb->interval = 1;
 		urb->start_frame = 0;
 		urb->number_of_packets = max_packets;
-#अगर_अघोषित CONFIG_DMA_NONCOHERENT
+#ifndef CONFIG_DMA_NONCOHERENT
 		urb->transfer_flags = URB_ISO_ASAP | URB_NO_TRANSFER_DMA_MAP;
-#अन्यथा
+#else
 		urb->transfer_flags = URB_ISO_ASAP;
-#पूर्ण_अगर
+#endif
 
 		k = 0;
-		क्रम (j = 0; j < max_packets; j++) अणु
+		for (j = 0; j < max_packets; j++) {
 			urb->iso_frame_desc[j].offset = k;
 			urb->iso_frame_desc[j].length =
 					dev->isoc_ctl.max_pkt_size;
 			k += dev->isoc_ctl.max_pkt_size;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	stk1160_dbg("%d urbs allocated\n", num_bufs);
 
 	/* At last we can say we have some buffers */
 	dev->isoc_ctl.num_bufs = num_bufs;
 
-	वापस 0;
+	return 0;
 
 nomore_tx_bufs:
 	/*
 	 * Failed to allocate desired buffer count. However, we may have
-	 * enough to work fine, so we just मुक्त the extra urb,
+	 * enough to work fine, so we just free the extra urb,
 	 * store the allocated count and keep going, fingers crossed!
 	 */
-	usb_मुक्त_urb(dev->isoc_ctl.urb[i]);
-	dev->isoc_ctl.urb[i] = शून्य;
+	usb_free_urb(dev->isoc_ctl.urb[i]);
+	dev->isoc_ctl.urb[i] = NULL;
 
 	stk1160_warn("%d urbs allocated. Trying to continue...\n", i - 1);
 
 	dev->isoc_ctl.num_bufs = i - 1;
 
-	वापस 0;
+	return 0;
 
-मुक्त_i_bufs:
-	/* Save the allocated buffers so far, so we can properly मुक्त them */
+free_i_bufs:
+	/* Save the allocated buffers so far, so we can properly free them */
 	dev->isoc_ctl.num_bufs = i+1;
-	stk1160_मुक्त_isoc(dev);
-	वापस -ENOMEM;
-पूर्ण
+	stk1160_free_isoc(dev);
+	return -ENOMEM;
+}
 

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,93 +20,93 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/fb.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/fb.h>
 
-#समावेश "vega12/smu9_driver_if.h"
-#समावेश "vega12_processpptables.h"
-#समावेश "ppatomfwctrl.h"
-#समावेश "atomfirmware.h"
-#समावेश "pp_debug.h"
-#समावेश "cgs_common.h"
-#समावेश "vega12_pptable.h"
+#include "vega12/smu9_driver_if.h"
+#include "vega12_processpptables.h"
+#include "ppatomfwctrl.h"
+#include "atomfirmware.h"
+#include "pp_debug.h"
+#include "cgs_common.h"
+#include "vega12_pptable.h"
 
-अटल व्योम set_hw_cap(काष्ठा pp_hwmgr *hwmgr, bool enable,
-		क्रमागत phm_platक्रमm_caps cap)
-अणु
-	अगर (enable)
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps, cap);
-	अन्यथा
-		phm_cap_unset(hwmgr->platक्रमm_descriptor.platक्रमmCaps, cap);
-पूर्ण
+static void set_hw_cap(struct pp_hwmgr *hwmgr, bool enable,
+		enum phm_platform_caps cap)
+{
+	if (enable)
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps, cap);
+	else
+		phm_cap_unset(hwmgr->platform_descriptor.platformCaps, cap);
+}
 
-अटल स्थिर व्योम *get_घातerplay_table(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक index = GetIndexIntoMasterDataTable(घातerplayinfo);
+static const void *get_powerplay_table(struct pp_hwmgr *hwmgr)
+{
+	int index = GetIndexIntoMasterDataTable(powerplayinfo);
 
 	u16 size;
 	u8 frev, crev;
-	स्थिर व्योम *table_address = hwmgr->soft_pp_table;
+	const void *table_address = hwmgr->soft_pp_table;
 
-	अगर (!table_address) अणु
+	if (!table_address) {
 		table_address = (ATOM_Vega12_POWERPLAYTABLE *)
 				smu_atom_get_data_table(hwmgr->adev, index,
 						&size, &frev, &crev);
 
 		hwmgr->soft_pp_table = table_address;	/*Cache the result in RAM.*/
 		hwmgr->soft_pp_table_size = size;
-	पूर्ण
+	}
 
-	वापस table_address;
-पूर्ण
+	return table_address;
+}
 
-अटल पूर्णांक check_घातerplay_tables(
-		काष्ठा pp_hwmgr *hwmgr,
-		स्थिर ATOM_Vega12_POWERPLAYTABLE *घातerplay_table)
-अणु
-	PP_ASSERT_WITH_CODE((घातerplay_table->sHeader.क्रमmat_revision >=
+static int check_powerplay_tables(
+		struct pp_hwmgr *hwmgr,
+		const ATOM_Vega12_POWERPLAYTABLE *powerplay_table)
+{
+	PP_ASSERT_WITH_CODE((powerplay_table->sHeader.format_revision >=
 		ATOM_VEGA12_TABLE_REVISION_VEGA12),
-		"Unsupported PPTable format!", वापस -1);
-	PP_ASSERT_WITH_CODE(घातerplay_table->sHeader.काष्ठाuresize > 0,
-		"Invalid PowerPlay Table!", वापस -1);
+		"Unsupported PPTable format!", return -1);
+	PP_ASSERT_WITH_CODE(powerplay_table->sHeader.structuresize > 0,
+		"Invalid PowerPlay Table!", return -1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक set_platक्रमm_caps(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t घातerplay_caps)
-अणु
+static int set_platform_caps(struct pp_hwmgr *hwmgr, uint32_t powerplay_caps)
+{
 	set_hw_cap(
 			hwmgr,
-			0 != (घातerplay_caps & ATOM_VEGA12_PP_PLATFORM_CAP_POWERPLAY),
-			PHM_Platक्रमmCaps_PowerPlaySupport);
-
-	set_hw_cap(
-			hwmgr,
-			0 != (घातerplay_caps & ATOM_VEGA12_PP_PLATFORM_CAP_SBIOSPOWERSOURCE),
-			PHM_Platक्रमmCaps_BiosPowerSourceControl);
+			0 != (powerplay_caps & ATOM_VEGA12_PP_PLATFORM_CAP_POWERPLAY),
+			PHM_PlatformCaps_PowerPlaySupport);
 
 	set_hw_cap(
 			hwmgr,
-			0 != (घातerplay_caps & ATOM_VEGA12_PP_PLATFORM_CAP_BACO),
-			PHM_Platक्रमmCaps_BACO);
+			0 != (powerplay_caps & ATOM_VEGA12_PP_PLATFORM_CAP_SBIOSPOWERSOURCE),
+			PHM_PlatformCaps_BiosPowerSourceControl);
 
 	set_hw_cap(
 			hwmgr,
-			0 != (घातerplay_caps & ATOM_VEGA12_PP_PLATFORM_CAP_BAMACO),
-			 PHM_Platक्रमmCaps_BAMACO);
+			0 != (powerplay_caps & ATOM_VEGA12_PP_PLATFORM_CAP_BACO),
+			PHM_PlatformCaps_BACO);
 
-	वापस 0;
-पूर्ण
+	set_hw_cap(
+			hwmgr,
+			0 != (powerplay_caps & ATOM_VEGA12_PP_PLATFORM_CAP_BAMACO),
+			 PHM_PlatformCaps_BAMACO);
 
-अटल पूर्णांक append_vbios_pptable(काष्ठा pp_hwmgr *hwmgr, PPTable_t *ppsmc_pptable)
-अणु
-	काष्ठा pp_atomfwctrl_smc_dpm_parameters smc_dpm_table;
+	return 0;
+}
+
+static int append_vbios_pptable(struct pp_hwmgr *hwmgr, PPTable_t *ppsmc_pptable)
+{
+	struct pp_atomfwctrl_smc_dpm_parameters smc_dpm_table;
 
 	PP_ASSERT_WITH_CODE(
-		pp_atomfwctrl_get_smc_dpm_inक्रमmation(hwmgr, &smc_dpm_table) == 0,
+		pp_atomfwctrl_get_smc_dpm_information(hwmgr, &smc_dpm_table) == 0,
 		"[appendVbiosPPTable] Failed to retrieve Smc Dpm Table from VBIOS!",
-		वापस -1);
+		return -1);
 
 	ppsmc_pptable->Liquid1_I2C_address = smc_dpm_table.liquid1_i2c_address;
 	ppsmc_pptable->Liquid2_I2C_address = smc_dpm_table.liquid2_i2c_address;
@@ -165,238 +164,238 @@
 	ppsmc_pptable->LedPin1 = smc_dpm_table.ledpin1;
 	ppsmc_pptable->LedPin2 = smc_dpm_table.ledpin2;
 
-	ppsmc_pptable->PllGfxclkSpपढ़ोEnabled = smc_dpm_table.pllgfxclkspपढ़ोenabled;
-	ppsmc_pptable->PllGfxclkSpपढ़ोPercent = smc_dpm_table.pllgfxclkspपढ़ोpercent;
-	ppsmc_pptable->PllGfxclkSpपढ़ोFreq = smc_dpm_table.pllgfxclkspपढ़ोfreq;
+	ppsmc_pptable->PllGfxclkSpreadEnabled = smc_dpm_table.pllgfxclkspreadenabled;
+	ppsmc_pptable->PllGfxclkSpreadPercent = smc_dpm_table.pllgfxclkspreadpercent;
+	ppsmc_pptable->PllGfxclkSpreadFreq = smc_dpm_table.pllgfxclkspreadfreq;
 
-	ppsmc_pptable->UclkSpपढ़ोEnabled = 0;
-	ppsmc_pptable->UclkSpपढ़ोPercent = smc_dpm_table.uclkspपढ़ोpercent;
-	ppsmc_pptable->UclkSpपढ़ोFreq = smc_dpm_table.uclkspपढ़ोfreq;
+	ppsmc_pptable->UclkSpreadEnabled = 0;
+	ppsmc_pptable->UclkSpreadPercent = smc_dpm_table.uclkspreadpercent;
+	ppsmc_pptable->UclkSpreadFreq = smc_dpm_table.uclkspreadfreq;
 
-	ppsmc_pptable->SocclkSpपढ़ोEnabled = 0;
-	ppsmc_pptable->SocclkSpपढ़ोPercent = smc_dpm_table.socclkspपढ़ोpercent;
-	ppsmc_pptable->SocclkSpपढ़ोFreq = smc_dpm_table.socclkspपढ़ोfreq;
+	ppsmc_pptable->SocclkSpreadEnabled = 0;
+	ppsmc_pptable->SocclkSpreadPercent = smc_dpm_table.socclkspreadpercent;
+	ppsmc_pptable->SocclkSpreadFreq = smc_dpm_table.socclkspreadfreq;
 
-	ppsmc_pptable->AcgGfxclkSpपढ़ोEnabled = smc_dpm_table.acggfxclkspपढ़ोenabled;
-	ppsmc_pptable->AcgGfxclkSpपढ़ोPercent = smc_dpm_table.acggfxclkspपढ़ोpercent;
-	ppsmc_pptable->AcgGfxclkSpपढ़ोFreq = smc_dpm_table.acggfxclkspपढ़ोfreq;
-
-	ppsmc_pptable->Vr2_I2C_address = smc_dpm_table.Vr2_I2C_address;
+	ppsmc_pptable->AcgGfxclkSpreadEnabled = smc_dpm_table.acggfxclkspreadenabled;
+	ppsmc_pptable->AcgGfxclkSpreadPercent = smc_dpm_table.acggfxclkspreadpercent;
+	ppsmc_pptable->AcgGfxclkSpreadFreq = smc_dpm_table.acggfxclkspreadfreq;
 
 	ppsmc_pptable->Vr2_I2C_address = smc_dpm_table.Vr2_I2C_address;
 
-	वापस 0;
-पूर्ण
+	ppsmc_pptable->Vr2_I2C_address = smc_dpm_table.Vr2_I2C_address;
 
-#घोषणा VEGA12_ENGINECLOCK_HARDMAX 198000
-अटल पूर्णांक init_घातerplay_table_inक्रमmation(
-		काष्ठा pp_hwmgr *hwmgr,
-		स्थिर ATOM_Vega12_POWERPLAYTABLE *घातerplay_table)
-अणु
-	काष्ठा phm_ppt_v3_inक्रमmation *pptable_inक्रमmation =
-		(काष्ठा phm_ppt_v3_inक्रमmation *)hwmgr->pptable;
-	uपूर्णांक32_t disable_घातer_control = 0;
-	पूर्णांक result;
+	return 0;
+}
 
-	hwmgr->thermal_controller.ucType = घातerplay_table->ucThermalControllerType;
-	pptable_inक्रमmation->uc_thermal_controller_type = घातerplay_table->ucThermalControllerType;
+#define VEGA12_ENGINECLOCK_HARDMAX 198000
+static int init_powerplay_table_information(
+		struct pp_hwmgr *hwmgr,
+		const ATOM_Vega12_POWERPLAYTABLE *powerplay_table)
+{
+	struct phm_ppt_v3_information *pptable_information =
+		(struct phm_ppt_v3_information *)hwmgr->pptable;
+	uint32_t disable_power_control = 0;
+	int result;
+
+	hwmgr->thermal_controller.ucType = powerplay_table->ucThermalControllerType;
+	pptable_information->uc_thermal_controller_type = powerplay_table->ucThermalControllerType;
 
 	set_hw_cap(hwmgr,
 		ATOM_VEGA12_PP_THERMALCONTROLLER_NONE != hwmgr->thermal_controller.ucType,
-		PHM_Platक्रमmCaps_ThermalController);
+		PHM_PlatformCaps_ThermalController);
 
-	phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps, PHM_Platक्रमmCaps_MicrocodeFanControl);
+	phm_cap_set(hwmgr->platform_descriptor.platformCaps, PHM_PlatformCaps_MicrocodeFanControl);
 
-	अगर (le32_to_cpu(घातerplay_table->ODSettingsMax[ATOM_VEGA12_ODSETTING_GFXCLKFMAX]) > VEGA12_ENGINECLOCK_HARDMAX)
-		hwmgr->platक्रमm_descriptor.overdriveLimit.engineClock = VEGA12_ENGINECLOCK_HARDMAX;
-	अन्यथा
-		hwmgr->platक्रमm_descriptor.overdriveLimit.engineClock =
-			le32_to_cpu(घातerplay_table->ODSettingsMax[ATOM_VEGA12_ODSETTING_GFXCLKFMAX]);
-	hwmgr->platक्रमm_descriptor.overdriveLimit.memoryClock =
-		le32_to_cpu(घातerplay_table->ODSettingsMax[ATOM_VEGA12_ODSETTING_UCLKFMAX]);
+	if (le32_to_cpu(powerplay_table->ODSettingsMax[ATOM_VEGA12_ODSETTING_GFXCLKFMAX]) > VEGA12_ENGINECLOCK_HARDMAX)
+		hwmgr->platform_descriptor.overdriveLimit.engineClock = VEGA12_ENGINECLOCK_HARDMAX;
+	else
+		hwmgr->platform_descriptor.overdriveLimit.engineClock =
+			le32_to_cpu(powerplay_table->ODSettingsMax[ATOM_VEGA12_ODSETTING_GFXCLKFMAX]);
+	hwmgr->platform_descriptor.overdriveLimit.memoryClock =
+		le32_to_cpu(powerplay_table->ODSettingsMax[ATOM_VEGA12_ODSETTING_UCLKFMAX]);
 
 	phm_copy_overdrive_settings_limits_array(hwmgr,
-						 &pptable_inक्रमmation->od_settings_max,
-						 घातerplay_table->ODSettingsMax,
+						 &pptable_information->od_settings_max,
+						 powerplay_table->ODSettingsMax,
 						 ATOM_VEGA12_ODSETTING_COUNT);
 	phm_copy_overdrive_settings_limits_array(hwmgr,
-						 &pptable_inक्रमmation->od_settings_min,
-						 घातerplay_table->ODSettingsMin,
+						 &pptable_information->od_settings_min,
+						 powerplay_table->ODSettingsMin,
 						 ATOM_VEGA12_ODSETTING_COUNT);
 
-	/* hwmgr->platक्रमmDescriptor.minOverdriveVDDC = 0;
-	hwmgr->platक्रमmDescriptor.maxOverdriveVDDC = 0;
-	hwmgr->platक्रमmDescriptor.overdriveVDDCStep = 0; */
+	/* hwmgr->platformDescriptor.minOverdriveVDDC = 0;
+	hwmgr->platformDescriptor.maxOverdriveVDDC = 0;
+	hwmgr->platformDescriptor.overdriveVDDCStep = 0; */
 
-	अगर (hwmgr->platक्रमm_descriptor.overdriveLimit.engineClock > 0
-		&& hwmgr->platक्रमm_descriptor.overdriveLimit.memoryClock > 0)
-		phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps, PHM_Platक्रमmCaps_ACOverdriveSupport);
+	if (hwmgr->platform_descriptor.overdriveLimit.engineClock > 0
+		&& hwmgr->platform_descriptor.overdriveLimit.memoryClock > 0)
+		phm_cap_set(hwmgr->platform_descriptor.platformCaps, PHM_PlatformCaps_ACOverdriveSupport);
 
-	pptable_inक्रमmation->us_small_घातer_limit1 = le16_to_cpu(घातerplay_table->usSmallPowerLimit1);
-	pptable_inक्रमmation->us_small_घातer_limit2 = le16_to_cpu(घातerplay_table->usSmallPowerLimit2);
-	pptable_inक्रमmation->us_boost_घातer_limit = le16_to_cpu(घातerplay_table->usBoostPowerLimit);
-	pptable_inक्रमmation->us_od_turbo_घातer_limit = le16_to_cpu(घातerplay_table->usODTurboPowerLimit);
-	pptable_inक्रमmation->us_od_घातersave_घातer_limit = le16_to_cpu(घातerplay_table->usODPowerSavePowerLimit);
+	pptable_information->us_small_power_limit1 = le16_to_cpu(powerplay_table->usSmallPowerLimit1);
+	pptable_information->us_small_power_limit2 = le16_to_cpu(powerplay_table->usSmallPowerLimit2);
+	pptable_information->us_boost_power_limit = le16_to_cpu(powerplay_table->usBoostPowerLimit);
+	pptable_information->us_od_turbo_power_limit = le16_to_cpu(powerplay_table->usODTurboPowerLimit);
+	pptable_information->us_od_powersave_power_limit = le16_to_cpu(powerplay_table->usODPowerSavePowerLimit);
 
-	pptable_inक्रमmation->us_software_shutकरोwn_temp = le16_to_cpu(घातerplay_table->usSoftwareShutकरोwnTemp);
+	pptable_information->us_software_shutdown_temp = le16_to_cpu(powerplay_table->usSoftwareShutdownTemp);
 
-	hwmgr->platक्रमm_descriptor.TDPODLimit = le32_to_cpu(घातerplay_table->ODSettingsMax[ATOM_VEGA12_ODSETTING_POWERPERCENTAGE]);
+	hwmgr->platform_descriptor.TDPODLimit = le32_to_cpu(powerplay_table->ODSettingsMax[ATOM_VEGA12_ODSETTING_POWERPERCENTAGE]);
 
-	disable_घातer_control = 0;
-	अगर (!disable_घातer_control) अणु
-		/* enable TDP overdrive (PowerControl) feature as well अगर supported */
-		अगर (hwmgr->platक्रमm_descriptor.TDPODLimit)
-			phm_cap_set(hwmgr->platक्रमm_descriptor.platक्रमmCaps,
-				PHM_Platक्रमmCaps_PowerControl);
-	पूर्ण
+	disable_power_control = 0;
+	if (!disable_power_control) {
+		/* enable TDP overdrive (PowerControl) feature as well if supported */
+		if (hwmgr->platform_descriptor.TDPODLimit)
+			phm_cap_set(hwmgr->platform_descriptor.platformCaps,
+				PHM_PlatformCaps_PowerControl);
+	}
 
-	phm_copy_घड़ी_limits_array(hwmgr, &pptable_inक्रमmation->घातer_saving_घड़ी_max, घातerplay_table->PowerSavingClockMax, ATOM_VEGA12_PPCLOCK_COUNT);
-	phm_copy_घड़ी_limits_array(hwmgr, &pptable_inक्रमmation->घातer_saving_घड़ी_min, घातerplay_table->PowerSavingClockMin, ATOM_VEGA12_PPCLOCK_COUNT);
+	phm_copy_clock_limits_array(hwmgr, &pptable_information->power_saving_clock_max, powerplay_table->PowerSavingClockMax, ATOM_VEGA12_PPCLOCK_COUNT);
+	phm_copy_clock_limits_array(hwmgr, &pptable_information->power_saving_clock_min, powerplay_table->PowerSavingClockMin, ATOM_VEGA12_PPCLOCK_COUNT);
 
-	pptable_inक्रमmation->smc_pptable = kmemdup(&(घातerplay_table->smcPPTable),
-						   माप(PPTable_t), GFP_KERNEL);
-	अगर (pptable_inक्रमmation->smc_pptable == शून्य)
-		वापस -ENOMEM;
+	pptable_information->smc_pptable = kmemdup(&(powerplay_table->smcPPTable),
+						   sizeof(PPTable_t), GFP_KERNEL);
+	if (pptable_information->smc_pptable == NULL)
+		return -ENOMEM;
 
-	result = append_vbios_pptable(hwmgr, (pptable_inक्रमmation->smc_pptable));
+	result = append_vbios_pptable(hwmgr, (pptable_information->smc_pptable));
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक vega12_pp_tables_initialize(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	पूर्णांक result = 0;
-	स्थिर ATOM_Vega12_POWERPLAYTABLE *घातerplay_table;
+static int vega12_pp_tables_initialize(struct pp_hwmgr *hwmgr)
+{
+	int result = 0;
+	const ATOM_Vega12_POWERPLAYTABLE *powerplay_table;
 
-	hwmgr->pptable = kzalloc(माप(काष्ठा phm_ppt_v3_inक्रमmation), GFP_KERNEL);
-	PP_ASSERT_WITH_CODE((hwmgr->pptable != शून्य),
-		"Failed to allocate hwmgr->pptable!", वापस -ENOMEM);
+	hwmgr->pptable = kzalloc(sizeof(struct phm_ppt_v3_information), GFP_KERNEL);
+	PP_ASSERT_WITH_CODE((hwmgr->pptable != NULL),
+		"Failed to allocate hwmgr->pptable!", return -ENOMEM);
 
-	घातerplay_table = get_घातerplay_table(hwmgr);
-	PP_ASSERT_WITH_CODE((घातerplay_table != शून्य),
-		"Missing PowerPlay Table!", वापस -1);
+	powerplay_table = get_powerplay_table(hwmgr);
+	PP_ASSERT_WITH_CODE((powerplay_table != NULL),
+		"Missing PowerPlay Table!", return -1);
 
-	result = check_घातerplay_tables(hwmgr, घातerplay_table);
+	result = check_powerplay_tables(hwmgr, powerplay_table);
 	PP_ASSERT_WITH_CODE((result == 0),
-		"check_powerplay_tables failed", वापस result);
+		"check_powerplay_tables failed", return result);
 
-	result = set_platक्रमm_caps(hwmgr,
-			le32_to_cpu(घातerplay_table->ulPlatक्रमmCaps));
+	result = set_platform_caps(hwmgr,
+			le32_to_cpu(powerplay_table->ulPlatformCaps));
 	PP_ASSERT_WITH_CODE((result == 0),
-		"set_platform_caps failed", वापस result);
+		"set_platform_caps failed", return result);
 
-	result = init_घातerplay_table_inक्रमmation(hwmgr, घातerplay_table);
+	result = init_powerplay_table_information(hwmgr, powerplay_table);
 	PP_ASSERT_WITH_CODE((result == 0),
-		"init_powerplay_table_information failed", वापस result);
+		"init_powerplay_table_information failed", return result);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक vega12_pp_tables_uninitialize(काष्ठा pp_hwmgr *hwmgr)
-अणु
-	काष्ठा phm_ppt_v3_inक्रमmation *pp_table_info =
-			(काष्ठा phm_ppt_v3_inक्रमmation *)(hwmgr->pptable);
+static int vega12_pp_tables_uninitialize(struct pp_hwmgr *hwmgr)
+{
+	struct phm_ppt_v3_information *pp_table_info =
+			(struct phm_ppt_v3_information *)(hwmgr->pptable);
 
-	kमुक्त(pp_table_info->घातer_saving_घड़ी_max);
-	pp_table_info->घातer_saving_घड़ी_max = शून्य;
+	kfree(pp_table_info->power_saving_clock_max);
+	pp_table_info->power_saving_clock_max = NULL;
 
-	kमुक्त(pp_table_info->घातer_saving_घड़ी_min);
-	pp_table_info->घातer_saving_घड़ी_min = शून्य;
+	kfree(pp_table_info->power_saving_clock_min);
+	pp_table_info->power_saving_clock_min = NULL;
 
-	kमुक्त(pp_table_info->od_settings_max);
-	pp_table_info->od_settings_max = शून्य;
+	kfree(pp_table_info->od_settings_max);
+	pp_table_info->od_settings_max = NULL;
 
-	kमुक्त(pp_table_info->od_settings_min);
-	pp_table_info->od_settings_min = शून्य;
+	kfree(pp_table_info->od_settings_min);
+	pp_table_info->od_settings_min = NULL;
 
-	kमुक्त(pp_table_info->smc_pptable);
-	pp_table_info->smc_pptable = शून्य;
+	kfree(pp_table_info->smc_pptable);
+	pp_table_info->smc_pptable = NULL;
 
-	kमुक्त(hwmgr->pptable);
-	hwmgr->pptable = शून्य;
+	kfree(hwmgr->pptable);
+	hwmgr->pptable = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा pp_table_func vega12_pptable_funcs = अणु
+const struct pp_table_func vega12_pptable_funcs = {
 	.pptable_init = vega12_pp_tables_initialize,
 	.pptable_fini = vega12_pp_tables_uninitialize,
-पूर्ण;
+};
 
-#अगर 0
-अटल uपूर्णांक32_t make_classअगरication_flags(काष्ठा pp_hwmgr *hwmgr,
-		uपूर्णांक16_t classअगरication, uपूर्णांक16_t classअगरication2)
-अणु
-	uपूर्णांक32_t result = 0;
+#if 0
+static uint32_t make_classification_flags(struct pp_hwmgr *hwmgr,
+		uint16_t classification, uint16_t classification2)
+{
+	uint32_t result = 0;
 
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_BOOT)
-		result |= PP_StateClassअगरicationFlag_Boot;
+	if (classification & ATOM_PPLIB_CLASSIFICATION_BOOT)
+		result |= PP_StateClassificationFlag_Boot;
 
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_THERMAL)
-		result |= PP_StateClassअगरicationFlag_Thermal;
+	if (classification & ATOM_PPLIB_CLASSIFICATION_THERMAL)
+		result |= PP_StateClassificationFlag_Thermal;
 
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_LIMITEDPOWERSOURCE)
-		result |= PP_StateClassअगरicationFlag_LimitedPowerSource;
+	if (classification & ATOM_PPLIB_CLASSIFICATION_LIMITEDPOWERSOURCE)
+		result |= PP_StateClassificationFlag_LimitedPowerSource;
 
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_REST)
-		result |= PP_StateClassअगरicationFlag_Rest;
+	if (classification & ATOM_PPLIB_CLASSIFICATION_REST)
+		result |= PP_StateClassificationFlag_Rest;
 
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_FORCED)
-		result |= PP_StateClassअगरicationFlag_Forced;
+	if (classification & ATOM_PPLIB_CLASSIFICATION_FORCED)
+		result |= PP_StateClassificationFlag_Forced;
 
-	अगर (classअगरication & ATOM_PPLIB_CLASSIFICATION_ACPI)
-		result |= PP_StateClassअगरicationFlag_ACPI;
+	if (classification & ATOM_PPLIB_CLASSIFICATION_ACPI)
+		result |= PP_StateClassificationFlag_ACPI;
 
-	अगर (classअगरication2 & ATOM_PPLIB_CLASSIFICATION2_LIMITEDPOWERSOURCE_2)
-		result |= PP_StateClassअगरicationFlag_LimitedPowerSource_2;
+	if (classification2 & ATOM_PPLIB_CLASSIFICATION2_LIMITEDPOWERSOURCE_2)
+		result |= PP_StateClassificationFlag_LimitedPowerSource_2;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-पूर्णांक vega12_get_घातerplay_table_entry(काष्ठा pp_hwmgr *hwmgr,
-		uपूर्णांक32_t entry_index, काष्ठा pp_घातer_state *घातer_state,
-		पूर्णांक (*call_back_func)(काष्ठा pp_hwmgr *, व्योम *,
-				काष्ठा pp_घातer_state *, व्योम *, uपूर्णांक32_t))
-अणु
-	पूर्णांक result = 0;
-	स्थिर ATOM_Vega12_State_Array *state_arrays;
-	स्थिर ATOM_Vega12_State *state_entry;
-	स्थिर ATOM_Vega12_POWERPLAYTABLE *pp_table =
-			get_घातerplay_table(hwmgr);
+int vega12_get_powerplay_table_entry(struct pp_hwmgr *hwmgr,
+		uint32_t entry_index, struct pp_power_state *power_state,
+		int (*call_back_func)(struct pp_hwmgr *, void *,
+				struct pp_power_state *, void *, uint32_t))
+{
+	int result = 0;
+	const ATOM_Vega12_State_Array *state_arrays;
+	const ATOM_Vega12_State *state_entry;
+	const ATOM_Vega12_POWERPLAYTABLE *pp_table =
+			get_powerplay_table(hwmgr);
 
 	PP_ASSERT_WITH_CODE(pp_table, "Missing PowerPlay Table!",
-			वापस -1;);
-	घातer_state->classअगरication.bios_index = entry_index;
+			return -1;);
+	power_state->classification.bios_index = entry_index;
 
-	अगर (pp_table->sHeader.क्रमmat_revision >=
-			ATOM_Vega12_TABLE_REVISION_VEGA12) अणु
+	if (pp_table->sHeader.format_revision >=
+			ATOM_Vega12_TABLE_REVISION_VEGA12) {
 		state_arrays = (ATOM_Vega12_State_Array *)
-				(((अचिन्हित दीर्घ)pp_table) +
+				(((unsigned long)pp_table) +
 				le16_to_cpu(pp_table->usStateArrayOffset));
 
 		PP_ASSERT_WITH_CODE(pp_table->usStateArrayOffset > 0,
 				"Invalid PowerPlay Table State Array Offset.",
-				वापस -1);
+				return -1);
 		PP_ASSERT_WITH_CODE(state_arrays->ucNumEntries > 0,
 				"Invalid PowerPlay Table State Array.",
-				वापस -1);
+				return -1);
 		PP_ASSERT_WITH_CODE((entry_index <= state_arrays->ucNumEntries),
 				"Invalid PowerPlay Table State Array Entry.",
-				वापस -1);
+				return -1);
 
 		state_entry = &(state_arrays->states[entry_index]);
 
-		result = call_back_func(hwmgr, (व्योम *)state_entry, घातer_state,
-				(व्योम *)pp_table,
-				make_classअगरication_flags(hwmgr,
-					le16_to_cpu(state_entry->usClassअगरication),
-					le16_to_cpu(state_entry->usClassअगरication2)));
-	पूर्ण
+		result = call_back_func(hwmgr, (void *)state_entry, power_state,
+				(void *)pp_table,
+				make_classification_flags(hwmgr,
+					le16_to_cpu(state_entry->usClassification),
+					le16_to_cpu(state_entry->usClassification2)));
+	}
 
-	अगर (!result && (घातer_state->classअगरication.flags &
-			PP_StateClassअगरicationFlag_Boot))
-		result = hwmgr->hwmgr_func->patch_boot_state(hwmgr, &(घातer_state->hardware));
+	if (!result && (power_state->classification.flags &
+			PP_StateClassificationFlag_Boot))
+		result = hwmgr->hwmgr_func->patch_boot_state(hwmgr, &(power_state->hardware));
 
-	वापस result;
-पूर्ण
-#पूर्ण_अगर
+	return result;
+}
+#endif

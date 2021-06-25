@@ -1,8 +1,7 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 
-/* P9 gzip sample code क्रम demonstrating the P9 NX hardware पूर्णांकerface.
- * Not पूर्णांकended क्रम productive uses or क्रम perक्रमmance or compression
+/* P9 gzip sample code for demonstrating the P9 NX hardware interface.
+ * Not intended for productive uses or for performance or compression
  * ratio measurements.  For simplicity of demonstration, this sample
  * code compresses in to fixed Huffman blocks only (Deflate btype=1)
  * and has very simple memory management.  Dynamic Huffman blocks
@@ -12,13 +11,13 @@
  *
  * Copyright 2020 IBM Corp.
  *
- * https://github.com/libnxz/घातer-gzip क्रम zlib api and other utils
+ * https://github.com/libnxz/power-gzip for zlib api and other utils
  *
  * Author: Bulent Abali <abali@us.ibm.com>
  *
  * Definitions of acronyms used here. See
- * P9 NX Gzip Accelerator User's Manual क्रम details:
- * https://github.com/libnxz/घातer-gzip/blob/develop/करोc/घातer_nx_gzip_um.pdf
+ * P9 NX Gzip Accelerator User's Manual for details:
+ * https://github.com/libnxz/power-gzip/blob/develop/doc/power_nx_gzip_um.pdf
  *
  * adler/crc: 32 bit checksums appended to stream tail
  * ce:       completion extension
@@ -31,101 +30,101 @@
  * dh/fh:    dynamic and fixed huffman types
  * fc:       coprocessor function code
  * histlen:  history/dictionary length
- * history:  sliding winकरोw of up to 32KB of data
+ * history:  sliding window of up to 32KB of data
  * lzcount:  Deflate LZ symbol counts
- * rembytecnt: reमुख्यing byte count
+ * rembytecnt: remaining byte count
  * sfbt:     source final block type; last block's type during decomp
  * spbc:     source processed byte count
  * subc:     source unprocessed bit count
  * tebc:     target ending bit count; valid bits in the last byte
  * tpbc:     target processed byte count
- * vas:      भव accelerator चयन; the user mode पूर्णांकerface
+ * vas:      virtual accelerator switch; the user mode interface
  */
 
-#घोषणा _ISOC11_SOURCE	// For aligned_alloc()
-#घोषणा _DEFAULT_SOURCE	// For endian.h
+#define _ISOC11_SOURCE	// For aligned_alloc()
+#define _DEFAULT_SOURCE	// For endian.h
 
-#समावेश <मानकपन.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
-#समावेश <मानक_निवेशt.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <sys/समय.स>
-#समावेश <sys/fcntl.h>
-#समावेश <sys/mman.h>
-#समावेश <endian.h>
-#समावेश <bits/endian.h>
-#समावेश <sys/ioctl.h>
-#समावेश <निश्चित.स>
-#समावेश <त्रुटिसं.स>
-#समावेश <संकेत.स>
-#समावेश "nxu.h"
-#समावेश "nx.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <stdint.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/fcntl.h>
+#include <sys/mman.h>
+#include <endian.h>
+#include <bits/endian.h>
+#include <sys/ioctl.h>
+#include <assert.h>
+#include <errno.h>
+#include <signal.h>
+#include "nxu.h"
+#include "nx.h"
 
-पूर्णांक nx_dbg;
-खाता *nx_gzip_log;
+int nx_dbg;
+FILE *nx_gzip_log;
 
-#घोषणा NX_MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
-#घोषणा FNAME_MAX 1024
-#घोषणा FEXT ".nx.gz"
+#define NX_MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#define FNAME_MAX 1024
+#define FEXT ".nx.gz"
 
 /*
- * LZ counts वापसed in the user supplied nx_gzip_crb_cpb_t काष्ठाure.
+ * LZ counts returned in the user supplied nx_gzip_crb_cpb_t structure.
  */
-अटल पूर्णांक compress_fht_sample(अक्षर *src, uपूर्णांक32_t srclen, अक्षर *dst,
-				uपूर्णांक32_t dstlen, पूर्णांक with_count,
-				काष्ठा nx_gzip_crb_cpb_t *cmdp, व्योम *handle)
-अणु
-	uपूर्णांक32_t fc;
+static int compress_fht_sample(char *src, uint32_t srclen, char *dst,
+				uint32_t dstlen, int with_count,
+				struct nx_gzip_crb_cpb_t *cmdp, void *handle)
+{
+	uint32_t fc;
 
-	निश्चित(!!cmdp);
+	assert(!!cmdp);
 
 	put32(cmdp->crb, gzip_fc, 0);  /* clear */
 	fc = (with_count) ? GZIP_FC_COMPRESS_RESUME_FHT_COUNT :
 			    GZIP_FC_COMPRESS_RESUME_FHT;
 	putnn(cmdp->crb, gzip_fc, fc);
 	putnn(cmdp->cpb, in_histlen, 0); /* resuming with no history */
-	स_रखो((व्योम *) &cmdp->crb.csb, 0, माप(cmdp->crb.csb));
+	memset((void *) &cmdp->crb.csb, 0, sizeof(cmdp->crb.csb));
 
-	/* Section 6.6 programming notes; spbc may be in two dअगरferent
+	/* Section 6.6 programming notes; spbc may be in two different
 	 * places depending on FC.
 	 */
-	अगर (!with_count)
+	if (!with_count)
 		put32(cmdp->cpb, out_spbc_comp, 0);
-	अन्यथा
+	else
 		put32(cmdp->cpb, out_spbc_comp_with_count, 0);
 
 	/* Figure 6-3 6-4; CSB location */
 	put64(cmdp->crb, csb_address, 0);
 	put64(cmdp->crb, csb_address,
-	      (uपूर्णांक64_t) &cmdp->crb.csb & csb_address_mask);
+	      (uint64_t) &cmdp->crb.csb & csb_address_mask);
 
 	/* Source direct dde (scatter-gather list) */
 	clear_dde(cmdp->crb.source_dde);
 	putnn(cmdp->crb.source_dde, dde_count, 0);
 	put32(cmdp->crb.source_dde, ddebc, srclen);
-	put64(cmdp->crb.source_dde, ddead, (uपूर्णांक64_t) src);
+	put64(cmdp->crb.source_dde, ddead, (uint64_t) src);
 
 	/* Target direct dde (scatter-gather list) */
 	clear_dde(cmdp->crb.target_dde);
 	putnn(cmdp->crb.target_dde, dde_count, 0);
 	put32(cmdp->crb.target_dde, ddebc, dstlen);
-	put64(cmdp->crb.target_dde, ddead, (uपूर्णांक64_t) dst);
+	put64(cmdp->crb.target_dde, ddead, (uint64_t) dst);
 
 	/* Submit the crb, the job descriptor, to the accelerator */
-	वापस nxu_submit_job(cmdp, handle);
-पूर्ण
+	return nxu_submit_job(cmdp, handle);
+}
 
 /*
- * Prepares a blank no filename no बारtamp gzip header and वापसs
+ * Prepares a blank no filename no timestamp gzip header and returns
  * the number of bytes written to buf.
- * Gzip specअगरication at https://tools.ietf.org/hपंचांगl/rfc1952
+ * Gzip specification at https://tools.ietf.org/html/rfc1952
  */
-पूर्णांक gzip_header_blank(अक्षर *buf)
-अणु
-	पूर्णांक i = 0;
+int gzip_header_blank(char *buf)
+{
+	int i = 0;
 
 	buf[i++] = 0x1f; /* ID1 */
 	buf[i++] = 0x8b; /* ID2 */
@@ -138,130 +137,130 @@
 	buf[i++] = 0x04; /* XFL 4=fastest */
 	buf[i++] = 0x03; /* OS UNIX */
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-/* Caller must मुक्त the allocated buffer वापस nonzero on error. */
-पूर्णांक पढ़ो_alloc_input_file(अक्षर *fname, अक्षर **buf, माप_प्रकार *bufsize)
-अणु
-	काष्ठा stat statbuf;
-	खाता *fp;
-	अक्षर *p;
-	माप_प्रकार num_bytes;
+/* Caller must free the allocated buffer return nonzero on error. */
+int read_alloc_input_file(char *fname, char **buf, size_t *bufsize)
+{
+	struct stat statbuf;
+	FILE *fp;
+	char *p;
+	size_t num_bytes;
 
-	अगर (stat(fname, &statbuf)) अणु
-		लिखो_त्रुटि(fname);
-		वापस(-1);
-	पूर्ण
-	fp = ख_खोलो(fname, "r");
-	अगर (fp == शून्य) अणु
-		लिखो_त्रुटि(fname);
-		वापस(-1);
-	पूर्ण
-	निश्चित(शून्य != (p = (अक्षर *) दो_स्मृति(statbuf.st_size)));
-	num_bytes = ख_पढ़ो(p, 1, statbuf.st_size, fp);
-	अगर (ख_त्रुटि(fp) || (num_bytes != statbuf.st_size)) अणु
-		लिखो_त्रुटि(fname);
-		वापस(-1);
-	पूर्ण
+	if (stat(fname, &statbuf)) {
+		perror(fname);
+		return(-1);
+	}
+	fp = fopen(fname, "r");
+	if (fp == NULL) {
+		perror(fname);
+		return(-1);
+	}
+	assert(NULL != (p = (char *) malloc(statbuf.st_size)));
+	num_bytes = fread(p, 1, statbuf.st_size, fp);
+	if (ferror(fp) || (num_bytes != statbuf.st_size)) {
+		perror(fname);
+		return(-1);
+	}
 	*buf = p;
 	*bufsize = num_bytes;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Returns nonzero on error */
-पूर्णांक ग_लिखो_output_file(अक्षर *fname, अक्षर *buf, माप_प्रकार bufsize)
-अणु
-	खाता *fp;
-	माप_प्रकार num_bytes;
+int write_output_file(char *fname, char *buf, size_t bufsize)
+{
+	FILE *fp;
+	size_t num_bytes;
 
-	fp = ख_खोलो(fname, "w");
-	अगर (fp == शून्य) अणु
-		लिखो_त्रुटि(fname);
-		वापस(-1);
-	पूर्ण
-	num_bytes = ख_डालो(buf, 1, bufsize, fp);
-	अगर (ख_त्रुटि(fp) || (num_bytes != bufsize)) अणु
-		लिखो_त्रुटि(fname);
-		वापस(-1);
-	पूर्ण
-	ख_बंद(fp);
-	वापस 0;
-पूर्ण
+	fp = fopen(fname, "w");
+	if (fp == NULL) {
+		perror(fname);
+		return(-1);
+	}
+	num_bytes = fwrite(buf, 1, bufsize, fp);
+	if (ferror(fp) || (num_bytes != bufsize)) {
+		perror(fname);
+		return(-1);
+	}
+	fclose(fp);
+	return 0;
+}
 
 /*
  * Z_SYNC_FLUSH as described in zlib.h.
  * Returns number of appended bytes
  */
-पूर्णांक append_sync_flush(अक्षर *buf, पूर्णांक tebc, पूर्णांक final)
-अणु
-	uपूर्णांक64_t flush;
-	पूर्णांक shअगरt = (tebc & 0x7);
+int append_sync_flush(char *buf, int tebc, int final)
+{
+	uint64_t flush;
+	int shift = (tebc & 0x7);
 
-	अगर (tebc > 0) अणु
+	if (tebc > 0) {
 		/* Last byte is partially full */
 		buf = buf - 1;
-		*buf = *buf & (अचिन्हित अक्षर) ((1<<tebc)-1);
-	पूर्ण अन्यथा
+		*buf = *buf & (unsigned char) ((1<<tebc)-1);
+	} else
 		*buf = 0;
-	flush = ((0x1ULL & final) << shअगरt) | *buf;
-	shअगरt = shअगरt + 3; /* BFINAL and BTYPE written */
-	shअगरt = (shअगरt <= 8) ? 8 : 16;
-	flush |= (0xFFFF0000ULL) << shअगरt; /* Zero length block */
-	shअगरt = shअगरt + 32;
-	जबतक (shअगरt > 0) अणु
-		*buf++ = (अचिन्हित अक्षर) (flush & 0xffULL);
+	flush = ((0x1ULL & final) << shift) | *buf;
+	shift = shift + 3; /* BFINAL and BTYPE written */
+	shift = (shift <= 8) ? 8 : 16;
+	flush |= (0xFFFF0000ULL) << shift; /* Zero length block */
+	shift = shift + 32;
+	while (shift > 0) {
+		*buf++ = (unsigned char) (flush & 0xffULL);
 		flush = flush >> 8;
-		shअगरt = shअगरt - 8;
-	पूर्ण
-	वापस(((tebc > 5) || (tebc == 0)) ? 5 : 4);
-पूर्ण
+		shift = shift - 8;
+	}
+	return(((tebc > 5) || (tebc == 0)) ? 5 : 4);
+}
 
 /*
  * Final deflate block bit.  This call assumes the block
  * beginning is byte aligned.
  */
-अटल व्योम set_bfinal(व्योम *buf, पूर्णांक bfinal)
-अणु
-	अक्षर *b = buf;
+static void set_bfinal(void *buf, int bfinal)
+{
+	char *b = buf;
 
-	अगर (bfinal)
-		*b = *b | (अचिन्हित अक्षर) 0x01;
-	अन्यथा
-		*b = *b & (अचिन्हित अक्षर) 0xfe;
-पूर्ण
+	if (bfinal)
+		*b = *b | (unsigned char) 0x01;
+	else
+		*b = *b & (unsigned char) 0xfe;
+}
 
-पूर्णांक compress_file(पूर्णांक argc, अक्षर **argv, व्योम *handle)
-अणु
-	अक्षर *inbuf, *outbuf, *srcbuf, *dstbuf;
-	अक्षर outname[FNAME_MAX];
-	uपूर्णांक32_t srclen, dstlen;
-	uपूर्णांक32_t flushlen, chunk;
-	माप_प्रकार inlen, outlen, dsttotlen, srctotlen;
-	uपूर्णांक32_t crc, spbc, tpbc, tebc;
-	पूर्णांक lzcounts = 0;
-	पूर्णांक cc;
-	पूर्णांक num_hdr_bytes;
-	काष्ठा nx_gzip_crb_cpb_t *cmdp;
-	uपूर्णांक32_t pagelen = 65536;
-	पूर्णांक fault_tries = NX_MAX_FAULTS;
+int compress_file(int argc, char **argv, void *handle)
+{
+	char *inbuf, *outbuf, *srcbuf, *dstbuf;
+	char outname[FNAME_MAX];
+	uint32_t srclen, dstlen;
+	uint32_t flushlen, chunk;
+	size_t inlen, outlen, dsttotlen, srctotlen;
+	uint32_t crc, spbc, tpbc, tebc;
+	int lzcounts = 0;
+	int cc;
+	int num_hdr_bytes;
+	struct nx_gzip_crb_cpb_t *cmdp;
+	uint32_t pagelen = 65536;
+	int fault_tries = NX_MAX_FAULTS;
 
-	cmdp = (व्योम *)(uपूर्णांकptr_t)
-		aligned_alloc(माप(काष्ठा nx_gzip_crb_cpb_t),
-			      माप(काष्ठा nx_gzip_crb_cpb_t));
+	cmdp = (void *)(uintptr_t)
+		aligned_alloc(sizeof(struct nx_gzip_crb_cpb_t),
+			      sizeof(struct nx_gzip_crb_cpb_t));
 
-	अगर (argc != 2) अणु
-		ख_लिखो(मानक_त्रुटि, "usage: %s <fname>\n", argv[0]);
-		निकास(-1);
-	पूर्ण
-	अगर (पढ़ो_alloc_input_file(argv[1], &inbuf, &inlen))
-		निकास(-1);
-	ख_लिखो(मानक_त्रुटि, "file %s read, %ld bytes\n", argv[1], inlen);
+	if (argc != 2) {
+		fprintf(stderr, "usage: %s <fname>\n", argv[0]);
+		exit(-1);
+	}
+	if (read_alloc_input_file(argv[1], &inbuf, &inlen))
+		exit(-1);
+	fprintf(stderr, "file %s read, %ld bytes\n", argv[1], inlen);
 
-	/* Generous output buffer क्रम header/trailer */
+	/* Generous output buffer for header/trailer */
 	outlen = 2 * inlen + 1024;
 
-	निश्चित(शून्य != (outbuf = (अक्षर *)दो_स्मृति(outlen)));
+	assert(NULL != (outbuf = (char *)malloc(outlen)));
 	nxu_touch_pages(outbuf, outlen, pagelen, 1);
 
 	/* Compress piecemeal in smallish chunks */
@@ -277,16 +276,16 @@
 	srctotlen = 0;
 
 	/* Init the CRB, the coprocessor request block */
-	स_रखो(&cmdp->crb, 0, माप(cmdp->crb));
+	memset(&cmdp->crb, 0, sizeof(cmdp->crb));
 
 	/* Initial gzip crc32 */
 	put32(cmdp->cpb, in_crc, 0);
 
-	जबतक (inlen > 0) अणु
+	while (inlen > 0) {
 
 		/* Submit chunk size source data per job */
 		srclen = NX_MIN(chunk, inlen);
-		/* Supply large target in हाल data expands */
+		/* Supply large target in case data expands */
 		dstlen = NX_MIN(2*srclen, outlen);
 
 		/* Page faults are handled by the user code */
@@ -296,7 +295,7 @@
 		 * compression ratio and adjust both the src and dst
 		 * touch amounts.
 		 */
-		nxu_touch_pages(cmdp, माप(काष्ठा nx_gzip_crb_cpb_t), pagelen,
+		nxu_touch_pages(cmdp, sizeof(struct nx_gzip_crb_cpb_t), pagelen,
 				1);
 		nxu_touch_pages(srcbuf, srclen, pagelen, 0);
 		nxu_touch_pages(dstbuf, dstlen, pagelen, 1);
@@ -306,129 +305,129 @@
 			dstbuf, dstlen,
 			lzcounts, cmdp, handle);
 
-		अगर (cc != ERR_NX_OK && cc != ERR_NX_TPBC_GT_SPBC &&
-		    cc != ERR_NX_AT_FAULT) अणु
-			ख_लिखो(मानक_त्रुटि, "nx error: cc= %d\n", cc);
-			निकास(-1);
-		पूर्ण
+		if (cc != ERR_NX_OK && cc != ERR_NX_TPBC_GT_SPBC &&
+		    cc != ERR_NX_AT_FAULT) {
+			fprintf(stderr, "nx error: cc= %d\n", cc);
+			exit(-1);
+		}
 
 		/* Page faults are handled by the user code */
-		अगर (cc == ERR_NX_AT_FAULT) अणु
-			NXPRT(ख_लिखो(मानक_त्रुटि, "page fault: cc= %d, ", cc));
-			NXPRT(ख_लिखो(मानक_त्रुटि, "try= %d, fsa= %08llx\n",
+		if (cc == ERR_NX_AT_FAULT) {
+			NXPRT(fprintf(stderr, "page fault: cc= %d, ", cc));
+			NXPRT(fprintf(stderr, "try= %d, fsa= %08llx\n",
 				  fault_tries,
-				  (अचिन्हित दीर्घ दीर्घ) cmdp->crb.csb.fsaddr));
+				  (unsigned long long) cmdp->crb.csb.fsaddr));
 			fault_tries--;
-			अगर (fault_tries > 0) अणु
-				जारी;
-			पूर्ण अन्यथा अणु
-				ख_लिखो(मानक_त्रुटि, "error: cannot progress; ");
-				ख_लिखो(मानक_त्रुटि, "too many faults\n");
-				निकास(-1);
-			पूर्ण
-		पूर्ण
+			if (fault_tries > 0) {
+				continue;
+			} else {
+				fprintf(stderr, "error: cannot progress; ");
+				fprintf(stderr, "too many faults\n");
+				exit(-1);
+			}
+		}
 
-		fault_tries = NX_MAX_FAULTS; /* Reset क्रम the next chunk */
+		fault_tries = NX_MAX_FAULTS; /* Reset for the next chunk */
 
 		inlen     = inlen - srclen;
 		srcbuf    = srcbuf + srclen;
 		srctotlen = srctotlen + srclen;
 
-		/* Two possible locations क्रम spbc depending on the function
+		/* Two possible locations for spbc depending on the function
 		 * code.
 		 */
 		spbc = (!lzcounts) ? get32(cmdp->cpb, out_spbc_comp) :
 			get32(cmdp->cpb, out_spbc_comp_with_count);
-		निश्चित(spbc == srclen);
+		assert(spbc == srclen);
 
 		/* Target byte count */
 		tpbc = get32(cmdp->crb.csb, tpbc);
 		/* Target ending bit count */
 		tebc = getnn(cmdp->cpb, out_tebc);
-		NXPRT(ख_लिखो(मानक_त्रुटि, "compressed chunk %d ", spbc));
-		NXPRT(ख_लिखो(मानक_त्रुटि, "to %d bytes, tebc= %d\n", tpbc, tebc));
+		NXPRT(fprintf(stderr, "compressed chunk %d ", spbc));
+		NXPRT(fprintf(stderr, "to %d bytes, tebc= %d\n", tpbc, tebc));
 
-		अगर (inlen > 0) अणु /* More chunks to go */
+		if (inlen > 0) { /* More chunks to go */
 			set_bfinal(dstbuf, 0);
 			dstbuf    = dstbuf + tpbc;
 			dsttotlen = dsttotlen + tpbc;
 			outlen    = outlen - tpbc;
 			/* Round up to the next byte with a flush
-			 * block; करो not set the BFINAqL bit.
+			 * block; do not set the BFINAqL bit.
 			 */
 			flushlen  = append_sync_flush(dstbuf, tebc, 0);
 			dsttotlen = dsttotlen + flushlen;
 			outlen    = outlen - flushlen;
 			dstbuf    = dstbuf + flushlen;
-			NXPRT(ख_लिखो(मानक_त्रुटि, "added sync_flush %d bytes\n",
+			NXPRT(fprintf(stderr, "added sync_flush %d bytes\n",
 					flushlen));
-		पूर्ण अन्यथा अणु  /* Done */
+		} else {  /* Done */
 			/* Set the BFINAL bit of the last block per Deflate
-			 * specअगरication.
+			 * specification.
 			 */
 			set_bfinal(dstbuf, 1);
 			dstbuf    = dstbuf + tpbc;
 			dsttotlen = dsttotlen + tpbc;
 			outlen    = outlen - tpbc;
-		पूर्ण
+		}
 
-		/* Resuming crc32 क्रम the next chunk */
+		/* Resuming crc32 for the next chunk */
 		crc = get32(cmdp->cpb, out_crc);
 		put32(cmdp->cpb, in_crc, crc);
 		crc = be32toh(crc);
-	पूर्ण
+	}
 
 	/* Append crc32 and ISIZE to the end */
-	स_नकल(dstbuf, &crc, 4);
-	स_नकल(dstbuf+4, &srctotlen, 4);
+	memcpy(dstbuf, &crc, 4);
+	memcpy(dstbuf+4, &srctotlen, 4);
 	dsttotlen = dsttotlen + 8;
 	outlen    = outlen - 8;
 
-	निश्चित(FNAME_MAX > (म_माप(argv[1]) + म_माप(FEXT)));
-	म_नकल(outname, argv[1]);
-	म_जोड़ो(outname, FEXT);
-	अगर (ग_लिखो_output_file(outname, outbuf, dsttotlen)) अणु
-		ख_लिखो(मानक_त्रुटि, "write error: %s\n", outname);
-		निकास(-1);
-	पूर्ण
+	assert(FNAME_MAX > (strlen(argv[1]) + strlen(FEXT)));
+	strcpy(outname, argv[1]);
+	strcat(outname, FEXT);
+	if (write_output_file(outname, outbuf, dsttotlen)) {
+		fprintf(stderr, "write error: %s\n", outname);
+		exit(-1);
+	}
 
-	ख_लिखो(मानक_त्रुटि, "compressed %ld to %ld bytes total, ", srctotlen,
+	fprintf(stderr, "compressed %ld to %ld bytes total, ", srctotlen,
 		dsttotlen);
-	ख_लिखो(मानक_त्रुटि, "crc32 checksum = %08x\n", crc);
+	fprintf(stderr, "crc32 checksum = %08x\n", crc);
 
-	अगर (inbuf != शून्य)
-		मुक्त(inbuf);
+	if (inbuf != NULL)
+		free(inbuf);
 
-	अगर (outbuf != शून्य)
-		मुक्त(outbuf);
+	if (outbuf != NULL)
+		free(outbuf);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
-अणु
-	पूर्णांक rc;
-	काष्ठा sigaction act;
-	व्योम *handle;
+int main(int argc, char **argv)
+{
+	int rc;
+	struct sigaction act;
+	void *handle;
 
 	nx_dbg = 0;
-	nx_gzip_log = शून्य;
+	nx_gzip_log = NULL;
 	act.sa_handler = 0;
 	act.sa_sigaction = nxu_sigsegv_handler;
 	act.sa_flags = SA_SIGINFO;
 	act.sa_restorer = 0;
 	sigemptyset(&act.sa_mask);
-	sigaction(संक_अंश, &act, शून्य);
+	sigaction(SIGSEGV, &act, NULL);
 
 	handle = nx_function_begin(NX_FUNC_COMP_GZIP, 0);
-	अगर (!handle) अणु
-		ख_लिखो(मानक_त्रुटि, "Unable to init NX, errno %d\n", त्रुटि_सं);
-		निकास(-1);
-	पूर्ण
+	if (!handle) {
+		fprintf(stderr, "Unable to init NX, errno %d\n", errno);
+		exit(-1);
+	}
 
 	rc = compress_file(argc, argv, handle);
 
 	nx_function_end(handle);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}

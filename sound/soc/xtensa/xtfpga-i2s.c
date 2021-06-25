@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Xtfpga I2S controller driver
  *
  * Copyright (c) 2014 Cadence Design Systems Inc.
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <sound/pcm_params.h>
-#समावेश <sound/soc.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/pm_runtime.h>
+#include <sound/pcm_params.h>
+#include <sound/soc.h>
 
-#घोषणा DRV_NAME	"xtfpga-i2s"
+#define DRV_NAME	"xtfpga-i2s"
 
-#घोषणा XTFPGA_I2S_VERSION	0x00
-#घोषणा XTFPGA_I2S_CONFIG	0x04
-#घोषणा XTFPGA_I2S_INT_MASK	0x08
-#घोषणा XTFPGA_I2S_INT_STATUS	0x0c
-#घोषणा XTFPGA_I2S_CHAN0_DATA	0x10
-#घोषणा XTFPGA_I2S_CHAN1_DATA	0x14
-#घोषणा XTFPGA_I2S_CHAN2_DATA	0x18
-#घोषणा XTFPGA_I2S_CHAN3_DATA	0x1c
+#define XTFPGA_I2S_VERSION	0x00
+#define XTFPGA_I2S_CONFIG	0x04
+#define XTFPGA_I2S_INT_MASK	0x08
+#define XTFPGA_I2S_INT_STATUS	0x0c
+#define XTFPGA_I2S_CHAN0_DATA	0x10
+#define XTFPGA_I2S_CHAN1_DATA	0x14
+#define XTFPGA_I2S_CHAN2_DATA	0x18
+#define XTFPGA_I2S_CHAN3_DATA	0x1c
 
-#घोषणा XTFPGA_I2S_CONFIG_TX_ENABLE	0x1
-#घोषणा XTFPGA_I2S_CONFIG_INT_ENABLE	0x2
-#घोषणा XTFPGA_I2S_CONFIG_LEFT		0x4
-#घोषणा XTFPGA_I2S_CONFIG_RATIO_BASE	8
-#घोषणा XTFPGA_I2S_CONFIG_RATIO_MASK	0x0000ff00
-#घोषणा XTFPGA_I2S_CONFIG_RES_BASE	16
-#घोषणा XTFPGA_I2S_CONFIG_RES_MASK	0x003f0000
-#घोषणा XTFPGA_I2S_CONFIG_LEVEL_BASE	24
-#घोषणा XTFPGA_I2S_CONFIG_LEVEL_MASK	0x0f000000
-#घोषणा XTFPGA_I2S_CONFIG_CHANNEL_BASE	28
+#define XTFPGA_I2S_CONFIG_TX_ENABLE	0x1
+#define XTFPGA_I2S_CONFIG_INT_ENABLE	0x2
+#define XTFPGA_I2S_CONFIG_LEFT		0x4
+#define XTFPGA_I2S_CONFIG_RATIO_BASE	8
+#define XTFPGA_I2S_CONFIG_RATIO_MASK	0x0000ff00
+#define XTFPGA_I2S_CONFIG_RES_BASE	16
+#define XTFPGA_I2S_CONFIG_RES_MASK	0x003f0000
+#define XTFPGA_I2S_CONFIG_LEVEL_BASE	24
+#define XTFPGA_I2S_CONFIG_LEVEL_MASK	0x0f000000
+#define XTFPGA_I2S_CONFIG_CHANNEL_BASE	28
 
-#घोषणा XTFPGA_I2S_INT_UNDERRUN		0x1
-#घोषणा XTFPGA_I2S_INT_LEVEL		0x2
-#घोषणा XTFPGA_I2S_INT_VALID		0x3
+#define XTFPGA_I2S_INT_UNDERRUN		0x1
+#define XTFPGA_I2S_INT_LEVEL		0x2
+#define XTFPGA_I2S_INT_VALID		0x3
 
-#घोषणा XTFPGA_I2S_FIFO_SIZE		8192
+#define XTFPGA_I2S_FIFO_SIZE		8192
 
 /*
  * I2S controller operation:
@@ -49,245 +48,245 @@
  * Enabling TX: output 1 period of zeros (starting with left channel)
  * and then queued data.
  *
- * Level status and पूर्णांकerrupt: whenever FIFO level is below FIFO trigger,
- * level status is 1 and an IRQ is निश्चितed (अगर enabled).
+ * Level status and interrupt: whenever FIFO level is below FIFO trigger,
+ * level status is 1 and an IRQ is asserted (if enabled).
  *
- * Underrun status and पूर्णांकerrupt: whenever FIFO is empty, underrun status
- * is 1 and an IRQ is निश्चितed (अगर enabled).
+ * Underrun status and interrupt: whenever FIFO is empty, underrun status
+ * is 1 and an IRQ is asserted (if enabled).
  */
-काष्ठा xtfpga_i2s अणु
-	काष्ठा device *dev;
-	काष्ठा clk *clk;
-	काष्ठा regmap *regmap;
-	व्योम __iomem *regs;
+struct xtfpga_i2s {
+	struct device *dev;
+	struct clk *clk;
+	struct regmap *regmap;
+	void __iomem *regs;
 
-	/* current playback substream. शून्य अगर not playing.
+	/* current playback substream. NULL if not playing.
 	 *
-	 * Access to that field is synchronized between the पूर्णांकerrupt handler
+	 * Access to that field is synchronized between the interrupt handler
 	 * and userspace through RCU.
 	 *
-	 * Interrupt handler (thपढ़ोed part) करोes PIO on substream data in RCU
-	 * पढ़ो-side critical section. Trigger callback sets and clears the
-	 * poपूर्णांकer when the playback is started and stopped with
-	 * rcu_assign_poपूर्णांकer. When userspace is about to मुक्त the playback
-	 * stream in the pcm_बंद callback it synchronizes with the पूर्णांकerrupt
+	 * Interrupt handler (threaded part) does PIO on substream data in RCU
+	 * read-side critical section. Trigger callback sets and clears the
+	 * pointer when the playback is started and stopped with
+	 * rcu_assign_pointer. When userspace is about to free the playback
+	 * stream in the pcm_close callback it synchronizes with the interrupt
 	 * handler by means of synchronize_rcu call.
 	 */
-	काष्ठा snd_pcm_substream __rcu *tx_substream;
-	अचिन्हित (*tx_fn)(काष्ठा xtfpga_i2s *i2s,
-			  काष्ठा snd_pcm_runसमय *runसमय,
-			  अचिन्हित tx_ptr);
-	अचिन्हित tx_ptr; /* next frame index in the sample buffer */
+	struct snd_pcm_substream __rcu *tx_substream;
+	unsigned (*tx_fn)(struct xtfpga_i2s *i2s,
+			  struct snd_pcm_runtime *runtime,
+			  unsigned tx_ptr);
+	unsigned tx_ptr; /* next frame index in the sample buffer */
 
-	/* current fअगरo level estimate.
+	/* current fifo level estimate.
 	 * Doesn't have to be perfectly accurate, but must be not less than
-	 * the actual FIFO level in order to aव्योम stall on push attempt.
+	 * the actual FIFO level in order to avoid stall on push attempt.
 	 */
-	अचिन्हित tx_fअगरo_level;
+	unsigned tx_fifo_level;
 
-	/* FIFO level at which level पूर्णांकerrupt occurs */
-	अचिन्हित tx_fअगरo_low;
+	/* FIFO level at which level interrupt occurs */
+	unsigned tx_fifo_low;
 
 	/* maximal FIFO level */
-	अचिन्हित tx_fअगरo_high;
-पूर्ण;
+	unsigned tx_fifo_high;
+};
 
-अटल bool xtfpga_i2s_wr_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	वापस reg >= XTFPGA_I2S_CONFIG;
-पूर्ण
+static bool xtfpga_i2s_wr_reg(struct device *dev, unsigned int reg)
+{
+	return reg >= XTFPGA_I2S_CONFIG;
+}
 
-अटल bool xtfpga_i2s_rd_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	वापस reg < XTFPGA_I2S_CHAN0_DATA;
-पूर्ण
+static bool xtfpga_i2s_rd_reg(struct device *dev, unsigned int reg)
+{
+	return reg < XTFPGA_I2S_CHAN0_DATA;
+}
 
-अटल bool xtfpga_i2s_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	वापस reg == XTFPGA_I2S_INT_STATUS;
-पूर्ण
+static bool xtfpga_i2s_volatile_reg(struct device *dev, unsigned int reg)
+{
+	return reg == XTFPGA_I2S_INT_STATUS;
+}
 
-अटल स्थिर काष्ठा regmap_config xtfpga_i2s_regmap_config = अणु
+static const struct regmap_config xtfpga_i2s_regmap_config = {
 	.reg_bits = 32,
 	.reg_stride = 4,
 	.val_bits = 32,
-	.max_रेजिस्टर = XTFPGA_I2S_CHAN3_DATA,
-	.ग_लिखोable_reg = xtfpga_i2s_wr_reg,
-	.पढ़ोable_reg = xtfpga_i2s_rd_reg,
-	.अस्थिर_reg = xtfpga_i2s_अस्थिर_reg,
+	.max_register = XTFPGA_I2S_CHAN3_DATA,
+	.writeable_reg = xtfpga_i2s_wr_reg,
+	.readable_reg = xtfpga_i2s_rd_reg,
+	.volatile_reg = xtfpga_i2s_volatile_reg,
 	.cache_type = REGCACHE_FLAT,
-पूर्ण;
+};
 
-/* Generate functions that करो PIO from TX DMA area to FIFO क्रम all supported
- * stream क्रमmats.
+/* Generate functions that do PIO from TX DMA area to FIFO for all supported
+ * stream formats.
  * Functions will be called xtfpga_pcm_tx_<channels>x<sample bits>, e.g.
- * xtfpga_pcm_tx_2x16 क्रम 16-bit stereo.
+ * xtfpga_pcm_tx_2x16 for 16-bit stereo.
  *
  * FIFO consists of 32-bit words, one word per channel, always 2 channels.
- * If I2S पूर्णांकerface is configured with smaller sample resolution, only
+ * If I2S interface is configured with smaller sample resolution, only
  * the LSB of each word is used.
  */
-#घोषणा xtfpga_pcm_tx_fn(channels, sample_bits) \
-अटल अचिन्हित xtfpga_pcm_tx_##channels##x##sample_bits( \
-	काष्ठा xtfpga_i2s *i2s, काष्ठा snd_pcm_runसमय *runसमय, \
-	अचिन्हित tx_ptr) \
-अणु \
-	स्थिर u##sample_bits (*p)[channels] = \
-		(व्योम *)runसमय->dma_area; \
+#define xtfpga_pcm_tx_fn(channels, sample_bits) \
+static unsigned xtfpga_pcm_tx_##channels##x##sample_bits( \
+	struct xtfpga_i2s *i2s, struct snd_pcm_runtime *runtime, \
+	unsigned tx_ptr) \
+{ \
+	const u##sample_bits (*p)[channels] = \
+		(void *)runtime->dma_area; \
 \
-	क्रम (; i2s->tx_fअगरo_level < i2s->tx_fअगरo_high; \
-	     i2s->tx_fअगरo_level += 2) अणु \
-		ioग_लिखो32(p[tx_ptr][0], \
+	for (; i2s->tx_fifo_level < i2s->tx_fifo_high; \
+	     i2s->tx_fifo_level += 2) { \
+		iowrite32(p[tx_ptr][0], \
 			  i2s->regs + XTFPGA_I2S_CHAN0_DATA); \
-		ioग_लिखो32(p[tx_ptr][channels - 1], \
+		iowrite32(p[tx_ptr][channels - 1], \
 			  i2s->regs + XTFPGA_I2S_CHAN0_DATA); \
-		अगर (++tx_ptr >= runसमय->buffer_size) \
+		if (++tx_ptr >= runtime->buffer_size) \
 			tx_ptr = 0; \
-	पूर्ण \
-	वापस tx_ptr; \
-पूर्ण
+	} \
+	return tx_ptr; \
+}
 
 xtfpga_pcm_tx_fn(1, 16)
 xtfpga_pcm_tx_fn(2, 16)
 xtfpga_pcm_tx_fn(1, 32)
 xtfpga_pcm_tx_fn(2, 32)
 
-#अघोषित xtfpga_pcm_tx_fn
+#undef xtfpga_pcm_tx_fn
 
-अटल bool xtfpga_pcm_push_tx(काष्ठा xtfpga_i2s *i2s)
-अणु
-	काष्ठा snd_pcm_substream *tx_substream;
+static bool xtfpga_pcm_push_tx(struct xtfpga_i2s *i2s)
+{
+	struct snd_pcm_substream *tx_substream;
 	bool tx_active;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	tx_substream = rcu_dereference(i2s->tx_substream);
 	tx_active = tx_substream && snd_pcm_running(tx_substream);
-	अगर (tx_active) अणु
-		अचिन्हित tx_ptr = READ_ONCE(i2s->tx_ptr);
-		अचिन्हित new_tx_ptr = i2s->tx_fn(i2s, tx_substream->runसमय,
+	if (tx_active) {
+		unsigned tx_ptr = READ_ONCE(i2s->tx_ptr);
+		unsigned new_tx_ptr = i2s->tx_fn(i2s, tx_substream->runtime,
 						 tx_ptr);
 
 		cmpxchg(&i2s->tx_ptr, tx_ptr, new_tx_ptr);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस tx_active;
-पूर्ण
+	return tx_active;
+}
 
-अटल व्योम xtfpga_pcm_refill_fअगरo(काष्ठा xtfpga_i2s *i2s)
-अणु
-	अचिन्हित पूर्णांक_status;
-	अचिन्हित i;
+static void xtfpga_pcm_refill_fifo(struct xtfpga_i2s *i2s)
+{
+	unsigned int_status;
+	unsigned i;
 
-	regmap_पढ़ो(i2s->regmap, XTFPGA_I2S_INT_STATUS,
-		    &पूर्णांक_status);
+	regmap_read(i2s->regmap, XTFPGA_I2S_INT_STATUS,
+		    &int_status);
 
-	क्रम (i = 0; i < 2; ++i) अणु
+	for (i = 0; i < 2; ++i) {
 		bool tx_active = xtfpga_pcm_push_tx(i2s);
 
-		regmap_ग_लिखो(i2s->regmap, XTFPGA_I2S_INT_STATUS,
+		regmap_write(i2s->regmap, XTFPGA_I2S_INT_STATUS,
 			     XTFPGA_I2S_INT_VALID);
-		अगर (tx_active)
-			regmap_पढ़ो(i2s->regmap, XTFPGA_I2S_INT_STATUS,
-				    &पूर्णांक_status);
+		if (tx_active)
+			regmap_read(i2s->regmap, XTFPGA_I2S_INT_STATUS,
+				    &int_status);
 
-		अगर (!tx_active ||
-		    !(पूर्णांक_status & XTFPGA_I2S_INT_LEVEL))
-			अवरोध;
+		if (!tx_active ||
+		    !(int_status & XTFPGA_I2S_INT_LEVEL))
+			break;
 
-		/* After the push the level IRQ is still निश्चितed,
-		 * means FIFO level is below tx_fअगरo_low. Estimate
-		 * it as tx_fअगरo_low.
+		/* After the push the level IRQ is still asserted,
+		 * means FIFO level is below tx_fifo_low. Estimate
+		 * it as tx_fifo_low.
 		 */
-		i2s->tx_fअगरo_level = i2s->tx_fअगरo_low;
-	पूर्ण
+		i2s->tx_fifo_level = i2s->tx_fifo_low;
+	}
 
-	अगर (!(पूर्णांक_status & XTFPGA_I2S_INT_LEVEL))
-		regmap_ग_लिखो(i2s->regmap, XTFPGA_I2S_INT_MASK,
+	if (!(int_status & XTFPGA_I2S_INT_LEVEL))
+		regmap_write(i2s->regmap, XTFPGA_I2S_INT_MASK,
 			     XTFPGA_I2S_INT_VALID);
-	अन्यथा अगर (!(पूर्णांक_status & XTFPGA_I2S_INT_UNDERRUN))
-		regmap_ग_लिखो(i2s->regmap, XTFPGA_I2S_INT_MASK,
+	else if (!(int_status & XTFPGA_I2S_INT_UNDERRUN))
+		regmap_write(i2s->regmap, XTFPGA_I2S_INT_MASK,
 			     XTFPGA_I2S_INT_UNDERRUN);
 
-	अगर (!(पूर्णांक_status & XTFPGA_I2S_INT_UNDERRUN))
+	if (!(int_status & XTFPGA_I2S_INT_UNDERRUN))
 		regmap_update_bits(i2s->regmap, XTFPGA_I2S_CONFIG,
 				   XTFPGA_I2S_CONFIG_INT_ENABLE |
 				   XTFPGA_I2S_CONFIG_TX_ENABLE,
 				   XTFPGA_I2S_CONFIG_INT_ENABLE |
 				   XTFPGA_I2S_CONFIG_TX_ENABLE);
-	अन्यथा
+	else
 		regmap_update_bits(i2s->regmap, XTFPGA_I2S_CONFIG,
 				   XTFPGA_I2S_CONFIG_INT_ENABLE |
 				   XTFPGA_I2S_CONFIG_TX_ENABLE, 0);
-पूर्ण
+}
 
-अटल irqवापस_t xtfpga_i2s_thपढ़ोed_irq_handler(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा xtfpga_i2s *i2s = dev_id;
-	काष्ठा snd_pcm_substream *tx_substream;
-	अचिन्हित config, पूर्णांक_status, पूर्णांक_mask;
+static irqreturn_t xtfpga_i2s_threaded_irq_handler(int irq, void *dev_id)
+{
+	struct xtfpga_i2s *i2s = dev_id;
+	struct snd_pcm_substream *tx_substream;
+	unsigned config, int_status, int_mask;
 
-	regmap_पढ़ो(i2s->regmap, XTFPGA_I2S_CONFIG, &config);
-	regmap_पढ़ो(i2s->regmap, XTFPGA_I2S_INT_MASK, &पूर्णांक_mask);
-	regmap_पढ़ो(i2s->regmap, XTFPGA_I2S_INT_STATUS, &पूर्णांक_status);
+	regmap_read(i2s->regmap, XTFPGA_I2S_CONFIG, &config);
+	regmap_read(i2s->regmap, XTFPGA_I2S_INT_MASK, &int_mask);
+	regmap_read(i2s->regmap, XTFPGA_I2S_INT_STATUS, &int_status);
 
-	अगर (!(config & XTFPGA_I2S_CONFIG_INT_ENABLE) ||
-	    !(पूर्णांक_status & पूर्णांक_mask & XTFPGA_I2S_INT_VALID))
-		वापस IRQ_NONE;
+	if (!(config & XTFPGA_I2S_CONFIG_INT_ENABLE) ||
+	    !(int_status & int_mask & XTFPGA_I2S_INT_VALID))
+		return IRQ_NONE;
 
-	/* Update FIFO level estimate in accordance with पूर्णांकerrupt status
-	 * रेजिस्टर.
+	/* Update FIFO level estimate in accordance with interrupt status
+	 * register.
 	 */
-	अगर (पूर्णांक_status & XTFPGA_I2S_INT_UNDERRUN) अणु
-		i2s->tx_fअगरo_level = 0;
+	if (int_status & XTFPGA_I2S_INT_UNDERRUN) {
+		i2s->tx_fifo_level = 0;
 		regmap_update_bits(i2s->regmap, XTFPGA_I2S_CONFIG,
 				   XTFPGA_I2S_CONFIG_TX_ENABLE, 0);
-	पूर्ण अन्यथा अणु
-		/* The FIFO isn't empty, but is below tx_fअगरo_low. Estimate
-		 * it as tx_fअगरo_low.
+	} else {
+		/* The FIFO isn't empty, but is below tx_fifo_low. Estimate
+		 * it as tx_fifo_low.
 		 */
-		i2s->tx_fअगरo_level = i2s->tx_fअगरo_low;
-	पूर्ण
+		i2s->tx_fifo_level = i2s->tx_fifo_low;
+	}
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	tx_substream = rcu_dereference(i2s->tx_substream);
 
-	अगर (tx_substream && snd_pcm_running(tx_substream)) अणु
+	if (tx_substream && snd_pcm_running(tx_substream)) {
 		snd_pcm_period_elapsed(tx_substream);
-		अगर (पूर्णांक_status & XTFPGA_I2S_INT_UNDERRUN)
+		if (int_status & XTFPGA_I2S_INT_UNDERRUN)
 			dev_dbg_ratelimited(i2s->dev, "%s: underrun\n",
 					    __func__);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	/* Refill FIFO, update allowed IRQ reasons, enable IRQ अगर FIFO is
+	/* Refill FIFO, update allowed IRQ reasons, enable IRQ if FIFO is
 	 * not empty.
 	 */
-	xtfpga_pcm_refill_fअगरo(i2s);
+	xtfpga_pcm_refill_fifo(i2s);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक xtfpga_i2s_startup(काष्ठा snd_pcm_substream *substream,
-			      काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा xtfpga_i2s *i2s = snd_soc_dai_get_drvdata(dai);
+static int xtfpga_i2s_startup(struct snd_pcm_substream *substream,
+			      struct snd_soc_dai *dai)
+{
+	struct xtfpga_i2s *i2s = snd_soc_dai_get_drvdata(dai);
 
 	snd_soc_dai_set_dma_data(dai, substream, i2s);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xtfpga_i2s_hw_params(काष्ठा snd_pcm_substream *substream,
-				काष्ठा snd_pcm_hw_params *params,
-				काष्ठा snd_soc_dai *dai)
-अणु
-	काष्ठा xtfpga_i2s *i2s = snd_soc_dai_get_drvdata(dai);
-	अचिन्हित srate = params_rate(params);
-	अचिन्हित channels = params_channels(params);
-	अचिन्हित period_size = params_period_size(params);
-	अचिन्हित sample_size = snd_pcm_क्रमmat_width(params_क्रमmat(params));
-	अचिन्हित freq, ratio, level;
-	पूर्णांक err;
+static int xtfpga_i2s_hw_params(struct snd_pcm_substream *substream,
+				struct snd_pcm_hw_params *params,
+				struct snd_soc_dai *dai)
+{
+	struct xtfpga_i2s *i2s = snd_soc_dai_get_drvdata(dai);
+	unsigned srate = params_rate(params);
+	unsigned channels = params_channels(params);
+	unsigned period_size = params_period_size(params);
+	unsigned sample_size = snd_pcm_format_width(params_format(params));
+	unsigned freq, ratio, level;
+	int err;
 
 	regmap_update_bits(i2s->regmap, XTFPGA_I2S_CONFIG,
 			   XTFPGA_I2S_CONFIG_RES_MASK,
@@ -295,14 +294,14 @@ xtfpga_pcm_tx_fn(2, 32)
 
 	freq = 256 * srate;
 	err = clk_set_rate(i2s->clk, freq);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	/* ratio field of the config रेजिस्टर controls MCLK->I2S घड़ी
-	 * derivation: I2S घड़ी = MCLK / (2 * (ratio + 2)).
+	/* ratio field of the config register controls MCLK->I2S clock
+	 * derivation: I2S clock = MCLK / (2 * (ratio + 2)).
 	 *
-	 * So with MCLK = 256 * sample rate ratio is 0 क्रम 32 bit stereo
-	 * and 2 क्रम 16 bit stereo.
+	 * So with MCLK = 256 * sample rate ratio is 0 for 32 bit stereo
+	 * and 2 for 16 bit stereo.
 	 */
 	ratio = (freq - (srate * sample_size * 8)) /
 		(srate * sample_size * 4);
@@ -311,16 +310,16 @@ xtfpga_pcm_tx_fn(2, 32)
 			   XTFPGA_I2S_CONFIG_RATIO_MASK,
 			   ratio << XTFPGA_I2S_CONFIG_RATIO_BASE);
 
-	i2s->tx_fअगरo_low = XTFPGA_I2S_FIFO_SIZE / 2;
+	i2s->tx_fifo_low = XTFPGA_I2S_FIFO_SIZE / 2;
 
-	/* period_size * 2: FIFO always माला_लो 2 samples per frame */
-	क्रम (level = 1;
-	     i2s->tx_fअगरo_low / 2 >= period_size * 2 &&
+	/* period_size * 2: FIFO always gets 2 samples per frame */
+	for (level = 1;
+	     i2s->tx_fifo_low / 2 >= period_size * 2 &&
 	     level < (XTFPGA_I2S_CONFIG_LEVEL_MASK >>
 		      XTFPGA_I2S_CONFIG_LEVEL_BASE); ++level)
-		i2s->tx_fअगरo_low /= 2;
+		i2s->tx_fifo_low /= 2;
 
-	i2s->tx_fअगरo_high = 2 * i2s->tx_fअगरo_low;
+	i2s->tx_fifo_high = 2 * i2s->tx_fifo_low;
 
 	regmap_update_bits(i2s->regmap, XTFPGA_I2S_CONFIG,
 			   XTFPGA_I2S_CONFIG_LEVEL_MASK,
@@ -332,29 +331,29 @@ xtfpga_pcm_tx_fn(2, 32)
 	dev_dbg(i2s->dev, "%s freq: %u, ratio: %u, level: %u\n",
 		__func__, freq, ratio, level);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xtfpga_i2s_set_fmt(काष्ठा snd_soc_dai *cpu_dai,
-			      अचिन्हित पूर्णांक fmt)
-अणु
-	अगर ((fmt & SND_SOC_DAIFMT_INV_MASK) != SND_SOC_DAIFMT_NB_NF)
-		वापस -EINVAL;
-	अगर ((fmt & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS)
-		वापस -EINVAL;
-	अगर ((fmt & SND_SOC_DAIFMT_FORMAT_MASK) != SND_SOC_DAIFMT_I2S)
-		वापस -EINVAL;
+static int xtfpga_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
+			      unsigned int fmt)
+{
+	if ((fmt & SND_SOC_DAIFMT_INV_MASK) != SND_SOC_DAIFMT_NB_NF)
+		return -EINVAL;
+	if ((fmt & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS)
+		return -EINVAL;
+	if ((fmt & SND_SOC_DAIFMT_FORMAT_MASK) != SND_SOC_DAIFMT_I2S)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* PCM */
 
-अटल स्थिर काष्ठा snd_pcm_hardware xtfpga_pcm_hardware = अणु
+static const struct snd_pcm_hardware xtfpga_pcm_hardware = {
 	.info = SNDRV_PCM_INFO_INTERLEAVED |
 		SNDRV_PCM_INFO_MMAP_VALID |
 		SNDRV_PCM_INFO_BLOCK_TRANSFER,
-	.क्रमmats		= SNDRV_PCM_FMTBIT_S16_LE |
+	.formats		= SNDRV_PCM_FMTBIT_S16_LE |
 				  SNDRV_PCM_FMTBIT_S32_LE,
 	.channels_min		= 1,
 	.channels_max		= 2,
@@ -363,288 +362,288 @@ xtfpga_pcm_tx_fn(2, 32)
 	.periods_min		= 2,
 	.periods_max		= XTFPGA_I2S_FIFO_SIZE * 8 / 2,
 	.buffer_bytes_max	= XTFPGA_I2S_FIFO_SIZE * 8,
-	.fअगरo_size		= 16,
-पूर्ण;
+	.fifo_size		= 16,
+};
 
-अटल पूर्णांक xtfpga_pcm_खोलो(काष्ठा snd_soc_component *component,
-			   काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
-	व्योम *p;
+static int xtfpga_pcm_open(struct snd_soc_component *component,
+			   struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+	void *p;
 
-	snd_soc_set_runसमय_hwparams(substream, &xtfpga_pcm_hardware);
+	snd_soc_set_runtime_hwparams(substream, &xtfpga_pcm_hardware);
 	p = snd_soc_dai_get_dma_data(asoc_rtd_to_cpu(rtd, 0), substream);
-	runसमय->निजी_data = p;
+	runtime->private_data = p;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xtfpga_pcm_बंद(काष्ठा snd_soc_component *component,
-			    काष्ठा snd_pcm_substream *substream)
-अणु
+static int xtfpga_pcm_close(struct snd_soc_component *component,
+			    struct snd_pcm_substream *substream)
+{
 	synchronize_rcu();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xtfpga_pcm_hw_params(काष्ठा snd_soc_component *component,
-				काष्ठा snd_pcm_substream *substream,
-				काष्ठा snd_pcm_hw_params *hw_params)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा xtfpga_i2s *i2s = runसमय->निजी_data;
-	अचिन्हित channels = params_channels(hw_params);
+static int xtfpga_pcm_hw_params(struct snd_soc_component *component,
+				struct snd_pcm_substream *substream,
+				struct snd_pcm_hw_params *hw_params)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct xtfpga_i2s *i2s = runtime->private_data;
+	unsigned channels = params_channels(hw_params);
 
-	चयन (channels) अणु
-	हाल 1:
-	हाल 2:
-		अवरोध;
+	switch (channels) {
+	case 1:
+	case 2:
+		break;
 
-	शेष:
-		वापस -EINVAL;
+	default:
+		return -EINVAL;
 
-	पूर्ण
+	}
 
-	चयन (params_क्रमmat(hw_params)) अणु
-	हाल SNDRV_PCM_FORMAT_S16_LE:
+	switch (params_format(hw_params)) {
+	case SNDRV_PCM_FORMAT_S16_LE:
 		i2s->tx_fn = (channels == 1) ?
 			xtfpga_pcm_tx_1x16 :
 			xtfpga_pcm_tx_2x16;
-		अवरोध;
+		break;
 
-	हाल SNDRV_PCM_FORMAT_S32_LE:
+	case SNDRV_PCM_FORMAT_S32_LE:
 		i2s->tx_fn = (channels == 1) ?
 			xtfpga_pcm_tx_1x32 :
 			xtfpga_pcm_tx_2x32;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xtfpga_pcm_trigger(काष्ठा snd_soc_component *component,
-			      काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा xtfpga_i2s *i2s = runसमय->निजी_data;
+static int xtfpga_pcm_trigger(struct snd_soc_component *component,
+			      struct snd_pcm_substream *substream, int cmd)
+{
+	int ret = 0;
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct xtfpga_i2s *i2s = runtime->private_data;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
-	हाल SNDRV_PCM_TRIGGER_RESUME:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
+	case SNDRV_PCM_TRIGGER_RESUME:
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		WRITE_ONCE(i2s->tx_ptr, 0);
-		rcu_assign_poपूर्णांकer(i2s->tx_substream, substream);
-		xtfpga_pcm_refill_fअगरo(i2s);
-		अवरोध;
+		rcu_assign_pointer(i2s->tx_substream, substream);
+		xtfpga_pcm_refill_fifo(i2s);
+		break;
 
-	हाल SNDRV_PCM_TRIGGER_STOP:
-	हाल SNDRV_PCM_TRIGGER_SUSPEND:
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		rcu_assign_poपूर्णांकer(i2s->tx_substream, शून्य);
-		अवरोध;
+	case SNDRV_PCM_TRIGGER_STOP:
+	case SNDRV_PCM_TRIGGER_SUSPEND:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		rcu_assign_pointer(i2s->tx_substream, NULL);
+		break;
 
-	शेष:
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	}
+	return ret;
+}
 
-अटल snd_pcm_uframes_t xtfpga_pcm_poपूर्णांकer(काष्ठा snd_soc_component *component,
-					    काष्ठा snd_pcm_substream *substream)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
-	काष्ठा xtfpga_i2s *i2s = runसमय->निजी_data;
+static snd_pcm_uframes_t xtfpga_pcm_pointer(struct snd_soc_component *component,
+					    struct snd_pcm_substream *substream)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct xtfpga_i2s *i2s = runtime->private_data;
 	snd_pcm_uframes_t pos = READ_ONCE(i2s->tx_ptr);
 
-	वापस pos < runसमय->buffer_size ? pos : 0;
-पूर्ण
+	return pos < runtime->buffer_size ? pos : 0;
+}
 
-अटल पूर्णांक xtfpga_pcm_new(काष्ठा snd_soc_component *component,
-			  काष्ठा snd_soc_pcm_runसमय *rtd)
-अणु
-	काष्ठा snd_card *card = rtd->card->snd_card;
-	माप_प्रकार size = xtfpga_pcm_hardware.buffer_bytes_max;
+static int xtfpga_pcm_new(struct snd_soc_component *component,
+			  struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_card *card = rtd->card->snd_card;
+	size_t size = xtfpga_pcm_hardware.buffer_bytes_max;
 
 	snd_pcm_set_managed_buffer_all(rtd->pcm, SNDRV_DMA_TYPE_DEV,
 				       card->dev, size, size);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_soc_component_driver xtfpga_i2s_component = अणु
+static const struct snd_soc_component_driver xtfpga_i2s_component = {
 	.name		= DRV_NAME,
-	.खोलो		= xtfpga_pcm_खोलो,
-	.बंद		= xtfpga_pcm_बंद,
+	.open		= xtfpga_pcm_open,
+	.close		= xtfpga_pcm_close,
 	.hw_params	= xtfpga_pcm_hw_params,
 	.trigger	= xtfpga_pcm_trigger,
-	.poपूर्णांकer	= xtfpga_pcm_poपूर्णांकer,
-	.pcm_स्थिरruct	= xtfpga_pcm_new,
-पूर्ण;
+	.pointer	= xtfpga_pcm_pointer,
+	.pcm_construct	= xtfpga_pcm_new,
+};
 
-अटल स्थिर काष्ठा snd_soc_dai_ops xtfpga_i2s_dai_ops = अणु
+static const struct snd_soc_dai_ops xtfpga_i2s_dai_ops = {
 	.startup	= xtfpga_i2s_startup,
 	.hw_params      = xtfpga_i2s_hw_params,
 	.set_fmt        = xtfpga_i2s_set_fmt,
-पूर्ण;
+};
 
-अटल काष्ठा snd_soc_dai_driver xtfpga_i2s_dai[] = अणु
-	अणु
+static struct snd_soc_dai_driver xtfpga_i2s_dai[] = {
+	{
 		.name = "xtfpga-i2s",
 		.id = 0,
-		.playback = अणु
+		.playback = {
 			.channels_min = 1,
 			.channels_max = 2,
 			.rates = SNDRV_PCM_RATE_8000_96000,
-			.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE |
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
 				   SNDRV_PCM_FMTBIT_S32_LE,
-		पूर्ण,
+		},
 		.ops = &xtfpga_i2s_dai_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक xtfpga_i2s_runसमय_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा xtfpga_i2s *i2s = dev_get_drvdata(dev);
+static int xtfpga_i2s_runtime_suspend(struct device *dev)
+{
+	struct xtfpga_i2s *i2s = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(i2s->clk);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xtfpga_i2s_runसमय_resume(काष्ठा device *dev)
-अणु
-	काष्ठा xtfpga_i2s *i2s = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int xtfpga_i2s_runtime_resume(struct device *dev)
+{
+	struct xtfpga_i2s *i2s = dev_get_drvdata(dev);
+	int ret;
 
 	ret = clk_prepare_enable(i2s->clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "clk_prepare_enable failed: %d\n", ret);
-		वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return ret;
+	}
+	return 0;
+}
 
-अटल पूर्णांक xtfpga_i2s_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा xtfpga_i2s *i2s;
-	पूर्णांक err, irq;
+static int xtfpga_i2s_probe(struct platform_device *pdev)
+{
+	struct xtfpga_i2s *i2s;
+	int err, irq;
 
-	i2s = devm_kzalloc(&pdev->dev, माप(*i2s), GFP_KERNEL);
-	अगर (!i2s) अणु
+	i2s = devm_kzalloc(&pdev->dev, sizeof(*i2s), GFP_KERNEL);
+	if (!i2s) {
 		err = -ENOMEM;
-		जाओ err;
-	पूर्ण
-	platक्रमm_set_drvdata(pdev, i2s);
+		goto err;
+	}
+	platform_set_drvdata(pdev, i2s);
 	i2s->dev = &pdev->dev;
 	dev_dbg(&pdev->dev, "dev: %p, i2s: %p\n", &pdev->dev, i2s);
 
-	i2s->regs = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(i2s->regs)) अणु
+	i2s->regs = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(i2s->regs)) {
 		err = PTR_ERR(i2s->regs);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	i2s->regmap = devm_regmap_init_mmio(&pdev->dev, i2s->regs,
 					    &xtfpga_i2s_regmap_config);
-	अगर (IS_ERR(i2s->regmap)) अणु
+	if (IS_ERR(i2s->regmap)) {
 		dev_err(&pdev->dev, "regmap init failed\n");
 		err = PTR_ERR(i2s->regmap);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	i2s->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (IS_ERR(i2s->clk)) अणु
+	i2s->clk = devm_clk_get(&pdev->dev, NULL);
+	if (IS_ERR(i2s->clk)) {
 		dev_err(&pdev->dev, "couldn't get clock\n");
 		err = PTR_ERR(i2s->clk);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	regmap_ग_लिखो(i2s->regmap, XTFPGA_I2S_CONFIG,
+	regmap_write(i2s->regmap, XTFPGA_I2S_CONFIG,
 		     (0x1 << XTFPGA_I2S_CONFIG_CHANNEL_BASE));
-	regmap_ग_लिखो(i2s->regmap, XTFPGA_I2S_INT_STATUS, XTFPGA_I2S_INT_VALID);
-	regmap_ग_लिखो(i2s->regmap, XTFPGA_I2S_INT_MASK, XTFPGA_I2S_INT_UNDERRUN);
+	regmap_write(i2s->regmap, XTFPGA_I2S_INT_STATUS, XTFPGA_I2S_INT_VALID);
+	regmap_write(i2s->regmap, XTFPGA_I2S_INT_MASK, XTFPGA_I2S_INT_UNDERRUN);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0) अणु
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
 		err = irq;
-		जाओ err;
-	पूर्ण
-	err = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
-					xtfpga_i2s_thपढ़ोed_irq_handler,
+		goto err;
+	}
+	err = devm_request_threaded_irq(&pdev->dev, irq, NULL,
+					xtfpga_i2s_threaded_irq_handler,
 					IRQF_SHARED | IRQF_ONESHOT,
 					pdev->name, i2s);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&pdev->dev, "request_irq failed\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	err = devm_snd_soc_रेजिस्टर_component(&pdev->dev,
+	err = devm_snd_soc_register_component(&pdev->dev,
 					      &xtfpga_i2s_component,
 					      xtfpga_i2s_dai,
 					      ARRAY_SIZE(xtfpga_i2s_dai));
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(&pdev->dev, "couldn't register component\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	pm_runसमय_enable(&pdev->dev);
-	अगर (!pm_runसमय_enabled(&pdev->dev)) अणु
-		err = xtfpga_i2s_runसमय_resume(&pdev->dev);
-		अगर (err)
-			जाओ err_pm_disable;
-	पूर्ण
-	वापस 0;
+	pm_runtime_enable(&pdev->dev);
+	if (!pm_runtime_enabled(&pdev->dev)) {
+		err = xtfpga_i2s_runtime_resume(&pdev->dev);
+		if (err)
+			goto err_pm_disable;
+	}
+	return 0;
 
 err_pm_disable:
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 err:
 	dev_err(&pdev->dev, "%s: err = %d\n", __func__, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक xtfpga_i2s_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा xtfpga_i2s *i2s = dev_get_drvdata(&pdev->dev);
+static int xtfpga_i2s_remove(struct platform_device *pdev)
+{
+	struct xtfpga_i2s *i2s = dev_get_drvdata(&pdev->dev);
 
-	अगर (i2s->regmap && !IS_ERR(i2s->regmap)) अणु
-		regmap_ग_लिखो(i2s->regmap, XTFPGA_I2S_CONFIG, 0);
-		regmap_ग_लिखो(i2s->regmap, XTFPGA_I2S_INT_MASK, 0);
-		regmap_ग_लिखो(i2s->regmap, XTFPGA_I2S_INT_STATUS,
+	if (i2s->regmap && !IS_ERR(i2s->regmap)) {
+		regmap_write(i2s->regmap, XTFPGA_I2S_CONFIG, 0);
+		regmap_write(i2s->regmap, XTFPGA_I2S_INT_MASK, 0);
+		regmap_write(i2s->regmap, XTFPGA_I2S_INT_STATUS,
 			     XTFPGA_I2S_INT_VALID);
-	पूर्ण
-	pm_runसमय_disable(&pdev->dev);
-	अगर (!pm_runसमय_status_suspended(&pdev->dev))
-		xtfpga_i2s_runसमय_suspend(&pdev->dev);
-	वापस 0;
-पूर्ण
+	}
+	pm_runtime_disable(&pdev->dev);
+	if (!pm_runtime_status_suspended(&pdev->dev))
+		xtfpga_i2s_runtime_suspend(&pdev->dev);
+	return 0;
+}
 
-#अगर_घोषित CONFIG_OF
-अटल स्थिर काष्ठा of_device_id xtfpga_i2s_of_match[] = अणु
-	अणु .compatible = "cdns,xtfpga-i2s", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+#ifdef CONFIG_OF
+static const struct of_device_id xtfpga_i2s_of_match[] = {
+	{ .compatible = "cdns,xtfpga-i2s", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, xtfpga_i2s_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल स्थिर काष्ठा dev_pm_ops xtfpga_i2s_pm_ops = अणु
-	SET_RUNTIME_PM_OPS(xtfpga_i2s_runसमय_suspend,
-			   xtfpga_i2s_runसमय_resume, शून्य)
-पूर्ण;
+static const struct dev_pm_ops xtfpga_i2s_pm_ops = {
+	SET_RUNTIME_PM_OPS(xtfpga_i2s_runtime_suspend,
+			   xtfpga_i2s_runtime_resume, NULL)
+};
 
-अटल काष्ठा platक्रमm_driver xtfpga_i2s_driver = अणु
+static struct platform_driver xtfpga_i2s_driver = {
 	.probe   = xtfpga_i2s_probe,
-	.हटाओ  = xtfpga_i2s_हटाओ,
-	.driver  = अणु
+	.remove  = xtfpga_i2s_remove,
+	.driver  = {
 		.name = "xtfpga-i2s",
 		.of_match_table = of_match_ptr(xtfpga_i2s_of_match),
 		.pm = &xtfpga_i2s_pm_ops,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(xtfpga_i2s_driver);
+module_platform_driver(xtfpga_i2s_driver);
 
 MODULE_AUTHOR("Max Filippov <jcmvbkbc@gmail.com>");
 MODULE_DESCRIPTION("xtfpga I2S controller driver");

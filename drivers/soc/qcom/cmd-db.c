@@ -1,362 +1,361 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (c) 2016-2018, 2020, The Linux Foundation. All rights reserved. */
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_reserved_स्मृति.स>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/seq_file.h>
-#समावेश <linux/types.h>
+#include <linux/debugfs.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_reserved_mem.h>
+#include <linux/platform_device.h>
+#include <linux/seq_file.h>
+#include <linux/types.h>
 
-#समावेश <soc/qcom/cmd-db.h>
+#include <soc/qcom/cmd-db.h>
 
-#घोषणा NUM_PRIORITY		2
-#घोषणा MAX_SLV_ID		8
-#घोषणा SLAVE_ID_MASK		0x7
-#घोषणा SLAVE_ID_SHIFT		16
+#define NUM_PRIORITY		2
+#define MAX_SLV_ID		8
+#define SLAVE_ID_MASK		0x7
+#define SLAVE_ID_SHIFT		16
 
 /**
- * काष्ठा entry_header: header क्रम each entry in cmddb
+ * struct entry_header: header for each entry in cmddb
  *
- * @id: resource's identअगरier
+ * @id: resource's identifier
  * @priority: unused
  * @addr: the address of the resource
  * @len: length of the data
  * @offset: offset from :@data_offset, start of the data
  */
-काष्ठा entry_header अणु
+struct entry_header {
 	u8 id[8];
 	__le32 priority[NUM_PRIORITY];
 	__le32 addr;
 	__le16 len;
 	__le16 offset;
-पूर्ण;
+};
 
 /**
- * काष्ठा rsc_hdr: resource header inक्रमmation
+ * struct rsc_hdr: resource header information
  *
- * @slv_id: id क्रम the resource
+ * @slv_id: id for the resource
  * @header_offset: entry's header at offset from the end of the cmd_db_header
  * @data_offset: entry's data at offset from the end of the cmd_db_header
- * @cnt: number of entries क्रम HW type
+ * @cnt: number of entries for HW type
  * @version: MSB is major, LSB is minor
- * @reserved: reserved क्रम future use.
+ * @reserved: reserved for future use.
  */
-काष्ठा rsc_hdr अणु
+struct rsc_hdr {
 	__le16 slv_id;
 	__le16 header_offset;
 	__le16 data_offset;
 	__le16 cnt;
 	__le16 version;
 	__le16 reserved[3];
-पूर्ण;
+};
 
 /**
- * काष्ठा cmd_db_header: The DB header inक्रमmation
+ * struct cmd_db_header: The DB header information
  *
  * @version: The cmd db version
- * @magic: स्थिरant expected in the database
+ * @magic: constant expected in the database
  * @header: array of resources
- * @checksum: checksum क्रम the header. Unused.
+ * @checksum: checksum for the header. Unused.
  * @reserved: reserved memory
- * @data: driver specअगरic data
+ * @data: driver specific data
  */
-काष्ठा cmd_db_header अणु
+struct cmd_db_header {
 	__le32 version;
 	u8 magic[4];
-	काष्ठा rsc_hdr header[MAX_SLV_ID];
+	struct rsc_hdr header[MAX_SLV_ID];
 	__le32 checksum;
 	__le32 reserved;
 	u8 data[];
-पूर्ण;
+};
 
 /**
  * DOC: Description of the Command DB database.
  *
- * At the start of the command DB memory is the cmd_db_header काष्ठाure.
+ * At the start of the command DB memory is the cmd_db_header structure.
  * The cmd_db_header holds the version, checksum, magic key as well as an
- * array क्रम header क्रम each slave (depicted by the rsc_header). Each h/w
+ * array for header for each slave (depicted by the rsc_header). Each h/w
  * based accelerator is a 'slave' (shared resource) and has slave id indicating
- * the type of accelerator. The rsc_header is the header क्रम such inभागidual
- * slaves of a given type. The entries क्रम each of these slaves begin at the
+ * the type of accelerator. The rsc_header is the header for such individual
+ * slaves of a given type. The entries for each of these slaves begin at the
  * rsc_hdr.header_offset. In addition each slave could have auxiliary data
- * that may be needed by the driver. The data क्रम the slave starts at the
- * entry_header.offset to the location poपूर्णांकed to by the rsc_hdr.data_offset.
+ * that may be needed by the driver. The data for the slave starts at the
+ * entry_header.offset to the location pointed to by the rsc_hdr.data_offset.
  *
- * Drivers have a stringअगरied key to a slave/resource. They can query the slave
- * inक्रमmation and get the slave id and the auxiliary data and the length of the
- * data. Using this inक्रमmation, they can क्रमmat the request to be sent to the
+ * Drivers have a stringified key to a slave/resource. They can query the slave
+ * information and get the slave id and the auxiliary data and the length of the
+ * data. Using this information, they can format the request to be sent to the
  * h/w accelerator and request a resource state.
  */
 
-अटल स्थिर u8 CMD_DB_MAGIC[] = अणु 0xdb, 0x30, 0x03, 0x0c पूर्ण;
+static const u8 CMD_DB_MAGIC[] = { 0xdb, 0x30, 0x03, 0x0c };
 
-अटल bool cmd_db_magic_matches(स्थिर काष्ठा cmd_db_header *header)
-अणु
-	स्थिर u8 *magic = header->magic;
+static bool cmd_db_magic_matches(const struct cmd_db_header *header)
+{
+	const u8 *magic = header->magic;
 
-	वापस स_भेद(magic, CMD_DB_MAGIC, ARRAY_SIZE(CMD_DB_MAGIC)) == 0;
-पूर्ण
+	return memcmp(magic, CMD_DB_MAGIC, ARRAY_SIZE(CMD_DB_MAGIC)) == 0;
+}
 
-अटल काष्ठा cmd_db_header *cmd_db_header;
+static struct cmd_db_header *cmd_db_header;
 
-अटल अंतरभूत स्थिर व्योम *rsc_to_entry_header(स्थिर काष्ठा rsc_hdr *hdr)
-अणु
+static inline const void *rsc_to_entry_header(const struct rsc_hdr *hdr)
+{
 	u16 offset = le16_to_cpu(hdr->header_offset);
 
-	वापस cmd_db_header->data + offset;
-पूर्ण
+	return cmd_db_header->data + offset;
+}
 
-अटल अंतरभूत व्योम *
-rsc_offset(स्थिर काष्ठा rsc_hdr *hdr, स्थिर काष्ठा entry_header *ent)
-अणु
+static inline void *
+rsc_offset(const struct rsc_hdr *hdr, const struct entry_header *ent)
+{
 	u16 offset = le16_to_cpu(hdr->data_offset);
 	u16 loffset = le16_to_cpu(ent->offset);
 
-	वापस cmd_db_header->data + offset + loffset;
-पूर्ण
+	return cmd_db_header->data + offset + loffset;
+}
 
 /**
- * cmd_db_पढ़ोy - Indicates अगर command DB is available
+ * cmd_db_ready - Indicates if command DB is available
  *
- * Return: 0 on success, त्रुटि_सं otherwise
+ * Return: 0 on success, errno otherwise
  */
-पूर्णांक cmd_db_पढ़ोy(व्योम)
-अणु
-	अगर (cmd_db_header == शून्य)
-		वापस -EPROBE_DEFER;
-	अन्यथा अगर (!cmd_db_magic_matches(cmd_db_header))
-		वापस -EINVAL;
+int cmd_db_ready(void)
+{
+	if (cmd_db_header == NULL)
+		return -EPROBE_DEFER;
+	else if (!cmd_db_magic_matches(cmd_db_header))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(cmd_db_पढ़ोy);
+	return 0;
+}
+EXPORT_SYMBOL(cmd_db_ready);
 
-अटल पूर्णांक cmd_db_get_header(स्थिर अक्षर *id, स्थिर काष्ठा entry_header **eh,
-			     स्थिर काष्ठा rsc_hdr **rh)
-अणु
-	स्थिर काष्ठा rsc_hdr *rsc_hdr;
-	स्थिर काष्ठा entry_header *ent;
-	पूर्णांक ret, i, j;
+static int cmd_db_get_header(const char *id, const struct entry_header **eh,
+			     const struct rsc_hdr **rh)
+{
+	const struct rsc_hdr *rsc_hdr;
+	const struct entry_header *ent;
+	int ret, i, j;
 	u8 query[8];
 
-	ret = cmd_db_पढ़ोy();
-	अगर (ret)
-		वापस ret;
+	ret = cmd_db_ready();
+	if (ret)
+		return ret;
 
 	/* Pad out query string to same length as in DB */
-	म_नकलन(query, id, माप(query));
+	strncpy(query, id, sizeof(query));
 
-	क्रम (i = 0; i < MAX_SLV_ID; i++) अणु
+	for (i = 0; i < MAX_SLV_ID; i++) {
 		rsc_hdr = &cmd_db_header->header[i];
-		अगर (!rsc_hdr->slv_id)
-			अवरोध;
+		if (!rsc_hdr->slv_id)
+			break;
 
 		ent = rsc_to_entry_header(rsc_hdr);
-		क्रम (j = 0; j < le16_to_cpu(rsc_hdr->cnt); j++, ent++) अणु
-			अगर (स_भेद(ent->id, query, माप(ent->id)) == 0) अणु
-				अगर (eh)
+		for (j = 0; j < le16_to_cpu(rsc_hdr->cnt); j++, ent++) {
+			if (memcmp(ent->id, query, sizeof(ent->id)) == 0) {
+				if (eh)
 					*eh = ent;
-				अगर (rh)
+				if (rh)
 					*rh = rsc_hdr;
-				वापस 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				return 0;
+			}
+		}
+	}
 
-	वापस -ENODEV;
-पूर्ण
+	return -ENODEV;
+}
 
 /**
- * cmd_db_पढ़ो_addr() - Query command db क्रम resource id address.
+ * cmd_db_read_addr() - Query command db for resource id address.
  *
- * @id: resource id to query क्रम address
+ * @id: resource id to query for address
  *
  * Return: resource address on success, 0 on error
  *
  * This is used to retrieve resource address based on resource
  * id.
  */
-u32 cmd_db_पढ़ो_addr(स्थिर अक्षर *id)
-अणु
-	पूर्णांक ret;
-	स्थिर काष्ठा entry_header *ent;
+u32 cmd_db_read_addr(const char *id)
+{
+	int ret;
+	const struct entry_header *ent;
 
-	ret = cmd_db_get_header(id, &ent, शून्य);
+	ret = cmd_db_get_header(id, &ent, NULL);
 
-	वापस ret < 0 ? 0 : le32_to_cpu(ent->addr);
-पूर्ण
-EXPORT_SYMBOL(cmd_db_पढ़ो_addr);
+	return ret < 0 ? 0 : le32_to_cpu(ent->addr);
+}
+EXPORT_SYMBOL(cmd_db_read_addr);
 
 /**
- * cmd_db_पढ़ो_aux_data() - Query command db क्रम aux data.
+ * cmd_db_read_aux_data() - Query command db for aux data.
  *
  *  @id: Resource to retrieve AUX Data on
- *  @len: size of data buffer वापसed
+ *  @len: size of data buffer returned
  *
- *  Return: poपूर्णांकer to data on success, error poपूर्णांकer otherwise
+ *  Return: pointer to data on success, error pointer otherwise
  */
-स्थिर व्योम *cmd_db_पढ़ो_aux_data(स्थिर अक्षर *id, माप_प्रकार *len)
-अणु
-	पूर्णांक ret;
-	स्थिर काष्ठा entry_header *ent;
-	स्थिर काष्ठा rsc_hdr *rsc_hdr;
+const void *cmd_db_read_aux_data(const char *id, size_t *len)
+{
+	int ret;
+	const struct entry_header *ent;
+	const struct rsc_hdr *rsc_hdr;
 
 	ret = cmd_db_get_header(id, &ent, &rsc_hdr);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
-	अगर (len)
+	if (len)
 		*len = le16_to_cpu(ent->len);
 
-	वापस rsc_offset(rsc_hdr, ent);
-पूर्ण
-EXPORT_SYMBOL(cmd_db_पढ़ो_aux_data);
+	return rsc_offset(rsc_hdr, ent);
+}
+EXPORT_SYMBOL(cmd_db_read_aux_data);
 
 /**
- * cmd_db_पढ़ो_slave_id - Get the slave ID क्रम a given resource address
+ * cmd_db_read_slave_id - Get the slave ID for a given resource address
  *
- * @id: Resource id to query the DB क्रम version
+ * @id: Resource id to query the DB for version
  *
- * Return: cmd_db_hw_type क्रमागत on success, CMD_DB_HW_INVALID on error
+ * Return: cmd_db_hw_type enum on success, CMD_DB_HW_INVALID on error
  */
-क्रमागत cmd_db_hw_type cmd_db_पढ़ो_slave_id(स्थिर अक्षर *id)
-अणु
-	पूर्णांक ret;
-	स्थिर काष्ठा entry_header *ent;
+enum cmd_db_hw_type cmd_db_read_slave_id(const char *id)
+{
+	int ret;
+	const struct entry_header *ent;
 	u32 addr;
 
-	ret = cmd_db_get_header(id, &ent, शून्य);
-	अगर (ret < 0)
-		वापस CMD_DB_HW_INVALID;
+	ret = cmd_db_get_header(id, &ent, NULL);
+	if (ret < 0)
+		return CMD_DB_HW_INVALID;
 
 	addr = le32_to_cpu(ent->addr);
-	वापस (addr >> SLAVE_ID_SHIFT) & SLAVE_ID_MASK;
-पूर्ण
-EXPORT_SYMBOL(cmd_db_पढ़ो_slave_id);
+	return (addr >> SLAVE_ID_SHIFT) & SLAVE_ID_MASK;
+}
+EXPORT_SYMBOL(cmd_db_read_slave_id);
 
-#अगर_घोषित CONFIG_DEBUG_FS
-अटल पूर्णांक cmd_db_debugfs_dump(काष्ठा seq_file *seq, व्योम *p)
-अणु
-	पूर्णांक i, j;
-	स्थिर काष्ठा rsc_hdr *rsc;
-	स्थिर काष्ठा entry_header *ent;
-	स्थिर अक्षर *name;
+#ifdef CONFIG_DEBUG_FS
+static int cmd_db_debugfs_dump(struct seq_file *seq, void *p)
+{
+	int i, j;
+	const struct rsc_hdr *rsc;
+	const struct entry_header *ent;
+	const char *name;
 	u16 len, version;
 	u8 major, minor;
 
-	seq_माला_दो(seq, "Command DB DUMP\n");
+	seq_puts(seq, "Command DB DUMP\n");
 
-	क्रम (i = 0; i < MAX_SLV_ID; i++) अणु
+	for (i = 0; i < MAX_SLV_ID; i++) {
 		rsc = &cmd_db_header->header[i];
-		अगर (!rsc->slv_id)
-			अवरोध;
+		if (!rsc->slv_id)
+			break;
 
-		चयन (le16_to_cpu(rsc->slv_id)) अणु
-		हाल CMD_DB_HW_ARC:
+		switch (le16_to_cpu(rsc->slv_id)) {
+		case CMD_DB_HW_ARC:
 			name = "ARC";
-			अवरोध;
-		हाल CMD_DB_HW_VRM:
+			break;
+		case CMD_DB_HW_VRM:
 			name = "VRM";
-			अवरोध;
-		हाल CMD_DB_HW_BCM:
+			break;
+		case CMD_DB_HW_BCM:
 			name = "BCM";
-			अवरोध;
-		शेष:
+			break;
+		default:
 			name = "Unknown";
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		version = le16_to_cpu(rsc->version);
 		major = version >> 8;
 		minor = version;
 
-		seq_म_लिखो(seq, "Slave %s (v%u.%u)\n", name, major, minor);
-		seq_माला_दो(seq, "-------------------------\n");
+		seq_printf(seq, "Slave %s (v%u.%u)\n", name, major, minor);
+		seq_puts(seq, "-------------------------\n");
 
 		ent = rsc_to_entry_header(rsc);
-		क्रम (j = 0; j < le16_to_cpu(rsc->cnt); j++, ent++) अणु
-			seq_म_लिखो(seq, "0x%05x: %*pEp", le32_to_cpu(ent->addr),
-				   (पूर्णांक)माप(ent->id), ent->id);
+		for (j = 0; j < le16_to_cpu(rsc->cnt); j++, ent++) {
+			seq_printf(seq, "0x%05x: %*pEp", le32_to_cpu(ent->addr),
+				   (int)sizeof(ent->id), ent->id);
 
 			len = le16_to_cpu(ent->len);
-			अगर (len) अणु
-				seq_म_लिखो(seq, " [%*ph]",
+			if (len) {
+				seq_printf(seq, " [%*ph]",
 					   len, rsc_offset(rsc, ent));
-			पूर्ण
-			seq_अ_दो(seq, '\n');
-		पूर्ण
-	पूर्ण
+			}
+			seq_putc(seq, '\n');
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक खोलो_cmd_db_debugfs(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, cmd_db_debugfs_dump, inode->i_निजी);
-पूर्ण
-#पूर्ण_अगर
+static int open_cmd_db_debugfs(struct inode *inode, struct file *file)
+{
+	return single_open(file, cmd_db_debugfs_dump, inode->i_private);
+}
+#endif
 
-अटल स्थिर काष्ठा file_operations cmd_db_debugfs_ops = अणु
-#अगर_घोषित CONFIG_DEBUG_FS
-	.खोलो = खोलो_cmd_db_debugfs,
-#पूर्ण_अगर
-	.पढ़ो = seq_पढ़ो,
+static const struct file_operations cmd_db_debugfs_ops = {
+#ifdef CONFIG_DEBUG_FS
+	.open = open_cmd_db_debugfs,
+#endif
+	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = single_release,
-पूर्ण;
+};
 
-अटल पूर्णांक cmd_db_dev_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा reserved_mem *rmem;
-	पूर्णांक ret = 0;
+static int cmd_db_dev_probe(struct platform_device *pdev)
+{
+	struct reserved_mem *rmem;
+	int ret = 0;
 
 	rmem = of_reserved_mem_lookup(pdev->dev.of_node);
-	अगर (!rmem) अणु
+	if (!rmem) {
 		dev_err(&pdev->dev, "failed to acquire memory region\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	cmd_db_header = memremap(rmem->base, rmem->size, MEMREMAP_WB);
-	अगर (!cmd_db_header) अणु
+	if (!cmd_db_header) {
 		ret = -ENOMEM;
-		cmd_db_header = शून्य;
-		वापस ret;
-	पूर्ण
+		cmd_db_header = NULL;
+		return ret;
+	}
 
-	अगर (!cmd_db_magic_matches(cmd_db_header)) अणु
+	if (!cmd_db_magic_matches(cmd_db_header)) {
 		dev_err(&pdev->dev, "Invalid Command DB Magic\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	debugfs_create_file("cmd-db", 0400, शून्य, शून्य, &cmd_db_debugfs_ops);
+	debugfs_create_file("cmd-db", 0400, NULL, NULL, &cmd_db_debugfs_ops);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id cmd_db_match_table[] = अणु
-	अणु .compatible = "qcom,cmd-db" पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct of_device_id cmd_db_match_table[] = {
+	{ .compatible = "qcom,cmd-db" },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, cmd_db_match_table);
 
-अटल काष्ठा platक्रमm_driver cmd_db_dev_driver = अणु
+static struct platform_driver cmd_db_dev_driver = {
 	.probe  = cmd_db_dev_probe,
-	.driver = अणु
+	.driver = {
 		   .name = "cmd-db",
 		   .of_match_table = cmd_db_match_table,
 		   .suppress_bind_attrs = true,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक __init cmd_db_device_init(व्योम)
-अणु
-	वापस platक्रमm_driver_रेजिस्टर(&cmd_db_dev_driver);
-पूर्ण
+static int __init cmd_db_device_init(void)
+{
+	return platform_driver_register(&cmd_db_dev_driver);
+}
 arch_initcall(cmd_db_device_init);
 
 MODULE_DESCRIPTION("Qualcomm Technologies, Inc. Command DB Driver");

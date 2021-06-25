@@ -1,182 +1,181 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * VFIO generic eventfd code क्रम IRQFD support.
- * Derived from drivers/vfio/pci/vfio_pci_पूर्णांकrs.c
+ * VFIO generic eventfd code for IRQFD support.
+ * Derived from drivers/vfio/pci/vfio_pci_intrs.c
  *
  * Copyright (C) 2012 Red Hat, Inc.  All rights reserved.
  *     Author: Alex Williamson <alex.williamson@redhat.com>
  */
 
-#समावेश <linux/vfपन.स>
-#समावेश <linux/eventfd.h>
-#समावेश <linux/file.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
+#include <linux/vfio.h>
+#include <linux/eventfd.h>
+#include <linux/file.h>
+#include <linux/module.h>
+#include <linux/slab.h>
 
-#घोषणा DRIVER_VERSION  "0.1"
-#घोषणा DRIVER_AUTHOR   "Alex Williamson <alex.williamson@redhat.com>"
-#घोषणा DRIVER_DESC     "IRQFD support for VFIO bus drivers"
+#define DRIVER_VERSION  "0.1"
+#define DRIVER_AUTHOR   "Alex Williamson <alex.williamson@redhat.com>"
+#define DRIVER_DESC     "IRQFD support for VFIO bus drivers"
 
-अटल काष्ठा workqueue_काष्ठा *vfio_irqfd_cleanup_wq;
-अटल DEFINE_SPINLOCK(virqfd_lock);
+static struct workqueue_struct *vfio_irqfd_cleanup_wq;
+static DEFINE_SPINLOCK(virqfd_lock);
 
-अटल पूर्णांक __init vfio_virqfd_init(व्योम)
-अणु
+static int __init vfio_virqfd_init(void)
+{
 	vfio_irqfd_cleanup_wq =
-		create_singlethपढ़ो_workqueue("vfio-irqfd-cleanup");
-	अगर (!vfio_irqfd_cleanup_wq)
-		वापस -ENOMEM;
+		create_singlethread_workqueue("vfio-irqfd-cleanup");
+	if (!vfio_irqfd_cleanup_wq)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास vfio_virqfd_निकास(व्योम)
-अणु
+static void __exit vfio_virqfd_exit(void)
+{
 	destroy_workqueue(vfio_irqfd_cleanup_wq);
-पूर्ण
+}
 
-अटल व्योम virqfd_deactivate(काष्ठा virqfd *virqfd)
-अणु
-	queue_work(vfio_irqfd_cleanup_wq, &virqfd->shutकरोwn);
-पूर्ण
+static void virqfd_deactivate(struct virqfd *virqfd)
+{
+	queue_work(vfio_irqfd_cleanup_wq, &virqfd->shutdown);
+}
 
-अटल पूर्णांक virqfd_wakeup(रुको_queue_entry_t *रुको, अचिन्हित mode, पूर्णांक sync, व्योम *key)
-अणु
-	काष्ठा virqfd *virqfd = container_of(रुको, काष्ठा virqfd, रुको);
+static int virqfd_wakeup(wait_queue_entry_t *wait, unsigned mode, int sync, void *key)
+{
+	struct virqfd *virqfd = container_of(wait, struct virqfd, wait);
 	__poll_t flags = key_to_poll(key);
 
-	अगर (flags & EPOLLIN) अणु
+	if (flags & EPOLLIN) {
 		u64 cnt;
-		eventfd_ctx_करो_पढ़ो(virqfd->eventfd, &cnt);
+		eventfd_ctx_do_read(virqfd->eventfd, &cnt);
 
-		/* An event has been संकेतed, call function */
-		अगर ((!virqfd->handler ||
+		/* An event has been signaled, call function */
+		if ((!virqfd->handler ||
 		     virqfd->handler(virqfd->opaque, virqfd->data)) &&
-		    virqfd->thपढ़ो)
+		    virqfd->thread)
 			schedule_work(&virqfd->inject);
-	पूर्ण
+	}
 
-	अगर (flags & EPOLLHUP) अणु
-		अचिन्हित दीर्घ flags;
+	if (flags & EPOLLHUP) {
+		unsigned long flags;
 		spin_lock_irqsave(&virqfd_lock, flags);
 
 		/*
-		 * The eventfd is closing, अगर the virqfd has not yet been
-		 * queued क्रम release, as determined by testing whether the
-		 * virqfd poपूर्णांकer to it is still valid, queue it now.  As
+		 * The eventfd is closing, if the virqfd has not yet been
+		 * queued for release, as determined by testing whether the
+		 * virqfd pointer to it is still valid, queue it now.  As
 		 * with kvm irqfds, we know we won't race against the virqfd
 		 * going away because we hold the lock to get here.
 		 */
-		अगर (*(virqfd->pvirqfd) == virqfd) अणु
-			*(virqfd->pvirqfd) = शून्य;
+		if (*(virqfd->pvirqfd) == virqfd) {
+			*(virqfd->pvirqfd) = NULL;
 			virqfd_deactivate(virqfd);
-		पूर्ण
+		}
 
 		spin_unlock_irqrestore(&virqfd_lock, flags);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम virqfd_ptable_queue_proc(काष्ठा file *file,
-				     रुको_queue_head_t *wqh, poll_table *pt)
-अणु
-	काष्ठा virqfd *virqfd = container_of(pt, काष्ठा virqfd, pt);
-	add_रुको_queue(wqh, &virqfd->रुको);
-पूर्ण
+static void virqfd_ptable_queue_proc(struct file *file,
+				     wait_queue_head_t *wqh, poll_table *pt)
+{
+	struct virqfd *virqfd = container_of(pt, struct virqfd, pt);
+	add_wait_queue(wqh, &virqfd->wait);
+}
 
-अटल व्योम virqfd_shutकरोwn(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा virqfd *virqfd = container_of(work, काष्ठा virqfd, shutकरोwn);
+static void virqfd_shutdown(struct work_struct *work)
+{
+	struct virqfd *virqfd = container_of(work, struct virqfd, shutdown);
 	u64 cnt;
 
-	eventfd_ctx_हटाओ_रुको_queue(virqfd->eventfd, &virqfd->रुको, &cnt);
+	eventfd_ctx_remove_wait_queue(virqfd->eventfd, &virqfd->wait, &cnt);
 	flush_work(&virqfd->inject);
 	eventfd_ctx_put(virqfd->eventfd);
 
-	kमुक्त(virqfd);
-पूर्ण
+	kfree(virqfd);
+}
 
-अटल व्योम virqfd_inject(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा virqfd *virqfd = container_of(work, काष्ठा virqfd, inject);
-	अगर (virqfd->thपढ़ो)
-		virqfd->thपढ़ो(virqfd->opaque, virqfd->data);
-पूर्ण
+static void virqfd_inject(struct work_struct *work)
+{
+	struct virqfd *virqfd = container_of(work, struct virqfd, inject);
+	if (virqfd->thread)
+		virqfd->thread(virqfd->opaque, virqfd->data);
+}
 
-पूर्णांक vfio_virqfd_enable(व्योम *opaque,
-		       पूर्णांक (*handler)(व्योम *, व्योम *),
-		       व्योम (*thपढ़ो)(व्योम *, व्योम *),
-		       व्योम *data, काष्ठा virqfd **pvirqfd, पूर्णांक fd)
-अणु
-	काष्ठा fd irqfd;
-	काष्ठा eventfd_ctx *ctx;
-	काष्ठा virqfd *virqfd;
-	पूर्णांक ret = 0;
+int vfio_virqfd_enable(void *opaque,
+		       int (*handler)(void *, void *),
+		       void (*thread)(void *, void *),
+		       void *data, struct virqfd **pvirqfd, int fd)
+{
+	struct fd irqfd;
+	struct eventfd_ctx *ctx;
+	struct virqfd *virqfd;
+	int ret = 0;
 	__poll_t events;
 
-	virqfd = kzalloc(माप(*virqfd), GFP_KERNEL);
-	अगर (!virqfd)
-		वापस -ENOMEM;
+	virqfd = kzalloc(sizeof(*virqfd), GFP_KERNEL);
+	if (!virqfd)
+		return -ENOMEM;
 
 	virqfd->pvirqfd = pvirqfd;
 	virqfd->opaque = opaque;
 	virqfd->handler = handler;
-	virqfd->thपढ़ो = thपढ़ो;
+	virqfd->thread = thread;
 	virqfd->data = data;
 
-	INIT_WORK(&virqfd->shutकरोwn, virqfd_shutकरोwn);
+	INIT_WORK(&virqfd->shutdown, virqfd_shutdown);
 	INIT_WORK(&virqfd->inject, virqfd_inject);
 
 	irqfd = fdget(fd);
-	अगर (!irqfd.file) अणु
+	if (!irqfd.file) {
 		ret = -EBADF;
-		जाओ err_fd;
-	पूर्ण
+		goto err_fd;
+	}
 
 	ctx = eventfd_ctx_fileget(irqfd.file);
-	अगर (IS_ERR(ctx)) अणु
+	if (IS_ERR(ctx)) {
 		ret = PTR_ERR(ctx);
-		जाओ err_ctx;
-	पूर्ण
+		goto err_ctx;
+	}
 
 	virqfd->eventfd = ctx;
 
 	/*
 	 * virqfds can be released by closing the eventfd or directly
-	 * through ioctl.  These are both करोne through a workqueue, so
-	 * we update the poपूर्णांकer to the virqfd under lock to aव्योम
+	 * through ioctl.  These are both done through a workqueue, so
+	 * we update the pointer to the virqfd under lock to avoid
 	 * pushing multiple jobs to release the same virqfd.
 	 */
 	spin_lock_irq(&virqfd_lock);
 
-	अगर (*pvirqfd) अणु
+	if (*pvirqfd) {
 		spin_unlock_irq(&virqfd_lock);
 		ret = -EBUSY;
-		जाओ err_busy;
-	पूर्ण
+		goto err_busy;
+	}
 	*pvirqfd = virqfd;
 
 	spin_unlock_irq(&virqfd_lock);
 
 	/*
-	 * Install our own custom wake-up handling so we are notअगरied via
-	 * a callback whenever someone संकेतs the underlying eventfd.
+	 * Install our own custom wake-up handling so we are notified via
+	 * a callback whenever someone signals the underlying eventfd.
 	 */
-	init_रुकोqueue_func_entry(&virqfd->रुको, virqfd_wakeup);
+	init_waitqueue_func_entry(&virqfd->wait, virqfd_wakeup);
 	init_poll_funcptr(&virqfd->pt, virqfd_ptable_queue_proc);
 
 	events = vfs_poll(irqfd.file, &virqfd->pt);
 
 	/*
-	 * Check अगर there was an event alपढ़ोy pending on the eventfd
-	 * beक्रमe we रेजिस्टरed and trigger it as अगर we didn't miss it.
+	 * Check if there was an event already pending on the eventfd
+	 * before we registered and trigger it as if we didn't miss it.
 	 */
-	अगर (events & EPOLLIN) अणु
-		अगर ((!handler || handler(opaque, data)) && thपढ़ो)
+	if (events & EPOLLIN) {
+		if ((!handler || handler(opaque, data)) && thread)
 			schedule_work(&virqfd->inject);
-	पूर्ण
+	}
 
 	/*
 	 * Do not drop the file until the irqfd is fully initialized,
@@ -184,42 +183,42 @@
 	 */
 	fdput(irqfd);
 
-	वापस 0;
+	return 0;
 err_busy:
 	eventfd_ctx_put(ctx);
 err_ctx:
 	fdput(irqfd);
 err_fd:
-	kमुक्त(virqfd);
+	kfree(virqfd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(vfio_virqfd_enable);
 
-व्योम vfio_virqfd_disable(काष्ठा virqfd **pvirqfd)
-अणु
-	अचिन्हित दीर्घ flags;
+void vfio_virqfd_disable(struct virqfd **pvirqfd)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&virqfd_lock, flags);
 
-	अगर (*pvirqfd) अणु
+	if (*pvirqfd) {
 		virqfd_deactivate(*pvirqfd);
-		*pvirqfd = शून्य;
-	पूर्ण
+		*pvirqfd = NULL;
+	}
 
 	spin_unlock_irqrestore(&virqfd_lock, flags);
 
 	/*
-	 * Block until we know all outstanding shutकरोwn jobs have completed.
-	 * Even अगर we करोn't queue the job, flush the wq to be sure it's
+	 * Block until we know all outstanding shutdown jobs have completed.
+	 * Even if we don't queue the job, flush the wq to be sure it's
 	 * been released.
 	 */
 	flush_workqueue(vfio_irqfd_cleanup_wq);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(vfio_virqfd_disable);
 
 module_init(vfio_virqfd_init);
-module_निकास(vfio_virqfd_निकास);
+module_exit(vfio_virqfd_exit);
 
 MODULE_VERSION(DRIVER_VERSION);
 MODULE_LICENSE("GPL v2");

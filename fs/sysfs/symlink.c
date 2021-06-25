@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * fs/sysfs/symlink.c - sysfs symlink implementation
  *
@@ -7,193 +6,193 @@
  * Copyright (c) 2007 SUSE Linux Products GmbH
  * Copyright (c) 2007 Tejun Heo <teheo@suse.de>
  *
- * Please see Documentation/fileप्रणालीs/sysfs.rst क्रम more inक्रमmation.
+ * Please see Documentation/filesystems/sysfs.rst for more information.
  */
 
-#समावेश <linux/fs.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kobject.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/security.h>
+#include <linux/fs.h>
+#include <linux/module.h>
+#include <linux/kobject.h>
+#include <linux/mutex.h>
+#include <linux/security.h>
 
-#समावेश "sysfs.h"
+#include "sysfs.h"
 
-अटल पूर्णांक sysfs_करो_create_link_sd(काष्ठा kernfs_node *parent,
-				   काष्ठा kobject *target_kobj,
-				   स्थिर अक्षर *name, पूर्णांक warn)
-अणु
-	काष्ठा kernfs_node *kn, *target = शून्य;
+static int sysfs_do_create_link_sd(struct kernfs_node *parent,
+				   struct kobject *target_kobj,
+				   const char *name, int warn)
+{
+	struct kernfs_node *kn, *target = NULL;
 
-	अगर (WARN_ON(!name || !parent))
-		वापस -EINVAL;
+	if (WARN_ON(!name || !parent))
+		return -EINVAL;
 
 	/*
-	 * We करोn't own @target_kobj and it may be हटाओd at any समय.
+	 * We don't own @target_kobj and it may be removed at any time.
 	 * Synchronize using sysfs_symlink_target_lock.  See
-	 * sysfs_हटाओ_dir() क्रम details.
+	 * sysfs_remove_dir() for details.
 	 */
 	spin_lock(&sysfs_symlink_target_lock);
-	अगर (target_kobj->sd) अणु
+	if (target_kobj->sd) {
 		target = target_kobj->sd;
 		kernfs_get(target);
-	पूर्ण
+	}
 	spin_unlock(&sysfs_symlink_target_lock);
 
-	अगर (!target)
-		वापस -ENOENT;
+	if (!target)
+		return -ENOENT;
 
 	kn = kernfs_create_link(parent, name, target);
 	kernfs_put(target);
 
-	अगर (!IS_ERR(kn))
-		वापस 0;
+	if (!IS_ERR(kn))
+		return 0;
 
-	अगर (warn && PTR_ERR(kn) == -EEXIST)
+	if (warn && PTR_ERR(kn) == -EEXIST)
 		sysfs_warn_dup(parent, name);
-	वापस PTR_ERR(kn);
-पूर्ण
+	return PTR_ERR(kn);
+}
 
 /**
  *	sysfs_create_link_sd - create symlink to a given object.
  *	@kn:		directory we're creating the link in.
- *	@target:	object we're poपूर्णांकing to.
+ *	@target:	object we're pointing to.
  *	@name:		name of the symlink.
  */
-पूर्णांक sysfs_create_link_sd(काष्ठा kernfs_node *kn, काष्ठा kobject *target,
-			 स्थिर अक्षर *name)
-अणु
-	वापस sysfs_करो_create_link_sd(kn, target, name, 1);
-पूर्ण
+int sysfs_create_link_sd(struct kernfs_node *kn, struct kobject *target,
+			 const char *name)
+{
+	return sysfs_do_create_link_sd(kn, target, name, 1);
+}
 
-अटल पूर्णांक sysfs_करो_create_link(काष्ठा kobject *kobj, काष्ठा kobject *target,
-				स्थिर अक्षर *name, पूर्णांक warn)
-अणु
-	काष्ठा kernfs_node *parent = शून्य;
+static int sysfs_do_create_link(struct kobject *kobj, struct kobject *target,
+				const char *name, int warn)
+{
+	struct kernfs_node *parent = NULL;
 
-	अगर (!kobj)
+	if (!kobj)
 		parent = sysfs_root_kn;
-	अन्यथा
+	else
 		parent = kobj->sd;
 
-	अगर (!parent)
-		वापस -EFAULT;
+	if (!parent)
+		return -EFAULT;
 
-	वापस sysfs_करो_create_link_sd(parent, target, name, warn);
-पूर्ण
+	return sysfs_do_create_link_sd(parent, target, name, warn);
+}
 
 /**
  *	sysfs_create_link - create symlink between two objects.
  *	@kobj:	object whose directory we're creating the link in.
- *	@target:	object we're poपूर्णांकing to.
+ *	@target:	object we're pointing to.
  *	@name:		name of the symlink.
  */
-पूर्णांक sysfs_create_link(काष्ठा kobject *kobj, काष्ठा kobject *target,
-		      स्थिर अक्षर *name)
-अणु
-	वापस sysfs_करो_create_link(kobj, target, name, 1);
-पूर्ण
+int sysfs_create_link(struct kobject *kobj, struct kobject *target,
+		      const char *name)
+{
+	return sysfs_do_create_link(kobj, target, name, 1);
+}
 EXPORT_SYMBOL_GPL(sysfs_create_link);
 
 /**
  *	sysfs_create_link_nowarn - create symlink between two objects.
  *	@kobj:	object whose directory we're creating the link in.
- *	@target:	object we're poपूर्णांकing to.
+ *	@target:	object we're pointing to.
  *	@name:		name of the symlink.
  *
- *	This function करोes the same as sysfs_create_link(), but it
- *	करोesn't warn अगर the link alपढ़ोy exists.
+ *	This function does the same as sysfs_create_link(), but it
+ *	doesn't warn if the link already exists.
  */
-पूर्णांक sysfs_create_link_nowarn(काष्ठा kobject *kobj, काष्ठा kobject *target,
-			     स्थिर अक्षर *name)
-अणु
-	वापस sysfs_करो_create_link(kobj, target, name, 0);
-पूर्ण
+int sysfs_create_link_nowarn(struct kobject *kobj, struct kobject *target,
+			     const char *name)
+{
+	return sysfs_do_create_link(kobj, target, name, 0);
+}
 EXPORT_SYMBOL_GPL(sysfs_create_link_nowarn);
 
 /**
- *	sysfs_delete_link - हटाओ symlink in object's directory.
- *	@kobj:	object we're acting क्रम.
- *	@targ:	object we're poपूर्णांकing to.
- *	@name:	name of the symlink to हटाओ.
+ *	sysfs_delete_link - remove symlink in object's directory.
+ *	@kobj:	object we're acting for.
+ *	@targ:	object we're pointing to.
+ *	@name:	name of the symlink to remove.
  *
- *	Unlike sysfs_हटाओ_link sysfs_delete_link has enough inक्रमmation
+ *	Unlike sysfs_remove_link sysfs_delete_link has enough information
  *	to successfully delete symlinks in tagged directories.
  */
-व्योम sysfs_delete_link(काष्ठा kobject *kobj, काष्ठा kobject *targ,
-			स्थिर अक्षर *name)
-अणु
-	स्थिर व्योम *ns = शून्य;
+void sysfs_delete_link(struct kobject *kobj, struct kobject *targ,
+			const char *name)
+{
+	const void *ns = NULL;
 
 	/*
-	 * We करोn't own @target and it may be हटाओd at any समय.
+	 * We don't own @target and it may be removed at any time.
 	 * Synchronize using sysfs_symlink_target_lock.  See
-	 * sysfs_हटाओ_dir() क्रम details.
+	 * sysfs_remove_dir() for details.
 	 */
 	spin_lock(&sysfs_symlink_target_lock);
-	अगर (targ->sd && kernfs_ns_enabled(kobj->sd))
+	if (targ->sd && kernfs_ns_enabled(kobj->sd))
 		ns = targ->sd->ns;
 	spin_unlock(&sysfs_symlink_target_lock);
-	kernfs_हटाओ_by_name_ns(kobj->sd, name, ns);
-पूर्ण
+	kernfs_remove_by_name_ns(kobj->sd, name, ns);
+}
 
 /**
- *	sysfs_हटाओ_link - हटाओ symlink in object's directory.
- *	@kobj:	object we're acting क्रम.
- *	@name:	name of the symlink to हटाओ.
+ *	sysfs_remove_link - remove symlink in object's directory.
+ *	@kobj:	object we're acting for.
+ *	@name:	name of the symlink to remove.
  */
-व्योम sysfs_हटाओ_link(काष्ठा kobject *kobj, स्थिर अक्षर *name)
-अणु
-	काष्ठा kernfs_node *parent = शून्य;
+void sysfs_remove_link(struct kobject *kobj, const char *name)
+{
+	struct kernfs_node *parent = NULL;
 
-	अगर (!kobj)
+	if (!kobj)
 		parent = sysfs_root_kn;
-	अन्यथा
+	else
 		parent = kobj->sd;
 
-	kernfs_हटाओ_by_name(parent, name);
-पूर्ण
-EXPORT_SYMBOL_GPL(sysfs_हटाओ_link);
+	kernfs_remove_by_name(parent, name);
+}
+EXPORT_SYMBOL_GPL(sysfs_remove_link);
 
 /**
- *	sysfs_नाम_link_ns - नाम symlink in object's directory.
- *	@kobj:	object we're acting क्रम.
- *	@targ:	object we're poपूर्णांकing to.
+ *	sysfs_rename_link_ns - rename symlink in object's directory.
+ *	@kobj:	object we're acting for.
+ *	@targ:	object we're pointing to.
  *	@old:	previous name of the symlink.
  *	@new:	new name of the symlink.
  *	@new_ns: new namespace of the symlink.
  *
- *	A helper function क्रम the common नाम symlink idiom.
+ *	A helper function for the common rename symlink idiom.
  */
-पूर्णांक sysfs_नाम_link_ns(काष्ठा kobject *kobj, काष्ठा kobject *targ,
-			 स्थिर अक्षर *old, स्थिर अक्षर *new, स्थिर व्योम *new_ns)
-अणु
-	काष्ठा kernfs_node *parent, *kn = शून्य;
-	स्थिर व्योम *old_ns = शून्य;
-	पूर्णांक result;
+int sysfs_rename_link_ns(struct kobject *kobj, struct kobject *targ,
+			 const char *old, const char *new, const void *new_ns)
+{
+	struct kernfs_node *parent, *kn = NULL;
+	const void *old_ns = NULL;
+	int result;
 
-	अगर (!kobj)
+	if (!kobj)
 		parent = sysfs_root_kn;
-	अन्यथा
+	else
 		parent = kobj->sd;
 
-	अगर (targ->sd)
+	if (targ->sd)
 		old_ns = targ->sd->ns;
 
 	result = -ENOENT;
 	kn = kernfs_find_and_get_ns(parent, old, old_ns);
-	अगर (!kn)
-		जाओ out;
+	if (!kn)
+		goto out;
 
 	result = -EINVAL;
-	अगर (kernfs_type(kn) != KERNFS_LINK)
-		जाओ out;
-	अगर (kn->symlink.target_kn->priv != targ)
-		जाओ out;
+	if (kernfs_type(kn) != KERNFS_LINK)
+		goto out;
+	if (kn->symlink.target_kn->priv != targ)
+		goto out;
 
-	result = kernfs_नाम_ns(kn, parent, new, new_ns);
+	result = kernfs_rename_ns(kn, parent, new, new_ns);
 
 out:
 	kernfs_put(kn);
-	वापस result;
-पूर्ण
-EXPORT_SYMBOL_GPL(sysfs_नाम_link_ns);
+	return result;
+}
+EXPORT_SYMBOL_GPL(sysfs_rename_link_ns);
